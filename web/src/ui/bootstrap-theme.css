@@ -806,6 +806,34 @@
   }
 }
 
+/*
+ * Everything inside the rail is a flex item on the way down to the link
+ * label, and a flex item's `min-width` defaults to `auto` — meaning it
+ * refuses to shrink below its content. The plugin section carries
+ * unmigrated markup, so without an explicit floor the nav grew past the
+ * rail and the surplus was painted over the content column (the nav
+ * clips it with `overflow-x: hidden`, which is what left stray letters
+ * hanging off the rail's right edge).
+ *
+ * `min-width: 0` at each level lets the chain actually shrink, and the
+ * `text-truncate` labels then ellipsise inside the rail instead.
+ */
+.app-rail nav,
+.app-rail > *,
+.app-rail nav > *,
+.app-rail ul,
+.app-rail li,
+.app-rail a,
+.app-rail button {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.app-rail nav ul,
+.app-rail > div > ul {
+  width: 100%;
+}
+
 /* ------------------------------------------------------------------ */
 /* Reduced motion — honour the OS setting rather than animating anyway */
 /* ------------------------------------------------------------------ */
