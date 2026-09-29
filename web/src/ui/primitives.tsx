@@ -216,13 +216,16 @@ export function Select({
   );
 }
 
-export const Switch = React.forwardRef<
-  HTMLInputElement,
-  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onChange"> & {
-    checked: boolean;
-    onCheckedChange: (checked: boolean) => void;
-  }
->(function Switch({ checked, className, onCheckedChange, onClick, ...props }, ref) {
+export interface SwitchProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "type"> {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}
+
+export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(function Switch(
+  { checked, className, onCheckedChange, onClick, ...props },
+  ref,
+) {
   return (
     <div className={cn("form-check form-switch", className)}>
       <input
@@ -283,7 +286,7 @@ const TYPOGRAPHY_VARIANT_CLASS: Record<string, string> = {
   xl: "fs-xl",
 };
 
-function Typography<T extends React.ElementType = "span">({
+export function Typography<T extends React.ElementType = "span">({
   as,
   className,
   compressed,
