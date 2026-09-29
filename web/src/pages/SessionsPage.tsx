@@ -53,7 +53,6 @@ import { Toast } from "@nous-research/ui/ui/components/toast";
 import { Button } from "@nous-research/ui/ui/components/button";
 import { Checkbox } from "@nous-research/ui/ui/components/checkbox";
 import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Segmented } from "@nous-research/ui/ui/components/segmented";
 import { Spinner } from "@nous-research/ui/ui/components/spinner";
 import { Badge } from "@nous-research/ui/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
@@ -1842,17 +1841,37 @@ export default function SessionsPage() {
       {(showOverviewTab && !isSearching) || showList ? (
         <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
-            <Segmented
-              className="w-fit shrink-0"
-              size="md"
-              value={sessionCategory}
-              onChange={updateSessionCategory}
-              options={[
-                { value: "chats", label: t.sessions.filterChats },
-                { value: "automation", label: t.sessions.filterAutomation },
-                { value: "all", label: t.sessions.filterAll },
-              ]}
-            />
+          {/* Bootstrap nav-pills instead of the design-system Segmented
+              control. The pills are plain anchors, so the active state
+              comes from `active` and needs no bespoke styling. */}
+          <ul
+            className="nav nav-pills gap-1 w-fit shrink-0"
+            role="tablist"
+          >
+            {(
+              [
+                ["chats", t.sessions.filterChats],
+                ["automation", t.sessions.filterAutomation],
+                ["all", t.sessions.filterAll],
+              ] as const
+            ).map(([value, label]) => (
+              <li className="nav-item" key={value} role="presentation">
+                <button
+                  aria-selected={sessionCategory === value}
+                  className={
+                    sessionCategory === value
+                      ? "nav-link active px-3 py-1"
+                      : "nav-link px-3 py-1"
+                  }
+                  onClick={() => updateSessionCategory(value)}
+                  role="tab"
+                  type="button"
+                >
+                  {label}
+                </button>
+              </li>
+            ))}
+          </ul>
 
             <div ref={sourceMenuRef} className="relative shrink-0">
               <Button
@@ -1939,16 +1958,30 @@ export default function SessionsPage() {
             </div>
 
             {showOverviewTab && !isSearching && (
-              <Segmented
-                className="w-fit shrink-0"
-                size="md"
-                value={view}
-                onChange={switchView}
-                options={[
-                  { value: "overview", label: t.sessions.overview },
-                  { value: "list", label: t.sessions.history },
-                ]}
-              />
+              <ul className="nav nav-pills gap-1 w-fit shrink-0" role="tablist">
+                {(
+                  [
+                    ["overview", t.sessions.overview],
+                    ["list", t.sessions.history],
+                  ] as const
+                ).map(([value, label]) => (
+                  <li className="nav-item" key={value} role="presentation">
+                    <button
+                      aria-selected={view === value}
+                      className={
+                        view === value
+                          ? "nav-link active px-3 py-1"
+                          : "nav-link px-3 py-1"
+                      }
+                      onClick={() => switchView(value)}
+                      role="tab"
+                      type="button"
+                    >
+                      {label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
 
             {showList && (
@@ -2092,20 +2125,22 @@ export default function SessionsPage() {
 
       {showList ? (
         filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <Clock className="h-8 w-8 mb-3 opacity-40" />
-            <p className="text-sm font-medium">
-              {search
-                ? t.sessions.noMatch
-                : selectedSources !== null || sessionCategory !== "chats"
-                  ? t.sessions.noSessionsInFilter
-                  : t.sessions.noSessions}
-            </p>
-            {!search && sessionCategory === "chats" && selectedSources === null && (
-              <p className="text-xs mt-1 text-text-tertiary">
-                {t.sessions.startConversation}
+          <div className="card">
+            <div className="card-body d-flex flex-column align-items-center justify-content-center text-center py-5">
+              <Clock className="mb-3 opacity-50" size={40} />
+              <p className="fw-semibold mb-1">
+                {search
+                  ? t.sessions.noMatch
+                  : selectedSources !== null || sessionCategory !== "chats"
+                    ? t.sessions.noSessionsInFilter
+                    : t.sessions.noSessions}
               </p>
-            )}
+              {!search && sessionCategory === "chats" && selectedSources === null && (
+                <p className="small text-body-secondary mb-0">
+                  {t.sessions.startConversation}
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           <>
