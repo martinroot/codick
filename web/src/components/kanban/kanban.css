@@ -44,6 +44,10 @@
   --kb-card-shadow-hover:
     0 0 1px 1px rgba(9, 30, 66, 0.25), 0 2px 5px rgba(9, 30, 66, 0.15);
   --kb-focus: #0052cc;
+  /* Trello's own warning and danger inks, so a late card looks like a late
+     card here and not like a CoDick opinion about urgency. */
+  --kb-stale-amber: #ffab00;
+  --kb-stale-red: #d0021b;
 
   position: relative;
   width: 100%;
@@ -68,6 +72,12 @@
   --kb-card-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
   --kb-card-shadow-hover: 0 0 2px 1px rgba(255, 255, 255, 0.16);
   --kb-focus: #579dff;
+  /* Trello's amber and red do not survive a dark board at full strength --
+     #ffab00 on #0e3257 reads as a glow rather than a warning. Stepped up in
+     lightness, stepped down in chroma, so the *order* amber-before-red still
+     holds. */
+  --kb-stale-amber: #ffc044;
+  --kb-stale-red: #ff6b6b;
 }
 
 /* ------------------------------------------------------------------ */
@@ -420,6 +430,62 @@
   font-size: 0.6875rem;
   color: var(--kb-muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* --- Staleness (#6) -----------------------------------------------------
+   Amber then red as a card sits without activity, measured against the
+   server's own claim TTL. The tint is a cue, not a diagnosis: the
+   authoritative "this is stuck" signal is the server's diagnostic chip, and
+   this only has to make the eye land there first.
+   The left edge is a bar rather than a full card wash, so a stale card still
+   reads as a card -- a coloured background turns a whole column into a
+   colour field and the next card over no longer looks healthy. */
+
+.kb-card-stale-amber {
+  box-shadow:
+    inset 3px 0 0 0 var(--kb-stale-amber),
+    var(--kb-card-shadow);
+}
+
+.kb-card-stale-red {
+  box-shadow:
+    inset 3px 0 0 0 var(--kb-stale-red),
+    var(--kb-card-shadow);
+}
+
+.kb-age-amber {
+  color: var(--kb-stale-amber);
+  font-weight: 600;
+}
+
+.kb-age-red {
+  color: var(--kb-stale-red);
+  font-weight: 600;
+}
+
+/* The claim chips are state, not alarm, so they stay muted. A card that is
+   merely claimed must not compete with one that is actually late. */
+.kb-chip-claimed {
+  color: var(--kb-muted);
+}
+
+.kb-chip-needs-assignee {
+  color: var(--kb-stale-amber);
+}
+
+.kb-chip-failures {
+  color: var(--kb-stale-red);
+}
+
+.kb-chip-warning {
+  color: var(--kb-stale-amber);
+}
+
+.kb-card-ident {
+  font-size: 0.625rem;
+  color: var(--kb-muted);
+  opacity: 0.65;
+  margin-top: -0.25rem;
 }
 
 /* Trello shows a member avatar rather than a name -- the board is scanned,

@@ -122,6 +122,61 @@ function duration(seconds: number): string {
 }
 
 
+/**
+ * How long a card has been sitting on nothing, in seconds.
+ *
+ * The reference point depends on what the column is *waiting for*. A running
+ * card is waiting for a heartbeat, so its clock is the last one; a queued card
+ * is waiting to be picked up, so its clock is when it was created. Using the
+ * wrong one makes a healthy new task look ancient and a wedged worker look
+ * fresh — which is the exact inversion the tint is supposed to prevent.
+ *
+ * Terminal and explicitly-held columns return null. A done card is not late
+ * and a blocked card has already said it is stuck; colouring them would train
+ * the eye to ignore the tint where it matters.
+ */
+function idleSeconds(task: KanbanTask, now: number | null): number | null {
+  if (now === null) return null;
+  switch (task.status) {
+    case "running":
+    case "review":
+      return task.last_heartbeat_at !== null ? now - task.last_heartbeat_at : null;
+    case "triage":
+    case "todo":
+    case "ready":
+      return task.created_at ? now - task.created_at : null;
+    default:
+      return null;
+  }
+}
+
+/**
+ * The two tint tiers, with the amber threshold taken from the server's own
+ * claim TTL rather than invented here.
+ *
+ * `DEFAULT_CLAIM_TTL_SECONDS` is 15 minutes in `hermes_cli/kanban_db.py`, and
+ * `DEFAULT_CLAIM_HEARTBEAT_MAX_STALE_SECONDS` is 60. Using those numbers
+ * means the board's idea of "late" tracks the dispatcher's own idea, instead
+ * of being a second threshold that drifts from it.
+ *
+ * This is a *visual* cue, not a diagnosis. The authoritative judgement is the
+ * server's diagnostic chip, which knows about reclaim grace periods and
+ * whether a live PID is still working. Re-deciding "stuck" here would be a
+ * second implementation of a rule the backend already owns.
+ */
+const STALE_AMBER_SECONDS = 15 * 60;
+const STALE_RED_SECONDS = 60 * 60;
+
+type StaleTier = "amber" | "red" | null;
+
+function staleness(task: KanbanTask, now: number | null): StaleTier {
+  const idle = idleSeconds(task, now);
+  if (idle === null || idle < 0) return null;
+  if (idle >= STALE_RED_SECONDS) return "red";
+  if (idle >= STALE_AMBER_SECONDS) return "amber";
+  return null;
+}
+
 /* ------------------------------------------------------------------ */
 /* Card                                                                */
 /* ------------------------------------------------------------------ */
@@ -129,12 +184,19 @@ function duration(seconds: number): string {
 export interface KanbanCardProps {
   task: KanbanTask;
   dragging: boolean;
+  /**
+   * The board payload's `now`, in the server's clock. Staleness is measured
+   * against it rather than the browser's, so a card whose age the server
+   * reports and the tint the server implies agree even if the two clocks
+   * differ.
+   */
+  now: number | null;
   onDragStart: (event: React.DragEvent<HTMLElement>, task: KanbanTask) => void;
   onDragEnd: () => void;
   onOpen?: (task: KanbanTask) => void;
 }
 
-function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: KanbanCardProps) {
+function KanbanCardImpl({ task, dragging, now, onDragStart, onDragEnd, onOpen }: KanbanCardProps) {
   // `skills` is the only list of strings the card carries, and it is what the
   // prototype's invented `labels` was standing in for.
   const labels = task.skills ?? [];
@@ -153,16 +215,27 @@ function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: Kanb
     task.last_failure_error ??
     null;
 
+  const tier = staleness(task, now);
+  const idle = idleSeconds(task, now);
+  // A claimed card is working; an unclaimed running card is a gap between
+  // "dispatched" and "someone picked it up", which is the state a board
+  // usually hides because it looks the same as busy.
+  const claimed = Boolean(task.claim_lock);
+
   return (
     <article
-      className={cn("kb-card", dragging && "kb-card-dragging")}
+      className={cn(
+        "kb-card",
+        dragging && "kb-card-dragging",
+        tier && `kb-card-stale-${tier}`,
+      )}
       draggable
       onDragEnd={onDragEnd}
       onDragStart={(event) => onDragStart(event, task)}
       onClick={() => onOpen?.(task)}
       tabIndex={0}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === "                                ") {
+        if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onOpen?.(task);
         }
@@ -190,6 +263,12 @@ function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: Kanb
       ) : null}
 
       <h3 className="kb-card-title">{task.title}</h3>
+
+      <div className="kb-card-ident">
+        {/* The short id, so a card can be named in a terminal or a bug report
+            without going to the detail drawer for it first. */}
+        <code title={task.id}>{task.id.replace(/^t_/, "")}</code>
+      </div>
 
       {task.latest_summary ? (
         <p className="kb-card-summary">{task.latest_summary}</p>
@@ -228,13 +307,88 @@ function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: Kanb
 
         {task.priority ? <span className="kb-chip kb-chip-priority">P{task.priority}</span> : null}
 
+        {/*
+          The claims a card cannot make on its own surface. Each is a field
+          the server already sends and the board was dropping, so an operator
+          reading the board was deciding on less than the backend knew.
+        */}
+        {task.tenant ? (
+          <span className="kb-chip" title={`Tenant: ${task.tenant}`}>
+            <span aria-hidden>⌂</span>
+            {task.tenant}
+          </span>
+        ) : null}
+
+        {task.link_counts.parents ? (
+          <span
+            className="kb-chip"
+            title={`Blocked by ${task.link_counts.parents} parent task(s)`}
+          >
+            <span aria-hidden>⇠</span>
+            {task.link_counts.parents}
+          </span>
+        ) : null}
+
+        {/*
+          Unassigned is a state, not an absence. On a board full of cards a
+          blank corner reads as "nothing to see", while a real marker is what
+          makes an unstaffed queue visible at a glance.
+        */}
+        {!task.assignee && task.status !== "done" ? (
+          <span className="kb-chip kb-chip-needs-assignee" title="Needs an assignee">
+            <span aria-hidden>☞</span>
+            Unassigned
+          </span>
+        ) : null}
+
+        {claimed ? (
+          <span
+            className={cn("kb-chip", !tier && "kb-chip-claimed")}
+            title={
+              task.claim_expires
+                ? `Claim held until ${new Date(task.claim_expires * 1000).toLocaleTimeString()}`
+                : "Claim held"
+            }
+          >
+            <span aria-hidden>⚿</span>
+            claimed
+          </span>
+        ) : null}
+
+        {task.worker_pid ? (
+          <span className="kb-chip" title={`Worker process ${task.worker_pid}`}>
+            <span aria-hidden>⏻</span>
+            {task.worker_pid}
+          </span>
+        ) : null}
+
+        {task.consecutive_failures > 0 ? (
+          <span
+            className="kb-chip kb-chip-failures"
+            title={
+              task.last_failure_error
+                ? `${task.consecutive_failures} failure(s): ${task.last_failure_error}`
+                : `${task.consecutive_failures} consecutive failure(s)`
+            }
+          >
+            <span aria-hidden>↻</span>
+            {task.consecutive_failures}
+          </span>
+        ) : null}
+
         {task.diagnostics?.length ? (
           <span
             className={cn(
               "kb-chip",
               task.diagnostics.some((d) => d.severity !== "warning") && "kb-chip-overdue",
+              // A warning and a real diagnosis look identical if they are
+              // only distinguished by a count, and the count is the smaller
+              // number when things are worse.
+              task.diagnostics.every((d) => d.severity === "warning") && "kb-chip-warning",
             )}
-            title={task.diagnostics.map((d) => d.title).join("; ")}
+            title={task.diagnostics
+              .map((d) => `${d.severity}: ${d.title}`)
+              .join("; ")}
           >
             <span aria-hidden>⚠</span>
             {task.diagnostics.length}
@@ -243,7 +397,24 @@ function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: Kanb
 
         <span className="kb-card-spacer" />
 
-        {age !== null ? <span className="kb-age">{duration(age)}</span> : null}
+        {/*
+          Prefer the idle clock. On a running card the creation age is noise --
+          a nine-hour task with a heartbeat a second ago is not nine hours
+          late -- and showing both would put two different numbers next to
+          each other with no way to tell which one the colour follows.
+        */}
+        {(idle ?? age) !== null ? (
+          <span
+            className={cn("kb-age", tier && `kb-age-${tier}`)}
+            title={
+              tier
+                ? `No activity for ${duration(idle ?? 0)}`
+                : `Created ${age !== null ? duration(age) : "just now"} ago`
+            }
+          >
+            {duration(idle ?? age ?? 0)}
+          </span>
+        ) : null}
 
         {task.assignee ? (
           <span className="kb-avatar" title={task.assignee}>
@@ -267,6 +438,7 @@ export const KanbanCard = React.memo(KanbanCardImpl);
 
 export interface KanbanColumnProps {
   column: KanbanColumn;
+  now: number | null;
   draggingId: string | null;
   dropTarget: KanbanStatus | null;
   onDragStart: (event: React.DragEvent<HTMLElement>, task: KanbanTask) => void;
@@ -284,6 +456,7 @@ export interface KanbanColumnProps {
 
 function KanbanColumnView({
   column,
+  now,
   draggingId,
   dropTarget,
   onDragStart,
@@ -375,6 +548,7 @@ function KanbanColumnView({
             <KanbanCard
               dragging={draggingId === task.id}
               key={task.id}
+              now={now}
               onDragEnd={onDragEnd}
               onDragStart={onDragStart}
               onOpen={onOpenTask}
@@ -444,6 +618,8 @@ function KanbanColumnView({
 
 export interface KanbanBoardProps {
   columns: KanbanColumn[];
+  /** The payload's server clock, threaded to each card for the staleness tint. */
+  now?: number | null;
   onMove?: (taskId: string, to: KanbanStatus) => void;
   onOpenTask?: (task: KanbanTask) => void;
   /**
@@ -454,7 +630,7 @@ export interface KanbanBoardProps {
   onCreateCard?: (status: KanbanStatus, title: string) => Promise<KanbanTaskCard>;
 }
 
-export function KanbanBoard({ columns, onMove, onOpenTask, onCreateCard }: KanbanBoardProps) {
+export function KanbanBoard({ columns, now = null, onMove, onOpenTask, onCreateCard }: KanbanBoardProps) {
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [dropTarget, setDropTarget] = React.useState<KanbanStatus | null>(null);
   const handleDragStart = React.useCallback((event: React.DragEvent<HTMLElement>, task: KanbanTask) => {
@@ -504,6 +680,7 @@ export function KanbanBoard({ columns, onMove, onOpenTask, onCreateCard }: Kanba
             onDragEnd={handleDragEnd}
             onDragStart={handleDragStart}
             onDragOverColumn={handleDragOverColumn}
+            now={now}
             onDropColumn={handleDropColumn}
             onOpenTask={onOpenTask}
             onCreateCard={onCreateCard}

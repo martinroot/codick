@@ -57,6 +57,13 @@ export default function KanbanMainPage() {
   const [board, setBoard] = React.useState<string>(requestedBoard ?? "");
   const [boards, setBoards] = React.useState<KanbanBoardSummary[]>([]);
   const [columns, setColumns] = React.useState<KanbanColumn[]>([]);
+  /**
+   * The server's clock, as of the last board read. Cards measure staleness
+   * against this rather than the browser's clock: the ages the server reports
+   * and the tint the board draws then agree, and a laptop with a wrong time
+   * does not make every card look wedged.
+   */
+  const [serverNow, setServerNow] = React.useState<number | null>(null);
   const [load, setLoad] = React.useState<LoadState>({ phase: "loading" });
   const [notice, setNotice] = React.useState<{ tone: string; text: string } | null>(null);
 
@@ -74,6 +81,8 @@ export default function KanbanMainPage() {
         const payload = await kanbanApi.getBoard(options);
         if (cancelled) return;
         setColumns(payload.columns);
+      setServerNow(payload.now ?? null);
+        setServerNow(payload.now ?? null);
         setLoad({ phase: "ready" });
       } catch (err) {
         if (cancelled) return;
@@ -124,6 +133,8 @@ export default function KanbanMainPage() {
       .getBoard(options)
       .then((payload) => {
         setColumns(payload.columns);
+      setServerNow(payload.now ?? null);
+        setServerNow(payload.now ?? null);
         setEventCursor(payload.latest_event_id);
         setLoad({ phase: "ready" });
       })
@@ -146,6 +157,8 @@ export default function KanbanMainPage() {
       .getBoard(options)
       .then((payload) => {
         setColumns(payload.columns);
+      setServerNow(payload.now ?? null);
+        setServerNow(payload.now ?? null);
         setEventCursor(payload.latest_event_id);
       })
       .catch(() => {});
@@ -209,6 +222,9 @@ export default function KanbanMainPage() {
           // forces a reload.
           const payload = await kanbanApi.getBoard(options);
           setColumns(payload.columns);
+      setServerNow(payload.now ?? null);
+          setServerNow(payload.now ?? null);
+        setServerNow(payload.now ?? null);
           setNotice({ tone: "info", text: `Moved to ${COLUMN_TITLES[to]}` });
         })
         .catch((err: unknown) => {
@@ -241,6 +257,7 @@ export default function KanbanMainPage() {
       const { id } = await kanbanApi.createCardInStatus(status, title, options);
       const payload = await kanbanApi.getBoard(options);
       setColumns(payload.columns);
+      setServerNow(payload.now ?? null);
       const placed = payload.columns
         .flatMap((column) => column.tasks)
         .find((candidate) => candidate.id === id);
@@ -334,6 +351,7 @@ export default function KanbanMainPage() {
 
       <KanbanBoard
         columns={columns}
+        now={serverNow}
         onCreateCard={handleCreateCard}
         onMove={handleMove}
         onOpenTask={handleOpenTask}
