@@ -1,4 +1,14 @@
 @import 'tailwindcss';
+/* ------------------------------------------------------------------ */
+/* Bootstrap 5 — the dashboard's styling base.                        */
+/* Imported BEFORE the theme layer below so the `--bs-*` overrides in  */
+/* `ui/bootstrap-theme.css` win on equal specificity. Bootstrap's      */
+/* reboot does not reset the app's theme CSS variables, and the       */
+/* dashboard sets `color-scheme: dark` there, so both stylesheets     */
+/* coexist while pages migrate off Tailwind.                          */
+/* ------------------------------------------------------------------ */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import './ui/bootstrap-theme.css';
 /* `fonts.css` must come BEFORE `globals.css`: as of @nous-research/ui 0.14.x,
    `globals.css` only declares the `--font-*` CSS variables (Collapse, Rules
    Compressed/Expanded, Mondwest). The `@font-face` registrations live in

@@ -1,0 +1,569 @@
+/**
+ * Bootstrap 5 theme for the dashboard.
+ *
+ * Bootstrap is themed entirely through its documented `--bs-*` custom
+ * properties, so there is no second palette to maintain: change a value
+ * here and every `btn`, `card`, `form-control` and `badge` on every page
+ * follows. Import order matters — this file must come AFTER
+ * `bootstrap.min.css` so the overrides win on equal specificity.
+ *
+ * Dark mode is the default: the dashboard is a long-session ops surface,
+ * and Bootstrap 5.3 ships `data-bs-theme="dark"` support so the switch is
+ * a single attribute rather than a stylesheet swap.
+ */
+
+:root,
+[data-bs-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces. `--background-base` is the dashboard canvas, so Bootstrap's
+     body/root colors resolve to the same value the shell already paints
+     — no flash between the app shell and the components inside it. */
+  --bs-body-bg: var(--background-base, #041c1c);
+  --bs-body-color: var(--midground, #ffe6cb);
+  --bs-emphasis-color: var(--midground, #ffe6cb);
+
+  --bs-primary: #2dd4bf;
+  --bs-primary-color: #04211f;
+  --bs-primary-bg-subtle: rgba(45, 212, 191, 0.14);
+  --bs-primary-border-subtle: rgba(45, 212, 191, 0.32);
+
+  --bs-secondary-color: rgba(255, 230, 203, 0.72);
+  --bs-secondary-bg: rgba(255, 230, 203, 0.08);
+  --bs-secondary-border-color: rgba(255, 230, 203, 0.16);
+
+  --bs-success: #4ade80;
+  --bs-success-color: #04211f;
+  --bs-warning: #fbbf24;
+  --bs-warning-color: #04211f;
+  --bs-danger: #fb2c36;
+  --bs-danger-color: #ffffff;
+  --bs-info: #38bdf8;
+  --bs-info-color: #04211f;
+
+  /* Typography — the dashboard's theme tokens, not Bootstrap's defaults,
+     so a theme switch keeps moving the type stack too. */
+  --bs-body-font-family: var(--theme-font-sans, system-ui, sans-serif);
+  --bs-body-font-size: 1rem;
+  --bs-body-line-height: var(--theme-line-height, 1.55);
+
+  --bs-border-color: rgba(255, 230, 203, 0.16);
+  --bs-border-color-translucent: rgba(255, 230, 203, 0.12);
+  --bs-border-width: 1px;
+  --bs-border-radius: var(--theme-radius, 0.5rem);
+  --bs-border-radius-sm: calc(var(--theme-radius, 0.5rem) - 4px);
+  --bs-border-radius-lg: var(--theme-radius, 0.5rem);
+
+  --bs-component-active-bg: var(--bs-primary);
+  --bs-component-active-color: var(--bs-primary-color);
+
+  /* Focus ring — the dashboard's accent, so keyboard focus is visible
+     against both the dark canvas and the teal primary. */
+  --bs-focus-ring-color: rgba(45, 212, 191, 0.35);
+  --bs-focus-ring-width: 0.2rem;
+
+  --bs-link-color: var(--bs-primary);
+  --bs-link-hover-color: #5eead4;
+}
+
+/* ------------------------------------------------------------------ */
+/* Component-level tokens the shim layer reads                         */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --ui-ghost-fg: var(--midground, #ffe6cb);
+  --ui-card-bg: rgba(255, 230, 203, 0.04);
+  --ui-card-border: rgba(255, 230, 203, 0.12);
+  --ui-surface-raised: rgba(255, 230, 203, 0.06);
+  --ui-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ui-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --ui-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --ui-transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Buttons                                                              */
+/* ------------------------------------------------------------------ */
+
+.btn {
+  --bs-btn-padding-y: 0.4rem;
+  --bs-btn-padding-x: 0.85rem;
+  --bs-btn-font-size: 0.9rem;
+  --bs-btn-font-weight: 500;
+  --bs-btn-border-radius: var(--bs-border-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition:
+    background-color var(--ui-transition-fast),
+    border-color var(--ui-transition-fast),
+    color var(--ui-transition-fast),
+    box-shadow var(--ui-transition-fast),
+    transform var(--ui-transition-fast);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Ghost: the dashboard's default quiet action. Borderless, hover reveals
+   a translucent fill — matches what the old design system did with its
+   `ghost` button variant, so toolbars keep their rhythm. */
+.btn-ghost {
+  --bs-btn-color: var(--ui-ghost-fg);
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: var(--ui-ghost-fg);
+  --bs-btn-hover-bg: rgba(255, 230, 203, 0.08);
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-color: var(--ui-ghost-fg);
+  --bs-btn-active-bg: rgba(255, 230, 203, 0.14);
+  --bs-btn-active-border-color: transparent;
+  --bs-btn-disabled-color: rgba(255, 230, 203, 0.4);
+  --bs-btn-disabled-bg: transparent;
+}
+
+.btn-invert {
+  --bs-btn-color: var(--background-base, #041c1c);
+  --bs-btn-bg: var(--ui-ghost-fg);
+  --bs-btn-border-color: var(--ui-ghost-fg);
+  --bs-btn-hover-color: var(--background-base, #041c1c);
+  --bs-btn-hover-bg: #fff;
+  --bs-btn-hover-border-color: #fff;
+  --bs-btn-active-color: var(--background-base, #041c1c);
+  --bs-btn-active-bg: #f2e6d8;
+  --bs-btn-active-border-color: #f2e6d8;
+}
+
+/* `size="icon"` renders a square hit target; the caller supplies the
+   glyph via children. */
+.btn.btn-icon {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+
+.btn-prefix,
+.btn-suffix {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.btn-primary {
+  --bs-btn-color: var(--bs-primary-color);
+  --bs-btn-bg: var(--bs-primary);
+  --bs-btn-border-color: var(--bs-primary);
+  --bs-btn-hover-color: var(--bs-primary-color);
+  --bs-btn-hover-bg: #5eead4;
+  --bs-btn-hover-border-color: #5eead4;
+  --bs-btn-active-color: var(--bs-primary-color);
+  --bs-btn-active-bg: #14b8a6;
+  --bs-btn-active-border-color: #14b8a6;
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--ui-ghost-fg);
+  --bs-btn-border-color: var(--ui-card-border);
+  --bs-btn-hover-color: var(--ui-ghost-fg);
+  --bs-btn-hover-bg: rgba(255, 230, 203, 0.08);
+  --bs-btn-hover-border-color: rgba(255, 230, 203, 0.28);
+  --bs-btn-active-color: var(--ui-ghost-fg);
+  --bs-btn-active-bg: rgba(255, 230, 203, 0.14);
+  --bs-btn-active-border-color: rgba(255, 230, 203, 0.28);
+}
+
+.btn-danger {
+  --bs-btn-color: var(--bs-danger-color);
+  --bs-btn-bg: var(--bs-danger);
+  --bs-btn-border-color: var(--bs-danger);
+  --bs-btn-hover-color: var(--bs-danger-color);
+  --bs-btn-hover-bg: #ff5560;
+  --bs-btn-hover-border-color: #ff5560;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cards                                                                */
+/* ------------------------------------------------------------------ */
+
+.card {
+  --bs-card-bg: var(--ui-card-bg);
+  --bs-card-border-color: var(--ui-card-border);
+  --bs-card-border-radius: var(--bs-border-radius);
+  --bs-card-inner-border-radius: calc(var(--bs-border-radius) - 1px);
+  --bs-card-cap-bg: var(--ui-surface-raised);
+  box-shadow: var(--ui-shadow-sm);
+  transition:
+    border-color var(--ui-transition-fast),
+    box-shadow var(--ui-transition-fast);
+}
+
+.card-header {
+  --bs-card-cap-bg: var(--ui-surface-raised);
+  --bs-card-cap-color: var(--ui-ghost-fg);
+  border-bottom: 1px solid var(--ui-card-border);
+  font-weight: 600;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Badges                                                               */
+/* ------------------------------------------------------------------ */
+
+.badge {
+  --bs-badge-padding-y: 0.3em;
+  --bs-badge-padding-x: 0.55em;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border-radius: 999px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Form controls                                                        */
+/* ------------------------------------------------------------------ */
+
+.form-control,
+.form-select {
+  background-color: rgba(255, 230, 203, 0.05);
+  border: 1px solid var(--ui-card-border);
+  color: var(--ui-ghost-fg);
+  transition:
+    border-color var(--ui-transition-fast),
+    box-shadow var(--ui-transition-fast),
+    background-color var(--ui-transition-fast);
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: rgba(255, 230, 203, 0.07);
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem rgba(45, 212, 191, 0.25);
+  color: var(--ui-ghost-fg);
+}
+
+.form-control::placeholder {
+  color: rgba(255, 230, 203, 0.45);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  background-color: rgba(255, 230, 203, 0.03);
+  opacity: 0.6;
+}
+
+.form-select {
+  /* Bootstrap draws the chevron with a background-image; on a dark
+     canvas the default glyph disappears, so paint it explicitly. */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffe6cb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.form-label {
+  margin-bottom: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ui-ghost-fg);
+}
+
+.form-check-input {
+  background-color: rgba(255, 230, 203, 0.08);
+  border: 1px solid var(--ui-card-border);
+  cursor: pointer;
+  transition:
+    background-color var(--ui-transition-fast),
+    border-color var(--ui-transition-fast);
+}
+
+.form-check-input:checked {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+.form-check-input:focus-visible {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem rgba(45, 212, 191, 0.25);
+}
+
+/* ------------------------------------------------------------------ */
+/* Modal / overlays                                                     */
+/* ------------------------------------------------------------------ */
+
+.modal-backdrop {
+  --bs-backdrop-bg: #000;
+  --bs-backdrop-opacity: 0.7;
+}
+
+.modal-content {
+  --bs-modal-bg: #0a2a29;
+  --bs-modal-border-color: var(--ui-card-border);
+  --bs-modal-border-radius: var(--bs-border-radius);
+  box-shadow: var(--ui-shadow-lg);
+}
+
+.modal-header,
+.modal-footer {
+  --bs-modal-border-color: var(--ui-card-border);
+}
+
+.toast {
+  --bs-toast-bg: #0a2a29;
+  --bs-toast-border-color: var(--ui-card-border);
+  --bs-toast-header-border-color: var(--ui-card-border);
+  box-shadow: var(--ui-shadow-md);
+}
+
+/* Bottom sheet — Bootstrap has no equivalent, so it is defined here in
+   the same token vocabulary. Slide up on mobile, and stay a sheet rather
+   than centering once there is room to read it as a panel. */
+.bottom-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1080;
+}
+
+.bottom-sheet {
+  position: absolute;
+  inset: auto 0 0 0;
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  background: #0a2a29;
+  border-top: 1px solid var(--ui-card-border);
+  border-radius: var(--bs-border-radius) var(--bs-border-radius) 0 0;
+  box-shadow: var(--ui-shadow-lg);
+  animation: bottom-sheet-in 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.bottom-sheet-grabber {
+  width: 2.5rem;
+  height: 0.25rem;
+  margin: 0.6rem auto 0.2rem;
+  border-radius: 999px;
+  background: rgba(255, 230, 203, 0.25);
+}
+
+.bottom-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--ui-card-border);
+}
+
+.bottom-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+@keyframes bottom-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .bottom-sheet {
+    inset: auto auto 0 50%;
+    transform: translateX(-50%);
+    width: min(40rem, 92vw);
+    border-radius: var(--bs-border-radius);
+    animation-name: bottom-sheet-in-desktop;
+  }
+
+  @keyframes bottom-sheet-in-desktop {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Tabs, list groups, stats, misc shim surfaces                        */
+/* ------------------------------------------------------------------ */
+
+.nav-tabs {
+  --bs-nav-tabs-border-color: var(--ui-card-border);
+  --bs-nav-tabs-link-active-bg: var(--ui-card-bg);
+  --bs-nav-tabs-link-active-color: var(--ui-ghost-fg);
+  --bs-nav-tabs-link-active-border-color: var(--ui-card-border);
+  border-bottom: 1px solid var(--ui-card-border);
+}
+
+.nav-link {
+  color: var(--bs-secondary-color);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  transition:
+    color var(--ui-transition-fast),
+    border-color var(--ui-transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--ui-ghost-fg);
+  border-color: rgba(255, 230, 203, 0.2);
+}
+
+.nav-link.active {
+  color: var(--ui-ghost-fg);
+  background: transparent;
+  border-bottom-color: var(--bs-primary);
+}
+
+.list-group {
+  --bs-list-group-bg: var(--ui-card-bg);
+  --bs-list-group-border-color: var(--ui-card-border);
+  --bs-list-group-color: var(--ui-ghost-fg);
+  --bs-list-group-action-hover-bg: rgba(255, 230, 203, 0.06);
+  --bs-list-group-action-hover-color: var(--ui-ghost-fg);
+  --bs-list-group-action-active-bg: var(--bs-primary);
+  --bs-list-group-action-active-color: var(--bs-primary-color);
+}
+
+.list-group-item {
+  background-color: var(--ui-card-bg);
+  border-color: var(--ui-card-border);
+  color: var(--ui-ghost-fg);
+}
+
+.list-group-item.active {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: var(--bs-primary-color);
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.stats-flip {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--bs-secondary-color);
+}
+
+.stat-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-ghost-fg);
+}
+
+.hr {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--ui-card-border);
+  opacity: 1;
+}
+
+.hr.vr {
+  width: 1px;
+  height: auto;
+  align-self: stretch;
+  border-top: 0;
+  border-left: 1px solid var(--ui-card-border);
+}
+
+.filter-group {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.command-block {
+  padding: 0.85rem 1rem;
+  background: var(--ui-card-bg);
+  border: 1px solid var(--ui-card-border);
+  border-radius: var(--bs-border-radius);
+}
+
+.command-block-code {
+  margin: 0;
+  font-family: var(--theme-font-mono, ui-monospace, monospace);
+  font-size: 0.82rem;
+  color: var(--ui-ghost-fg);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.typography {
+  color: inherit;
+}
+
+.typography-expanded {
+  letter-spacing: 0.02em;
+}
+
+.typography-compressed {
+  letter-spacing: -0.01em;
+}
+
+.spinner-border {
+  --bs-spinner-width: 1rem;
+  --bs-spinner-height: 1rem;
+  --bs-spinner-border-width: 0.15em;
+  color: currentColor;
+  vertical-align: -0.125em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion — honour the OS setting rather than animating anyway */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .card,
+  .form-control,
+  .form-select,
+  .form-check-input,
+  .nav-link {
+    transition: none;
+  }
+
+  .bottom-sheet {
+    animation: none;
+  }
+}
