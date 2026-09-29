@@ -26,13 +26,19 @@
 /* ------------------------------------------------------------------ */
 
 /*
- * The design tokens are scoped to the board element -- and the drawer, a
- * *sibling* of the board rather than a descendant, inherited nothing and so
- * rendered with a transparent background, with the board visible through it.
- * Both surfaces declare the tokens.
+ * These tokens are declared on `:root`, not on a component.
+ *
+ * Scoping them to `.kb-board` (and then to `.kb-drawer`, and then having to
+ * add each new surface) is what produced two separate failures: the drawer
+ * inherited nothing and rendered transparent, and the attention strip's
+ * severity borders resolved `var(--kb-amber)` to nothing, which voids the
+ * declaration and leaves `border-left-width: 0`. Both look like styling
+ * mistakes rather than scope mistakes, and both were only caught by looking
+ * at a screenshot.
+ *
+ * A token that only resolves on one component is not a token, it is a trap.
  */
-.kb-board,
-.kb-drawer {
+:root {
   --kb-column-width: 272px;
   --kb-column-gap: 0.5rem;
   --kb-rail-height: min(72vh, 46rem);
@@ -55,6 +61,13 @@
      card here and not like a CoDick opinion about urgency. */
   --kb-stale-amber: #ffab00;
   --kb-stale-red: #d0021b;
+  /* Severity inks for the attention strip. These alias the staleness inks
+     rather than being new colours: a red that is not the same red as a
+     stale card's is how a board grows two ideas of "wrong". */
+  --kb-amber: var(--kb-stale-amber);
+  --kb-red: var(--kb-stale-red);
+  --kb-line: rgba(9, 30, 66, 0.12);
+  --kb-inset: rgba(9, 30, 66, 0.06);
 
   position: relative;
   width: 100%;
@@ -69,8 +82,7 @@
   padding: 1rem;
 }
 
-[data-bs-theme="dark"] .kb-board,
-[data-bs-theme="dark"] .kb-drawer {
+[data-bs-theme="dark"] {
   --kb-ink: #d5e2f3;
   --kb-muted: #9fadbd;
   --kb-list-bg: rgba(255, 255, 255, 0.1);
@@ -86,6 +98,10 @@
      holds. */
   --kb-stale-amber: #ffc044;
   --kb-stale-red: #ff6b6b;
+  --kb-amber: var(--kb-stale-amber);
+  --kb-red: var(--kb-stale-red);
+  --kb-line: rgba(255, 255, 255, 0.16);
+  --kb-inset: rgba(255, 255, 255, 0.1);
 }
 
 /* ------------------------------------------------------------------ */
@@ -854,6 +870,165 @@
 .kb-recovery-assign .form-select {
   width: auto;
   min-width: 11rem;
+}
+
+/* --- Attention strip (#10) ------------------------------------------- */
+
+.kb-strip {
+  margin: 0 0 0.6rem;
+  border: 1px solid var(--kb-line);
+  border-left: 3px solid var(--kb-amber);
+  border-radius: 0.5rem;
+  background: var(--kb-card-bg);
+  box-shadow: var(--kb-card-shadow);
+}
+
+.kb-strip-error {
+  border-left-color: var(--kb-red);
+  padding: 0.5rem 0.6rem;
+  color: var(--kb-red);
+  font-size: 0.8125rem;
+}
+
+.kb-strip-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--kb-line);
+  font-size: 0.8125rem;
+}
+
+.kb-strip-count {
+  color: var(--kb-ink);
+}
+
+.kb-strip-filters {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.kb-strip-filters .btn-link {
+  color: var(--kb-muted);
+  text-decoration: none;
+  padding: 0 0.35rem;
+}
+
+.kb-strip-filters .btn-secondary {
+  color: #fff;
+}
+
+.kb-strip-tools {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.kb-strip-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.kb-diag {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--kb-line);
+}
+
+.kb-diag:last-child {
+  border-bottom: none;
+}
+
+.kb-diag-critical {
+  border-left: 3px solid var(--kb-red);
+}
+
+.kb-diag-error {
+  border-left: 3px solid var(--kb-red);
+  background: color-mix(in srgb, var(--kb-red) 5%, transparent);
+}
+
+.kb-diag-warning {
+  border-left: 3px solid var(--kb-amber);
+}
+
+.kb-diag-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.kb-diag-sev {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--kb-muted);
+}
+
+.kb-diag-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--kb-ink);
+}
+
+.kb-diag-open {
+  padding: 0;
+  font-size: 0.8125rem;
+  vertical-align: baseline;
+}
+
+.kb-diag-detail {
+  margin: 0.2rem 0 0.4rem;
+  font-size: 0.8125rem;
+  color: var(--kb-muted);
+}
+
+.kb-diag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.kb-diag-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.kb-diag-suggested {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--kb-focus);
+}
+
+.kb-diag-assign {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.kb-diag-assign .form-select {
+  width: auto;
+  min-width: 9rem;
+}
+
+.kb-diag-cli {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+}
+
+.kb-diag-cli code {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  background: var(--kb-inset);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .kb-drawer-status {

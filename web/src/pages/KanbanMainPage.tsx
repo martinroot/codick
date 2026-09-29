@@ -29,6 +29,7 @@
 import * as React from "react";
 import { useSearchParams } from "react-router";
 
+import { AttentionStrip } from "@/components/kanban/AttentionStrip";
 import {
   BulkActionBar,
   type BulkAction,
@@ -287,6 +288,11 @@ export default function KanbanMainPage() {
   // the row would only risk showing board data in a pane that is meant to be
   // the detail.
   const [openTaskId, setOpenTaskId] = React.useState<string | null>(null);
+  /** Set by a diagnostic's `comment` action to open the drawer on Comments. */
+  const [commentFocus, setCommentFocus] = React.useState<{
+    taskId: string;
+    at: number;
+  } | null>(null);
   // ------------------------------------------------------------- selection
 
   const selection = useCardSelection();
@@ -456,6 +462,7 @@ export default function KanbanMainPage() {
       ) : null}
 
       <TaskDrawer
+        commentFocus={commentFocus}
         onClose={() => setOpenTaskId(null)}
         options={options}
         taskId={openTaskId}
@@ -466,6 +473,23 @@ export default function KanbanMainPage() {
         pushing the columns down -- a selection bar that reflows the board
         makes the cards you are about to act on move under the cursor.
       */}
+      <AttentionStrip
+        onBoardChanged={() => kanbanApi.getBoard(options).then((payload) => {
+          setColumns(payload.columns);
+          setServerNow(payload.now ?? null);
+        })}
+        onError={(message) => setNotice({ tone: "error", text: message })}
+        onFocusComment={(taskId) => {
+          setOpenTaskId(taskId);
+          // A comment action wants the composer, not the detail. The drawer
+          // owns its tab, so the intent is handed over as a signal rather
+          // than by reaching into it.
+          setCommentFocus({ taskId, at: Date.now() });
+        }}
+        onOpenTask={setOpenTaskId}
+        options={options}
+      />
+
       <BulkActionBar
         busy={bulkBusy}
         count={selection.selected.size}

@@ -1,10 +1,12 @@
 import * as React from "react";
 
 import { Markdown } from "@/components/Markdown";
+import { DiagnosticCard } from "@/components/kanban/DiagnosticCard";
 import { RecoveryPanel } from "@/components/kanban/RecoveryPanel";
 import { ACCENTS } from "@/components/kanban/KanbanBoard";
 import {
   kanbanApi,
+  type KanbanDiagnostic,
   type KanbanRequestOptions,
   type KanbanStatus,
   type KanbanTaskCard,
@@ -36,6 +38,12 @@ export interface TaskDrawerProps {
   seed?: KanbanTaskCard | null;
   /** Notified after every successful read, so the board can follow along. */
   onChanged?: () => void;
+  /**
+   * A `comment` diagnostic action wants the Comments tab, not Detail. The
+   * drawer owns its tab, so the caller hands over the intent and the `at`
+   * timestamp is what makes a repeat request for the same task register.
+   */
+  commentFocus?: { taskId: string; at: number } | null;
 }
 
 type Tab = "detail" | "comments" | "events" | "runs" | "files" | "log";
@@ -66,6 +74,7 @@ export function TaskDrawer({
   onClose,
   seed,
   onChanged,
+  commentFocus,
 }: TaskDrawerProps) {
   const [detail, setDetail] = React.useState<KanbanTaskDetail | null>(null);
   const [load, setLoad] = React.useState<{ phase: string; message?: string }>({
@@ -80,6 +89,13 @@ export function TaskDrawer({
    * the card again rather than retry.
    */
   const [actionError, setActionError] = React.useState<string | null>(null);
+
+  // Honour the comment signal, but only for the task it names — a stale
+  // signal must not yank the drawer to another card's tab.
+  React.useEffect(() => {
+    if (!commentFocus || commentFocus.taskId !== taskId) return;
+    setTab("comments");
+  }, [commentFocus, taskId]);
 
   /**
    * Re-read after a mutation. Deliberately does not flip the drawer into its
@@ -251,6 +267,8 @@ export function TaskDrawer({
           {tab === "detail" && task ? (
             <DetailTab
               detail={detail}
+              diagnostics={detail?.task.diagnostics ?? []}
+              setTab={setTab}
               onChanged={reloadDetail}
               onError={(message) => setActionError(message)}
               options={options}
@@ -332,18 +350,49 @@ export function TaskDrawer({
   );
 }
 
+type LinkSide = "parents" | "children";
+
+function linkRows(
+  detail: KanbanTaskDetail,
+  side: LinkSide,
+  caption: string,
+) {
+  const ids = detail.links?.[side] ?? [];
+  if (!ids.length) return null;
+  const titled = detail.link_tasks?.[side];
+  return (
+    <>
+      <p className="kb-drawer-muted">{caption}</p>
+      <ul className="kb-drawer-list">
+        {ids.map((id) => {
+          const row = titled?.find((t) => t.id === id);
+          return (
+            <li key={id}>
+              <code>{id.replace(/^t_/, "")}</code> {row?.title ?? "(unavailable)"}
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
 function DetailTab({
   detail,
   task,
   options,
   onChanged,
   onError,
+  diagnostics,
+  setTab,
 }: {
   detail: KanbanTaskDetail | null;
   task: KanbanTaskCard;
   options: KanbanRequestOptions;
   onChanged: () => void | Promise<void>;
   onError: (message: string) => void;
+  diagnostics: KanbanDiagnostic[];
+  setTab: (tab: Tab) => void;
 }) {
   return (
     <div className="kb-drawer-section">
@@ -357,6 +406,19 @@ function DetailTab({
           task={detail}
         />
       ) : null}
+
+      {/* The backend's own diagnosis of this card, above our own controls:
+          when both disagree, the server is the one with the events. */}
+      {diagnostics.map((d, i) => (
+        <DiagnosticCard
+          diagnostic={{ ...d, task_id: task.id, task_title: task.title }}
+          key={`${d.kind}-${i}`}
+          onChanged={onChanged}
+          onError={onError}
+          onFocusComment={() => setTab("comments")}
+          options={options}
+        />
+      ))}
       {task.body ? (
         <section className="kb-drawer-block">
           <h3 className="kb-drawer-h3">Description</h3>
@@ -398,30 +460,15 @@ function DetailTab({
       {detail && (detail.links.parents.length || detail.links.children.length) ? (
         <section className="kb-drawer-block">
           <h3 className="kb-drawer-h3">Dependencies</h3>
-          {detail.links.parents.length ? (
-            <>
-              <p className="kb-drawer-muted">Blocked by</p>
-              <ul className="kb-drawer-list">
-                {detail.link_tasks.parents.map((t) => (
-                  <li key={t.id}>
-                    <code>{t.id.replace(/^t_/, "")}</code> {t.title}
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : null}
-          {detail.links.children.length ? (
-            <>
-              <p className="kb-drawer-muted">Blocks</p>
-              <ul className="kb-drawer-list">
-                {detail.link_tasks.children.map((t) => (
-                  <li key={t.id}>
-                    <code>{t.id.replace(/^t_/, "")}</code> {t.title}
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : null}
+          {/*
+            `link_tasks` is the title-carrying form of `links`; `links` is the
+            authority on what exists. Reading `.parents` off an absent
+            `link_tasks` crashed the drawer — and the whole page with it — on
+            any task that had a parent, so the fallback is deliberate: an id is
+            worse than a title, but it is not a blank screen.
+          */}
+          {linkRows(detail, "parents", "Blocked by")}
+          {linkRows(detail, "children", "Blocks")}
         </section>
       ) : null}
 

@@ -266,16 +266,24 @@ def _links_for(conn: sqlite3.Connection, task_id: str) -> dict[str, list[str]]:
     return {"parents": _ids("parent_id", "child_id"), "children": _ids("child_id", "parent_id")}
 
 
-def _link_tasks(conn: sqlite3.Connection, links: dict[str, list[str]]) -> list[dict]:
-    """One {id, title, status} row per linked task, so UIs can render titles
+def _link_tasks(conn: sqlite3.Connection, links: dict[str, list[str]]) -> dict[str, list[dict]]:
+    """``{parents, children}`` of ``{id, title, status}``, so UIs can render titles
     instead of raw ids. Dropped/foreign rows are simply absent — callers fall
-    back to the id."""
-    rows = []
-    for task_id in dict.fromkeys([*links["parents"], *links["children"]]):
-        task = kanban_db.get_task(conn, task_id)
-        if task:
-            rows.append({"id": task.id, "title": task.title, "status": task.status})
-    return rows
+    back to the id.
+
+    Keyed by direction on purpose. A flat list of both sides cannot be split
+    back apart: ``links`` gives ids but no titles, and a UI showing "Blocks"
+    and "Blocked by" needs to know which is which. Returning one merged list
+    forced the client to guess, and it guessed by indexing ``.parents`` on a
+    list — which crashed the drawer on any task that had a parent at all.
+    """
+    out: dict[str, list[dict]] = {"parents": [], "children": []}
+    for side in ("parents", "children"):
+        for task_id in links[side]:
+            task = kanban_db.get_task(conn, task_id)
+            if task:
+                out[side].append({"id": task.id, "title": task.title, "status": task.status})
+    return out
 
 
 # --- GET /board -------------------------------------------------------------

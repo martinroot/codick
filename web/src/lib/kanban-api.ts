@@ -194,6 +194,21 @@ export interface KanbanDiagnostic {
   count: number;
   run_id: number | null;
   data: Record<string, unknown>;
+
+  /**
+   * Which task this is about.
+   *
+   * The server nests diagnostics under their task
+   * (`KanbanBoardDiagnosticEntry.diagnostics`), because that is the honest
+   * grouping. The attention strip renders one card per *diagnostic*, so it
+   * flattens that nesting and stamps these three on as it goes — the inner
+   * object alone cannot act on anything, because an action needs a task id.
+   * Always client-stamped; never present in a server response.
+   */
+  task_id?: string;
+  task_title?: string;
+  task_status?: KanbanStatus;
+  task_assignee?: string | null;
 }
 
 export interface KanbanWarnings {
