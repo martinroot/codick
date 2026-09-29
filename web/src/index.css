@@ -1,14 +1,19 @@
-@import 'tailwindcss';
 /* ------------------------------------------------------------------ */
 /* Bootstrap 5 — the dashboard's styling base.                        */
-/* Imported BEFORE the theme layer below so the `--bs-*` overrides in  */
-/* `ui/bootstrap-theme.css` win on equal specificity. Bootstrap's      */
-/* reboot does not reset the app's theme CSS variables, and the       */
-/* dashboard sets `color-scheme: dark` there, so both stylesheets     */
-/* coexist while pages migrate off Tailwind.                          */
+/*                                                                    */
+/* Both imports MUST stay inside a cascade layer. Tailwind v4 emits its */
+/* utilities into `@layer utilities`, and unlayered CSS outranks every  */
+/* cascade layer — so a bare `@import 'bootstrap.min.css'` silently     */
+/* beat `text-sm`, `p-3` and every other utility in the app. That is   */
+/* why an `h1` marked `text-sm` still rendered as a 2.5rem Bootstrap   */
+/* heading. Declaring the layers first puts Bootstrap underneath        */
+/* Tailwind (utilities win on equal specificity) while `bootstrap-     */
+/* theme` still overrides Bootstrap itself.                            */
 /* ------------------------------------------------------------------ */
-@import 'bootstrap/dist/css/bootstrap.min.css';
-@import './ui/bootstrap-theme.css';
+@layer bootstrap-base, bootstrap-theme;
+@import 'bootstrap/dist/css/bootstrap.min.css' layer(bootstrap-base);
+@import './ui/bootstrap-theme.css' layer(bootstrap-theme);
+@import 'tailwindcss';
 /* `fonts.css` must come BEFORE `globals.css`: as of @nous-research/ui 0.14.x,
    `globals.css` only declares the `--font-*` CSS variables (Collapse, Rules
    Compressed/Expanded, Mondwest). The `@font-face` registrations live in

@@ -566,6 +566,51 @@
   max-width: 20rem;
 }
 
+/* ------------------------------------------------------------------ */
+/* Token bridge                                                        */
+/*                                                                     */
+/* These are legacy design-system colour and type tokens, not Tailwind */
+/* utilities — Bootstrap has no equivalent, and they appear hundreds of */
+/* times across the pages still to be migrated. Defining them here      */
+/* gives every one of those call sites a home BEFORE Tailwind is        */
+/* removed, so deleting the Tailwind import is a styling change rather  */
+/* than a breakage. Remove each block once its last call site is gone.   */
+/*                                                                     */
+/* Every colour is a percentage of the cream foreground over the dark  */
+/* canvas, matching the ramp the design system used, so the bridge      */
+/* reproduces the old tones rather than inventing new ones.             */
+/* ------------------------------------------------------------------ */
+
+.text-muted-foreground { color: color-mix(in srgb, var(--midground) 55%, transparent); }
+.text-text-secondary { color: color-mix(in srgb, var(--midground) 75%, transparent); }
+.text-text-tertiary { color: color-mix(in srgb, var(--midground) 55%, transparent); }
+.text-foreground { color: var(--midground); }
+
+/* Legacy display faces have no Bootstrap role. Map them onto the theme
+   stacks so nothing falls back to a missing font family. */
+.font-mondwest,
+.font-expanded {
+  font-family: var(--theme-font-display, var(--theme-font-sans));
+}
+.font-collapsed {
+  font-family: var(--theme-font-sans);
+}
+
+/* Utility equivalents Bootstrap expresses differently, kept under the
+   Tailwind names the migrated code still uses. */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shrink-0 { flex-shrink: 0; }
+.grow { flex-grow: 1; }
+.overflow-x-auto { overflow-x: auto; }
+.overflow-y-auto { overflow-y: auto; }
+.rounded { border-radius: 0.375rem; }
+.pointer-events-none { pointer-events: none; }
+
 /* Files table — one CSS grid shared by the header, the `..` row and
    every entry, so columns stay aligned as content changes. */
 .files-row {
