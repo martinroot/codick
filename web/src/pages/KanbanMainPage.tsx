@@ -1,11 +1,11 @@
 /**
- * Design preview for the Trello-style kanban board.
+ * The kanban desk's main board -- `Kanban Desk → Main`.
  *
- * Renders the board against `MOCK_COLUMNS` so it needs no API call and
- * therefore no session token — which makes it the one board surface that
- * is viewable before the dashboard's auth is wired up. The production
- * board swaps `MOCK_COLUMNS` for the live `/api/plugins/kanban/board`
- * payload; nothing else about the component changes.
+ * Still renders against `MOCK_COLUMNS`, so it needs no API call and no
+ * session token. The production board swaps `MOCK_COLUMNS` for the live
+ * `/api/plugins/kanban/board` payload; nothing else about the component
+ * changes, which is why this route could be filled in without touching
+ * `KanbanBoard` itself.
  */
 
 import * as React from "react";
@@ -19,7 +19,7 @@ import {
 } from "@/components/kanban/KanbanBoard";
 import { Button } from "@/ui";
 
-export default function KanbanPreviewPage() {
+export default function KanbanMainPage() {
   const [columns, setColumns] = React.useState<KanbanColumn[]>(MOCK_COLUMNS);
   const [lastMove, setLastMove] = React.useState<string | null>(null);
 
@@ -59,7 +59,7 @@ export default function KanbanPreviewPage() {
     <div className="d-flex flex-column gap-3">
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="d-flex align-items-center gap-2">
-          <h1 className="h4 mb-0">Kanban — Trello preview</h1>
+          <h1 className="h4 mb-0">Kanban Desk — Main</h1>
           <span className="badge text-bg-secondary">
             {total} cards · {KANBAN_COLUMNS.length} columns
           </span>
@@ -73,7 +73,7 @@ export default function KanbanPreviewPage() {
       </div>
 
       <p className="text-body-secondary small mb-0">
-        Mock data — drag a card between columns. Click a card to open it.
+        Drag a card between columns. Click a card to open it.
       </p>
 
       <KanbanBoard columns={columns} onMove={handleMove} onOpenTask={handleOpenTask} />

@@ -35,6 +35,8 @@ import {
   Globe,
   Heart,
   Kanban,
+  LayoutTemplate,
+  Moon,
   KeyRound,
   LayoutGrid,
   Menu,
@@ -48,8 +50,12 @@ import {
   Settings,
   Shield,
   ShieldCheck,
+  Server,
   Sparkles,
+  Square,
   Star,
+  Store,
+  Stethoscope,
   Terminal,
   Users,
   Webhook,
@@ -95,7 +101,31 @@ const WebhooksPage = lazy(() => import("@/pages/WebhooksPage"));
 const SystemPage = lazy(() => import("@/pages/SystemPage"));
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const ChatPage = lazy(() => import("@/pages/ChatPage"));
-const KanbanPreviewPage = lazy(() => import("@/pages/KanbanPreviewPage"));
+const KanbanMainPage = lazy(() => import("@/pages/KanbanMainPage"));
+const KanbanFleetDashboardPage = lazy(() =>
+  import("@/pages/FleetSections").then((m) => ({ default: m.KanbanFleetDashboardPage })),
+);
+const KanbanTemplateBuilderPage = lazy(() =>
+  import("@/pages/FleetSections").then((m) => ({ default: m.KanbanTemplateBuilderPage })),
+);
+const ServersListPage = lazy(() =>
+  import("@/pages/FleetSections").then((m) => ({ default: m.ServersListPage })),
+);
+const ServerWakePage = lazy(() =>
+  import("@/pages/FleetSections").then((m) => ({ default: m.ServerWakePage })),
+);
+const ServerLogsPage = lazy(() =>
+  import("@/pages/FleetSections").then((m) => ({ default: m.ServerLogsPage })),
+);
+const ServerDoctorPage = lazy(() =>
+  import("@/pages/FleetSections").then((m) => ({ default: m.ServerDoctorPage })),
+);
+const MarketplaceViewPage = lazy(() =>
+  import("@/pages/FleetSections").then((m) => ({ default: m.MarketplaceViewPage })),
+);
+const MarketplaceSetupPage = lazy(() =>
+  import("@/pages/FleetSections").then((m) => ({ default: m.MarketplaceSetupPage })),
+);
 import { useI18n } from "@/i18n";
 import type { Translations } from "@/i18n/types";
 import { PluginPage, PluginSlot, usePlugins } from "@/plugins";
@@ -169,9 +199,18 @@ const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
   "/config": ConfigPage,
   "/env": EnvPage,
   "/docs": DocsPage,
-  // Design preview: renders the Trello-style board from mock data, so it
-  // needs no API call and stays viewable without a session token.
-  "/kanban-preview": KanbanPreviewPage,
+  "/kanban": KanbanMainPage,
+  "/kanban/fleet": KanbanFleetDashboardPage,
+  "/kanban/templates": KanbanTemplateBuilderPage,
+  "/servers": ServersListPage,
+  "/servers/wakeup": ServerWakePage,
+  "/servers/logs": ServerLogsPage,
+  "/servers/doctor": ServerDoctorPage,
+  "/marketplace": MarketplaceViewPage,
+  "/marketplace/setup": MarketplaceSetupPage,
+  // The board was previewed here before the desk section existed; anyone
+  // holding the old link lands on the same board.
+  "/kanban-preview": KanbanMainPage,
 };
 
 // Route placeholder for /chat.  The persistent ChatPage host (rendered
@@ -197,6 +236,14 @@ const NAV_GROUPS: NavGroup[] = [
   },
   { id: "models", label: "Models & Data", accent: "info", icon: Cpu },
   {
+    id: "desk",
+    label: "Kanban Desk",
+    accent: "primary",
+    icon: Kanban,
+  },
+  { id: "servers", label: "Servers", accent: "info", icon: Server },
+  { id: "marketplace", label: "Marketplace", accent: "success", icon: Store },
+  {
     id: "automation",
     label: "Automation",
     accent: "success",
@@ -213,6 +260,70 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 const BUILTIN_NAV_REST: NavItem[] = [
+  {
+    path: "/kanban/fleet",
+    label: "Dashboard флота",
+    icon: Gauge,
+    group: "desk",
+    accent: "primary",
+  },
+  {
+    path: "/kanban",
+    label: "Main",
+    icon: Kanban,
+    group: "desk",
+    accent: "primary",
+  },
+  {
+    path: "/kanban/templates",
+    label: "Конструктор шаблонов",
+    icon: LayoutTemplate,
+    group: "desk",
+    accent: "primary",
+  },
+  {
+    path: "/servers",
+    label: "List",
+    icon: Server,
+    group: "servers",
+    accent: "info",
+  },
+  {
+    path: "/servers/wakeup",
+    label: "WakeUp new",
+    icon: Moon,
+    group: "servers",
+    accent: "info",
+  },
+  {
+    path: "/servers/logs",
+    label: "Logs",
+    icon: FileText,
+    group: "servers",
+    accent: "info",
+  },
+  {
+    path: "/servers/doctor",
+    label: "Doctor",
+    icon: Stethoscope,
+    group: "servers",
+    accent: "info",
+  },
+  {
+    path: "/marketplace",
+    label: "view",
+    icon: Store,
+    group: "marketplace",
+    accent: "success",
+  },
+  {
+    path: "/marketplace/setup",
+    label: "Setup",
+    icon: Square,
+    group: "marketplace",
+    accent: "success",
+  },
+
   {
     path: "/",
     label: "Dashboard",
@@ -298,13 +409,6 @@ const BUILTIN_NAV_REST: NavItem[] = [
     accent: "warning",
   },
   { path: "/mcp", label: "MCP", icon: Plug, group: "extensions", accent: "warning" },
-  {
-    path: "/kanban-preview",
-    label: "Kanban",
-    icon: Kanban,
-    group: "extensions",
-    accent: "warning",
-  },
   {
     path: "/profiles",
     labelKey: "profiles",
@@ -1239,6 +1343,9 @@ interface NavItem {
 type NavGroupId =
   | "workspace"
   | "models"
+  | "desk"
+  | "servers"
+  | "marketplace"
   | "automation"
   | "extensions"
   | "plugins"

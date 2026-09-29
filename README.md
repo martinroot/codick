@@ -28,11 +28,17 @@
 
 ## What works today
 
+**The dashboard** — gateway and session state, live token usage and spend, and charts drawn from the APIs that already exist rather than from fixtures.
+
 ![The CoDick dashboard](assets/codick-dashboard.png)
+
+**The Kanban desk** — a Trello-style board: fixed columns on a scrolling rail, cards as the only elevated surface, drag between columns, and real Trello's label palette.
+
+![The CoDick Kanban desk](assets/codick-kanban.png)
 
 **The web dashboard has been migrated to Bootstrap 5.3.** This is the current implemented scope of CoDick. The existing Hermes agent, gateway, CLI, tools, and execution model remain upstream. Fleet enrollment, one-click server setup, the workflow builder, and the marketplace described below are **planned**, not shipped features.
 
-The current dashboard work includes a rebuilt navigation shell, Bootstrap-based components and color modes, an overview of gateway and session activity, and SVG charts backed by existing Hermes APIs. The UI is developed in `web/`; the Python backend serves its built assets from `hermes_cli/web_dist`.
+The rail is already sectioned for where those go: **Kanban Desk**, **Servers** and **Marketplace** are in place, and the routes behind them are live but empty. The dashboard work includes a rebuilt navigation shell, Bootstrap-based components and color modes, an overview of gateway and session activity, and SVG charts backed by existing Hermes APIs. The UI is developed in `web/`; the Python backend serves its built assets from `hermes_cli/web_dist`.
 
 This repository is where that work lands. The public fork that carries its full commit history remains at [martinroot/hermes-multiserver-web-bootstrap](https://github.com/martinroot/hermes-multiserver-web-bootstrap). Expect changes while the interface settles.
 

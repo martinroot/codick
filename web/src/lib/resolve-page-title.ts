@@ -25,6 +25,19 @@ const BUILTIN_LITERAL: Record<string, string> = {
   "/webhooks": "Webhooks",
   "/pairing": "Pairing",
   "/system": "System",
+  // The desk, servers and marketplace sections. The labels match the rail
+  // exactly -- the header title and the nav item that opened it are read
+  // together, and "Kanban/fleet" derived from the path is neither.
+  "/kanban": "Main",
+  "/kanban-preview": "Main",
+  "/kanban/fleet": "Dashboard флота",
+  "/kanban/templates": "Конструктор шаблонов",
+  "/servers": "List",
+  "/servers/wakeup": "WakeUp new",
+  "/servers/logs": "Logs",
+  "/servers/doctor": "Doctor",
+  "/marketplace": "view",
+  "/marketplace/setup": "Setup",
 };
 
 export function resolvePageTitle(
