@@ -369,11 +369,14 @@ function applyTheme(theme: DashboardTheme) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
 
-  // Bootstrap's colour mode follows the dashboard's. Every theme in the
-  // catalog paints a dark canvas — `--background-base` is near-black in
-  // all of them — so the framework is told "dark" outright. Reading it
-  // from the theme instead would need a per-theme flag nobody sets today.
-  applyBootstrapColourMode("dark");
+  // Light is the base. Every colour in the app now comes from Bootstrap's
+  // own palette, and its default colour mode is light — so the honest
+  // thing is to say so rather than to keep a hard-coded "dark" whose
+  // only justification was the old canvas token, which no longer exists.
+  // The attribute is still set explicitly: leaving it off would let
+  // whatever was there before (a user-agent `prefers-color-scheme: dark`)
+  // decide instead of the app.
+  applyBootstrapColourMode("light");
 
   // Clear any overrides from a previous theme before applying the new set.
   for (const cssVar of ALL_OVERRIDE_VARS) {

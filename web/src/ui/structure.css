@@ -133,12 +133,14 @@
   .app-rail {
     width: var(--app-rail-w);
     flex: 0 0 var(--app-rail-w);
-    /* The rail scrolls with the page, so it pins to the top of the
-       viewport and takes the full height of the shell. */
+    /* The rail pins to the top of the viewport and takes the full height
+       of the shell. It does not scroll itself: the <nav> inside it does,
+       so the list scrolls while the System block below stays put. Giving
+       the rail its own overflow as well produced two scrollbars for one
+       list, and the inner one drew straight over the System block. */
     position: sticky;
     top: 0;
     height: 100vh;
-    overflow-y: auto;
     transition:
       width 0.3s ease,
       flex-basis 0.3s ease;
