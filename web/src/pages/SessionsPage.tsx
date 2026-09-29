@@ -1714,41 +1714,45 @@ export default function SessionsPage() {
       </Dialog>
 
       {stats && (
-        <div className="card">
-          <div className="card-body d-flex flex-wrap align-items-center gap-4">
-            <div className="d-flex flex-column">
-              <span className="fs-4 fw-semibold lh-1 tabular-nums">
-                {stats.total}
-              </span>
-              <span className="small text-body-secondary">Total</span>
-            </div>
-            <div className="d-flex flex-column">
-              <span className="fs-4 fw-semibold lh-1 tabular-nums text-success">
-                {stats.active_store}
-              </span>
-              <span className="small text-body-secondary">Active in store</span>
-            </div>
-            <div className="d-flex flex-column">
-              <span className="fs-4 fw-semibold lh-1 tabular-nums">
-                {stats.archived}
-              </span>
-              <span className="small text-body-secondary">Archived</span>
-            </div>
-            <div className="d-flex flex-column">
-              <span className="fs-4 fw-semibold lh-1 tabular-nums">
-                {stats.messages}
-              </span>
-              <span className="small text-body-secondary">Messages</span>
-            </div>
-            {Object.keys(stats.by_source).length > 0 && (
-              <div className="d-flex flex-column">
-                <span className="fs-4 fw-semibold lh-1 tabular-nums">
-                  {Object.keys(stats.by_source).length}
-                </span>
-                <span className="small text-body-secondary">Sources</span>
+        /*
+         * The reference template's summary row: a `row` of `col`s, each
+         * holding a `card h-100`, rather than one wide card with the
+         * figures spaced inside it. The cards stretch to a common height
+         * because of the `h-100`, and the gutters come from the grid's
+         * own `g-4` instead of hand-placed margins.
+         */
+        <div className="row row-cols-2 row-cols-lg-5 g-3 mb-4">
+          {[
+            { value: stats.total, label: "Total" },
+            { value: stats.active_store, label: "Active in store", tone: "success" },
+            { value: stats.archived, label: "Archived" },
+            { value: stats.messages, label: "Messages" },
+            ...(Object.keys(stats.by_source).length > 0
+              ? [
+                  {
+                    value: Object.keys(stats.by_source).length,
+                    label: "Sources",
+                  },
+                ]
+              : []),
+          ].map(({ value, label, tone }) => (
+            <div className="col" key={label}>
+              <div className="card h-100">
+                <div className="card-body">
+                  <div
+                    className={
+                      tone === "success"
+                        ? "fs-4 fw-semibold lh-1 tabular-nums text-success"
+                        : "fs-4 fw-semibold lh-1 tabular-nums"
+                    }
+                  >
+                    {value}
+                  </div>
+                  <div className="small text-body-secondary mt-1">{label}</div>
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          ))}
         </div>
       )}
 
