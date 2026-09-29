@@ -156,6 +156,44 @@ export default function KanbanMainPage() {
     [columns, options, reload],
   );
 
+  /**
+   * Creates a card, then re-reads the board.
+   *
+   * The obvious implementation — splice the response into the column it
+   * names — does not work, and the failure is silent until a render throws:
+   * `POST /tasks` returns the stored row (41 fields) while the board serves
+   * enriched cards (44). `comment_count`, `link_counts` and `progress` are
+   * only ever computed for the board endpoint, so the card renders with
+   * `link_counts.children` on undefined.
+   *
+   * Re-reading is also the honest placement: the server files a new task by
+   * its own rules, and `POST` with `triage` answers `ready`. Splicing would
+   * put the card in the column that was asked for rather than the one it
+   * landed in.
+   */
+  const handleCreateCard = React.useCallback(
+    async (status: KanbanStatus, title: string): Promise<KanbanTaskCard> => {
+      const { task } = await kanbanApi.createTask({ title, status }, options);
+      const payload = await kanbanApi.getBoard(options);
+      setColumns(payload.columns);
+      const placed = payload.columns
+        .flatMap((column) => column.tasks)
+        .find((candidate) => candidate.id === task.id);
+      setNotice({ tone: "success", text: `Added “${task.title}”` });
+      if (!placed) {
+        // The task exists but the board does not show it. Say so instead of
+        // letting the composer look like it silently swallowed the title.
+        setNotice({
+          tone: "warning",
+          text: `“${task.title}” was created as ${task.id} but is not on the board. Refresh to see where it went.`,
+        });
+        throw new Error("created task is missing from the board");
+      }
+      return placed;
+    },
+    [options],
+  );
+
   const handleOpenTask = React.useCallback((task: KanbanTaskCard) => {
     setNotice({ tone: "info", text: `open ${task.id}` });
   }, []);
@@ -229,7 +267,12 @@ export default function KanbanMainPage() {
         </p>
       ) : null}
 
-      <KanbanBoard columns={columns} onMove={handleMove} onOpenTask={handleOpenTask} />
+      <KanbanBoard
+        columns={columns}
+        onCreateCard={handleCreateCard}
+        onMove={handleMove}
+        onOpenTask={handleOpenTask}
+      />
     </div>
   );
 }

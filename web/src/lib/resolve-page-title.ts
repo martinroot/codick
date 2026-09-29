@@ -29,8 +29,6 @@ const BUILTIN_LITERAL: Record<string, string> = {
   // exactly -- the header title and the nav item that opened it are read
   // together, and "Kanban/fleet" derived from the path is neither.
   "/kanban": "Main",
-  "/kanban-next": "Kanban (React port)",
-  "/kanban-preview": "Kanban (React port)",
   "/kanban/fleet": "Fleet Dashboard",
   "/kanban/templates": "Template Builder",
   "/servers": "List",

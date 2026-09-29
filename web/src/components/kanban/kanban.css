@@ -216,6 +216,39 @@
   border-radius: 6px;
 }
 
+/* The composer sits between the card list and the footer, exactly where
+   Trello opens it, so a click on "Add a card" grows a box in the place the
+   eye already is. */
+.kb-composer {
+  padding: var(--kb-gutter);
+  border-top: 1px solid var(--bs-border-color);
+  background: var(--kb-column-bg);
+}
+
+.kb-composer-input {
+  width: 100%;
+  resize: vertical;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--bs-primary);
+  border-radius: 0.5rem;
+  background: var(--kb-card-bg);
+  color: inherit;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  box-shadow: var(--kb-shadow-focus);
+}
+
+.kb-composer-input:focus {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 1px;
+}
+
+.kb-composer-actions {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
 /* Trello's "Add a card" lives at the foot of the list, not in the header. */
 .kb-column-footer {
   flex-shrink: 0;

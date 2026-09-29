@@ -5,9 +5,8 @@
   "icon": "Package",
   "version": "1.0.0",
   "tab": {
-    "path": "/kanban",
-    "position": "after:skills",
-    "override": "/kanban"
+    "path": "/kanban-reference",
+    "position": "after:skills"
   },
   "entry": "dist/index.js",
   "css": "dist/style.css",

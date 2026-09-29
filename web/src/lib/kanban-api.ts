@@ -193,6 +193,20 @@ export interface KanbanTaskCard {
   warnings?: KanbanWarnings;
 }
 
+/**
+ * A task as `POST /tasks` returns it: the dataclass, not the card.
+ *
+ * Three fields exist only on the enriched card the board endpoint builds —
+ * `comment_count`, `link_counts`, `progress` — and are absent here. Verified
+ * against the running server: 41 keys on create, 44 on the board, and the
+ * difference is exactly those three. Splicing this into a rendered board
+ * crashes the card, because the renderer reads `link_counts.children`.
+ */
+export type KanbanTaskRow = Omit<
+  KanbanTaskCard,
+  "comment_count" | "link_counts" | "progress"
+>;
+
 export interface KanbanColumn {
   name: KanbanStatus;
   tasks: KanbanTaskCard[];
@@ -381,13 +395,13 @@ export const kanbanApi = {
   },
 
   /**
-   * Creates a task and returns the finished card.
+   * Creates a task and returns it as the server stores it.
    *
-   * Not `{id}`: the server answers with the whole task, and callers that
-   * need only the id should read `.task.id` rather than have this hide it.
+   * Not `{id}`, and not a card either: see `KanbanTaskRow` for why the
+   * three derived fields are missing. To render it, re-read the board.
    */
   createTask: (task: KanbanCreateTask, options: KanbanRequestOptions) =>
-    fetchJSON<{ task: KanbanTaskCard }>(kanbanUrl("/tasks", options), {
+    fetchJSON<{ task: KanbanTaskRow }>(kanbanUrl("/tasks", options), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(task),

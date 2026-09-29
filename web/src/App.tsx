@@ -199,10 +199,9 @@ const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
   "/config": ConfigPage,
   "/env": EnvPage,
   "/docs": DocsPage,
-  // The plugin's manifest declares `override: /kanban`, so it owns that
-  // path and the builtin below is never routed there. The React board
-  // lives on a dev path while it is the porting target (issue #2-#17).
-  "/kanban-next": KanbanMainPage,
+  // Main is the React board: Trello surfaces, live API. The plugin bundle
+  // is the migration reference and registers itself at /kanban-reference.
+  "/kanban": KanbanMainPage,
   "/kanban/fleet": KanbanFleetDashboardPage,
   "/kanban/templates": KanbanTemplateBuilderPage,
   "/servers": ServersListPage,
@@ -276,6 +275,16 @@ const BUILTIN_NAV_REST: NavItem[] = [
     icon: Kanban,
     group: "desk",
     accent: "primary",
+  },
+  {
+    // The shipped plugin bundle, kept as the migration reference until #26.
+    // Its own stylesheet does not survive the host, so it looks unfinished —
+    // which is why it is labelled as a reference and not the product board.
+    path: "/kanban-reference",
+    label: "Plugin (reference)",
+    icon: Kanban,
+    group: "desk",
+    accent: "secondary",
   },
   {
     path: "/kanban/templates",

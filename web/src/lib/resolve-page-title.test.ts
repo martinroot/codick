@@ -39,6 +39,16 @@ describe("resolvePageTitle", () => {
     expect(resolvePageTitle("/whatever", t, [])).toBe("Whatever");
   });
 
+  it("titles /kanban as Main, not from the plugin that used to own it", () => {
+    // The plugin bundle used to register a tab at /kanban, and a plugin tab
+    // outranks the builtin map. It now registers at /kanban-reference, so
+    // the header must follow the nav item that opened it.
+    expect(resolvePageTitle("/kanban", t, [])).toBe("Main");
+    expect(resolvePageTitle("/kanban", t, [{ path: "/kanban-reference", label: "Kanban" }])).toBe(
+      "Main",
+    );
+  });
+
   it("treats root as the dashboard, and trailing slashes as equivalent", () => {
     // Root is the dashboard, not a redirect to the session list: the tile
     // grid and the charts live there, and a title reading "Sessions" above

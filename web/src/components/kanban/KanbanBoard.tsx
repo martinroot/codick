@@ -20,6 +20,7 @@
 import * as React from "react";
 
 import type { KanbanStatus, KanbanTaskCard } from "@/lib/kanban-api";
+import { Button } from "@/ui";
 import { cn } from "@/lib/utils";
 import "./kanban.css";
 
@@ -273,6 +274,12 @@ export interface KanbanColumnProps {
   onDragOverColumn: (status: KanbanStatus) => void;
   onDropColumn: (status: KanbanStatus) => void;
   onOpenTask?: (task: KanbanTask) => void;
+  /**
+   * Creates a card in this column. Returns the server's card so the board
+   * can place what the server actually made — the status it came back with
+   * is not always the one that was asked for.
+   */
+  onCreateCard?: (status: KanbanStatus, title: string) => Promise<KanbanTaskCard>;
 }
 
 function KanbanColumnView({
@@ -284,9 +291,40 @@ function KanbanColumnView({
   onDragOverColumn,
   onDropColumn,
   onOpenTask,
+  onCreateCard,
 }: KanbanColumnProps) {
   const isDropTarget = dropTarget === column.name;
   const wipExceeded = column.name === "running" && column.tasks.length > 4;
+
+  // `running` is not a column you can create into: PATCH rejects it with a
+  // 400 and a task only reaches it by being dispatched. Offering the composer
+  // there would produce a guaranteed failure on submit.
+  const creatable = column.name !== "running" && Boolean(onCreateCard);
+  const [composing, setComposing] = React.useState(false);
+  const [draft, setDraft] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  const openComposer = React.useCallback(() => {
+    if (!creatable) return;
+    setComposing(true);
+  }, [creatable]);
+
+  const submit = React.useCallback(async () => {
+    const title = draft.trim();
+    if (!title || !onCreateCard || saving) return;
+    setSaving(true);
+    try {
+      await onCreateCard(column.name, title);
+      setDraft("");
+      // Stay open: adding three cards should not mean retyping the box.
+    } catch {
+      // The page surfaces the reason. Swallowing the title here would lose
+      // what someone typed over an error message, which is the worst
+      // possible time to lose it.
+    } finally {
+      setSaving(false);
+    }
+  }, [column.name, draft, onCreateCard, saving]);
 
   return (
     <section
@@ -314,9 +352,19 @@ function KanbanColumnView({
         <span className="kb-dot" style={{ background: ACCENTS[column.name] }} aria-hidden />
         <h2 className="kb-column-title">{COLUMN_TITLES[column.name]}</h2>
         <span className={cn("kb-count", wipExceeded && "kb-count-over")}>{column.tasks.length}</span>
-        <button className="kb-column-add" type="button" aria-label={`Add card to ${COLUMN_TITLES[column.name]}`}>
-          +
-        </button>
+        {/* Absent rather than disabled in `running`: a control that cannot
+            ever succeed is noise, and the column header should say what the
+            column is for, not that a task is in flight there. */}
+        {creatable ? (
+          <button
+            className="kb-column-add"
+            onClick={openComposer}
+            type="button"
+            aria-label={`Add card to ${COLUMN_TITLES[column.name]}`}
+          >
+            +
+          </button>
+        ) : null}
       </header>
 
       <div className="kb-column-body">
@@ -338,12 +386,54 @@ function KanbanColumnView({
 
       {/* Trello puts the composer at the foot of the list, not in the
           header -- the header's + is a quick-add and this is the full one. */}
-      <footer className="kb-column-footer">
-        <button className="kb-add-card" type="button">
-          <span aria-hidden>+</span>
-          Add a card
-        </button>
-      </footer>
+      {composing ? (
+        <form
+          className="kb-composer"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit();
+          }}
+        >
+          <textarea
+            autoFocus
+            className="kb-composer-input"
+            onBlur={() => {
+              // Trello closes an untouched composer when it loses focus. One
+              // with text stays open, so a stray click cannot discard a title
+              // someone just typed.
+              if (!draft.trim()) setComposing(false);
+            }}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                setDraft("");
+                setComposing(false);
+              }
+            }}
+            placeholder="What needs doing?"
+            rows={3}
+            value={draft}
+          />
+          <div className="kb-composer-actions">
+            <Button disabled={saving || !draft.trim()} size="sm" type="submit">
+              {saving ? "Adding…" : "Add card"}
+            </Button>
+            <Button ghost onClick={() => { setDraft(""); setComposing(false); }} size="sm" type="button">
+              Cancel
+            </Button>
+          </div>
+        </form>
+      ) : null}
+
+      {creatable ? (
+        <footer className="kb-column-footer">
+          <button className="kb-add-card" onClick={openComposer} type="button">
+            <span aria-hidden>+</span>
+            Add a card
+          </button>
+        </footer>
+      ) : null}
     </section>
   );
 }
@@ -356,9 +446,15 @@ export interface KanbanBoardProps {
   columns: KanbanColumn[];
   onMove?: (taskId: string, to: KanbanStatus) => void;
   onOpenTask?: (task: KanbanTask) => void;
+  /**
+   * Omit to make the board read-only: the composer and both add controls
+   * disappear rather than appearing and failing. The page passes it only
+   * when a board is loaded and writable.
+   */
+  onCreateCard?: (status: KanbanStatus, title: string) => Promise<KanbanTaskCard>;
 }
 
-export function KanbanBoard({ columns, onMove, onOpenTask }: KanbanBoardProps) {
+export function KanbanBoard({ columns, onMove, onOpenTask, onCreateCard }: KanbanBoardProps) {
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [dropTarget, setDropTarget] = React.useState<KanbanStatus | null>(null);
   const handleDragStart = React.useCallback((event: React.DragEvent<HTMLElement>, task: KanbanTask) => {
@@ -400,6 +496,7 @@ export function KanbanBoard({ columns, onMove, onOpenTask }: KanbanBoardProps) {
             onDragOverColumn={handleDragOverColumn}
             onDropColumn={handleDropColumn}
             onOpenTask={onOpenTask}
+            onCreateCard={onCreateCard}
           />
         ))}
       </div>
