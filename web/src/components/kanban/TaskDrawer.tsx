@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { Markdown } from "@/components/Markdown";
+import { RecoveryPanel } from "@/components/kanban/RecoveryPanel";
 import { ACCENTS } from "@/components/kanban/KanbanBoard";
 import {
   kanbanApi,
@@ -72,6 +73,29 @@ export function TaskDrawer({
   });
   const [tab, setTab] = React.useState<Tab>("detail");
   const [log, setLog] = React.useState<{ text: string; phase: string } | null>(null);
+  /**
+   * A refusal from a recovery action -- 409 "already ended", 409 "no longer
+   * reclaimable" -- is information, not breakage. It is shown in the panel and
+   * the drawer stays open, because the correct next step is usually to look at
+   * the card again rather than retry.
+   */
+  const [actionError, setActionError] = React.useState<string | null>(null);
+
+  /**
+   * Re-read after a mutation. Deliberately does not flip the drawer into its
+   * loading phase: a panel that blanks while acting looks like the click
+   * failed, and on a reclaim that is exactly the wrong impression.
+   */
+  const reloadDetail = React.useCallback(async () => {
+    if (!taskId) return;
+    try {
+      const payload = await kanbanApi.getTask(taskId, options);
+      setDetail(payload);
+      onChanged?.();
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : String(err));
+    }
+  }, [options, onChanged, taskId]);
 
   // A new task resets everything. Keeping the previous task's comments on
   // screen while the next one loads is how you end up reading one task while
@@ -82,6 +106,7 @@ export function TaskDrawer({
       setLoad({ phase: "idle" });
       setTab("detail");
       setLog(null);
+      setActionError(null);
       return;
     }
     let cancelled = false;
@@ -204,12 +229,33 @@ export function TaskDrawer({
             </p>
           ) : null}
 
+          {/* A refusal from a recovery action, shown separately from a load
+              failure: the detail loaded fine, the action did not. */}
+          {actionError ? (
+            <p className="kb-drawer-error" role="alert">
+              {actionError}
+              <button
+                className="btn btn-sm btn-link"
+                onClick={() => setActionError(null)}
+                type="button"
+              >
+                Dismiss
+              </button>
+            </p>
+          ) : null}
+
           {!detail && load.phase === "loading" ? (
             <p className="kb-drawer-muted">Loading…</p>
           ) : null}
 
           {tab === "detail" && task ? (
-            <DetailTab detail={detail} task={task} />
+            <DetailTab
+              detail={detail}
+              onChanged={reloadDetail}
+              onError={(message) => setActionError(message)}
+              options={options}
+              task={task}
+            />
           ) : null}
 
           {tab === "comments" ? (
@@ -289,12 +335,28 @@ export function TaskDrawer({
 function DetailTab({
   detail,
   task,
+  options,
+  onChanged,
+  onError,
 }: {
   detail: KanbanTaskDetail | null;
   task: KanbanTaskCard;
+  options: KanbanRequestOptions;
+  onChanged: () => void | Promise<void>;
+  onError: (message: string) => void;
 }) {
   return (
     <div className="kb-drawer-section">
+      {/* Recovery sits above the description: when a card is stuck, the
+          question is "what do I do about it", not "what is it". */}
+      {detail ? (
+        <RecoveryPanel
+          onChanged={onChanged}
+          onError={onError}
+          options={options}
+          task={detail}
+        />
+      ) : null}
       {task.body ? (
         <section className="kb-drawer-block">
           <h3 className="kb-drawer-h3">Description</h3>

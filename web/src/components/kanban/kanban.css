@@ -827,6 +827,35 @@
   color: var(--kb-focus);
 }
 
+.kb-recovery-reason {
+  display: block;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.kb-recovery-reason span {
+  display: block;
+  font-size: 0.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.kb-recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.kb-recovery-assign {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.kb-recovery-assign .form-select {
+  width: auto;
+  min-width: 11rem;
+}
+
 .kb-drawer-status {
   display: inline-flex;
   align-items: center;

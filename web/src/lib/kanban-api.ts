@@ -104,6 +104,15 @@ export interface KanbanAttachment {
   created_at?: number;
 }
 
+export interface KanbanProfile {
+  name: string;
+  is_default: boolean;
+  model?: string;
+  provider?: string;
+  description?: string;
+  description_auto?: boolean;
+}
+
 export interface KanbanRunRecord {
   id: number;
   status: string;
@@ -536,6 +545,12 @@ export const kanbanApi = {
       body: JSON.stringify(body),
     }),
 
+  /** Installed profiles, for the reassign control. */
+  listProfiles: (options: KanbanRequestOptions) =>
+    fetchJSON<{ profiles: KanbanProfile[] }>(kanbanUrl("/profiles", options)).then(
+      (payload) => payload.profiles ?? [],
+    ),
+
   /** Every board, with counts. Unscoped — `/boards` is not board-scoped. */
   listBoards: (profile?: string) => {
     const url = profile ? `${BASE_PATH}/boards?profile=${encodeURIComponent(profile)}` : `${BASE_PATH}/boards`;
@@ -672,21 +687,67 @@ export const kanbanApi = {
       },
     ),
 
-  /** Release a stuck claim. */
-  reclaimTask: (id: string, options: KanbanRequestOptions) =>
-    fetchJSON<{ ok: boolean }>(
+  /**
+   * Release a stuck claim — SIGTERM then SIGKILL the worker, without waiting
+   * for the claim TTL. 409 when the claim has already lapsed, which by the
+   * time an operator clicks is a perfectly normal race with the dispatcher.
+   *
+   * The reason is sent because the server accepts one and an unexplained
+   * reclaim is what makes the next incident hard.
+   */
+  reclaimTask: (id: string, reason: string | null, options: KanbanRequestOptions) =>
+    fetchJSON<{ ok: boolean; task_id?: string }>(
       kanbanUrl(`/tasks/${encodeURIComponent(id)}/reclaim`, options),
-      { method: "POST" },
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      },
     ),
 
-  /** Reassign to a profile; the server reclaims the claim first. */
-  reassignTask: (id: string, profile: string, options: KanbanRequestOptions) =>
-    fetchJSON<{ ok: boolean }>(
+  /**
+   * Reassign to a profile. `reclaimFirst` bounces a stuck worker before
+   * handing the task over; `profile: null` unassigns.
+   */
+  reassignTask: (
+    id: string,
+    body: { profile: string | null; reclaimFirst?: boolean; reason?: string | null },
+    options: KanbanRequestOptions,
+  ) =>
+    fetchJSON<{ ok: boolean; task_id?: string }>(
       kanbanUrl(`/tasks/${encodeURIComponent(id)}/reassign`, options),
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile }),
+        body: JSON.stringify({
+          profile: body.profile,
+          reclaim_first: body.reclaimFirst ?? false,
+          reason: body.reason ?? null,
+        }),
+      },
+    ),
+
+  /**
+   * Unblock is a plain status move, not its own endpoint.
+   */
+  unblockTask: (id: string, options: KanbanRequestOptions) =>
+    fetchJSON<{ task: KanbanTaskRow }>(
+      kanbanUrl(`/tasks/${encodeURIComponent(id)}`, options),
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "todo" }),
+      },
+    ),
+
+  /** Terminate one in-flight run. 409 when it has already ended. */
+  terminateRun: (runId: number, reason: string | null, options: KanbanRequestOptions) =>
+    fetchJSON<{ ok: boolean; run_id: number; task_id: string }>(
+      kanbanUrl(`/runs/${runId}/terminate`, options),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
       },
     ),
 
