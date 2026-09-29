@@ -22,7 +22,15 @@ export function TopBar({ status }: TopBarProps) {
   return (
     <div className="z-1 flex-shrink-0 bg-body-tertiary border-bottom px-3 py-2">
       <div className="d-flex align-items-center gap-3">
-        <span className="fw-bold text-body text-uppercase ls-wide">Hermes</span>
+        {/*
+          The wordmark. The gradient is built from Bootstrap's own theme
+          colours, so it follows the colour mode and introduces no colour
+          the framework does not already have — it is a treatment, not a
+          new palette. `background-clip: text` is what actually paints the
+          letters; the fill colour behind them is only the fallback for a
+          browser that will not clip.
+        */}
+        <span className="hermes-wordmark">Hermes</span>
 
         <div className="ms-auto d-flex align-items-center gap-2">
           <StatusDropdown status={status} />

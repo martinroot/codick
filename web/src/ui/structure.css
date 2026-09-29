@@ -188,13 +188,77 @@
   color: var(--bs-nav-pills-link-active-color);
 }
 
-/* Section headings between the groups. */
+/*
+ * The wordmark.
+ *
+ * A gradient clipped to the glyphs. The stops are Bootstrap's own
+ * theme colours, so the mark follows the colour mode and adds no
+ * colour the framework does not already ship. The solid `color` is the
+ * fallback: a browser that will not clip the background still renders
+ * readable text rather than a transparent void.
+ */
+.hermes-wordmark {
+  background-image: linear-gradient(
+    100deg,
+    var(--bs-primary) 0%,
+    var(--bs-info) 28%,
+    var(--bs-success) 52%,
+    var(--bs-warning) 76%,
+    var(--bs-danger) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: var(--bs-primary);
+  font-weight: var(--bs-font-weight-bold);
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  -webkit-text-fill-color: transparent;
+}
+
+/*
+ * Section headings.
+ *
+ * Bold, letter-spaced, and separated from the section above by a rule —
+ * a rail of nineteen rows needs a visible edge between its groups, or
+ * "Plugins" and "System" read as one long undifferentiated list. The
+ * first section has no rule above it, which would otherwise be a line
+ * floating under the profile picker for no reason.
+ *
+ * The colour comes from Bootstrap's own secondary ramp rather than a
+ * fixed grey, so it tracks the colour mode.
+ */
+.app-rail .nav-section + .nav-section {
+  border-top: var(--bs-border-width) var(--bs-border-style)
+    var(--bs-border-color);
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+}
+
 .app-rail .nav-section-heading {
   color: var(--bs-secondary-color);
   font-size: var(--bs-font-size-sm);
-  font-weight: var(--bs-font-weight-semibold);
+  font-weight: var(--bs-font-weight-bold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* Hovering a heading implies the whole group is clickable. */
+.app-rail .nav-section-heading:hover,
+.app-rail .nav-section-heading:focus-visible {
+  color: var(--bs-body-color);
+}
+
+/*
+ * How many rows are behind the heading. A collapsed section that
+ * advertises its size can be skipped past or opened deliberately.
+ */
+.app-rail .nav-section-count {
+  color: var(--bs-tertiary-color);
+  font-size: var(--bs-font-size-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--bs-font-weight-normal);
 }
 
 .app-rail nav,

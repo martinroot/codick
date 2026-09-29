@@ -35,6 +35,7 @@ import {
   Heart,
   Kanban,
   KeyRound,
+  LayoutGrid,
   Menu,
   MessageSquare,
   Package,
@@ -189,11 +190,27 @@ function ChatRouteSink() {
  * automations live" should not mean reading every label to find out.
  */
 const NAV_GROUPS: NavGroup[] = [
-  { id: "workspace", label: "Workspace", accent: "primary" },
-  { id: "models", label: "Models & Data", accent: "info" },
-  { id: "automation", label: "Automation", accent: "success" },
-  { id: "extensions", label: "Extensions", accent: "warning" },
-  { id: "system", label: "System", accent: "secondary" },
+  {
+    id: "workspace",
+    label: "Workspace",
+    accent: "primary",
+    icon: LayoutGrid,
+  },
+  { id: "models", label: "Models & Data", accent: "info", icon: Cpu },
+  {
+    id: "automation",
+    label: "Automation",
+    accent: "success",
+    icon: Zap,
+  },
+  {
+    id: "extensions",
+    label: "Extensions",
+    accent: "warning",
+    icon: Puzzle,
+  },
+  { id: "plugins", label: "Plugins", accent: "danger", icon: Plug },
+  { id: "system", label: "System", accent: "secondary", icon: Wrench },
 ];
 
 const BUILTIN_NAV_REST: NavItem[] = [
@@ -379,8 +396,8 @@ function buildNavItems(
       // their own section at the foot of the rail — but they still need
       // an icon tint, and the accent of the section they are shown in
       // is the one that reads correctly next to it.
-      group: "extensions",
-      accent: "warning",
+      group: "plugins",
+      accent: "danger",
     };
 
     const pos = manifest.tab.position ?? "end";
@@ -743,12 +760,6 @@ export default function App() {
                 )}
               >
                 <PluginSlot name="header-left" />
-
-                <Typography className="fw-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-body text-uppercase">
-                  Hermes
-                  <br />
-                  Agent
-                </Typography>
               </div>
 
               <Button
@@ -756,7 +767,7 @@ export default function App() {
                 size="icon"
                 onClick={closeMobile}
                 aria-label={t.app.closeNavigation}
-                className="d-lg-none text-body-secondary hover:text-midground"
+                className="d-lg-none text-body-secondary"
               >
                 <X />
               </Button>
@@ -793,9 +804,16 @@ export default function App() {
               aria-label={t.app.navigation}
             >
               {NAV_GROUPS.map((group) => {
-                const items = sidebarNav.coreItems.filter(
-                  (item) => item.group === group.id,
-                );
+                // Plugin tabs are registered at runtime and are not part
+                // of the built-in set, so they are read from their own
+                // list — but they render as an ordinary section, not as
+                // a separate block under the rail.
+                const items =
+                  group.id === "plugins"
+                    ? sidebarNav.pluginItems
+                    : sidebarNav.coreItems.filter(
+                        (item) => item.group === group.id,
+                      );
                 if (items.length === 0) return null;
                 return (
                   <SidebarNavGroup
@@ -809,48 +827,13 @@ export default function App() {
                   />
                 );
               })}
-
-              {sidebarNav.pluginItems.length > 0 && (
-                <div
-                  aria-labelledby="hermes-sidebar-plugin-nav-heading"
-                  className="d-flex flex-column border-top border-current/10 pb-2"
-                  role="group"
-                >
-                  <span
-                    className={cn(
-                      "px-5 pt-2.5 pb-1",
-                      "font-sans fw-semibold fs-6 tracking-[0.12em] text-body-tertiary",
-                      isDesktopCollapsed && "lg:hidden",
-                    )}
-                    id="hermes-sidebar-plugin-nav-heading"
-                  >
-                    {t.app.pluginNavSection}
-                  </span>
-
-                  <ul className="d-flex flex-column">
-                    {sidebarNav.pluginItems.map((item) => (
-                      <SidebarNavLink
-                        closeMobile={closeMobile}
-                        collapsed={isDesktopCollapsed}
-                        item={item}
-                        key={item.path}
-                        t={t}
-                        tooltipWarmRef={tooltipWarmRef}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              )}
             </nav>
 
             {/*
-              The System block, the theme and language switchers and the
-              footer all moved to the top strip. They are chrome, not
-              navigation: a status line and a language picker are not
-              destinations, and leaving them in the rail put the app's
-              most global controls at the bottom of a scrolling list.
-              The rail keeps one thing at its foot — the auth widget,
-              which only means anything to a signed-out user.
+              The auth widget is the one thing that stays at the foot of
+              the rail: it only means anything to a signed-out user, and
+              putting it in the top strip would give a global-looking
+              control to the minority who can see it.
             */}
             <div
               className={cn(
@@ -988,8 +971,10 @@ function SidebarNavGroup({
   tooltipWarmRef,
   t,
 }: SidebarNavGroupProps) {
-  const { label, accent } = group;
-  const [open, setOpen] = useState(true);
+  const { label, accent, icon: GroupIcon } = group;
+  // Collapsed by default. A rail of five headings is scannable at a
+  // glance; a rail of nineteen rows is a list to read.
+  const [open, setOpen] = useState(false);
   const regionId = `hermes-rail-group-${group.id}`;
   const headingId = `${regionId}-heading`;
 
@@ -1024,7 +1009,7 @@ function SidebarNavGroup({
   const expanded = open || holdsCurrentPage;
 
   return (
-    <div className="mb-2">
+    <div className="nav-section">
       <button
         aria-controls={regionId}
         aria-expanded={expanded}
@@ -1036,16 +1021,21 @@ function SidebarNavGroup({
         onClick={() => setOpen((prev) => !prev)}
         type="button"
       >
+        <GroupIcon aria-hidden className={cn("icon-sm", `text-${accent}`)} />
+
+        <span className="flex-grow-1 text-truncate">{label}</span>
+
+        {/*
+          The count sits between the label and the caret: a heading that
+          says how much is behind it is scannable without opening it.
+        */}
+        <span className="nav-section-count">{items.length}</span>
+
         <ChevronDown
           aria-hidden
-          className={cn(
-            "icon-sm flex-shrink-0",
-            `text-${accent}`,
-            expanded ? "rotate-180" : "",
-          )}
+          className={cn("icon-sm", expanded ? "rotate-180" : "")}
           style={{ transition: "transform 0.15s ease-in-out" }}
         />
-        <span className="flex-grow-1 text-truncate">{label}</span>
       </button>
 
       <div aria-labelledby={headingId} id={regionId}>
@@ -1216,6 +1206,7 @@ type NavGroupId =
   | "models"
   | "automation"
   | "extensions"
+  | "plugins"
   | "system";
 
 /** Bootstrap utility tint applied to a nav item's icon. */
@@ -1230,6 +1221,8 @@ type NavAccent =
 interface NavGroup {
   id: NavGroupId;
   label: string;
+  /** The section's own icon, so a heading is identifiable without its list. */
+  icon: ComponentType<{ className?: string }>;
   /**
    * The icon beside the heading, and each member's icon tint. A section
    * reads as a unit when its items share a colour, which is why this is
