@@ -307,6 +307,17 @@ export interface KanbanBoardProps {
 export function KanbanBoard({ columns, onMove, onOpenTask }: KanbanBoardProps) {
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [dropTarget, setDropTarget] = React.useState<KanbanStatus | null>(null);
+  const [scrolled, setScrolled] = React.useState(false);
+  const railRef = React.useRef<HTMLDivElement | null>(null);
+
+  // The left edge-fade is a lie when the rail is already at the start, so
+  // track it rather than painting it unconditionally.
+  const syncScrolled = React.useCallback(() => {
+    const rail = railRef.current;
+    if (rail) setScrolled(rail.scrollLeft > 2);
+  }, []);
+
+  React.useEffect(syncScrolled, [syncScrolled]);
 
   const handleDragStart = React.useCallback((event: React.DragEvent<HTMLElement>, task: KanbanTask) => {
     setDraggingId(task.id);
@@ -334,8 +345,8 @@ export function KanbanBoard({ columns, onMove, onOpenTask }: KanbanBoardProps) {
   );
 
   return (
-    <div className="kb-board">
-      <div className="kb-rail">
+    <div className="kb-board" data-scrolled={scrolled}>
+      <div className="kb-rail" onScroll={syncScrolled} ref={railRef}>
         {columns.map((column) => (
           <KanbanColumnView
             column={column}

@@ -21,8 +21,46 @@
   --kb-rail-height: min(72vh, 46rem);
   --kb-radius: 0.5rem;
 
+  position: relative;
   width: 100%;
   min-width: 0;
+}
+
+/*
+ * Scroll affordance. Eight columns do not fit a laptop viewport, and a
+ * board that silently clips its last four lanes reads as broken rather
+ * than as scrollable. A gradient pinned to the right edge fades the cut
+ * column out, which is the same "there is more" signal the column's own
+ * half-visible edge gives — just legible instead of accidental.
+ */
+.kb-board::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0.5rem;
+  width: 3rem;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--background-base, #041c1c) 85%);
+  opacity: 0.9;
+}
+
+/* Same on the left, shown only once the rail has been scrolled. */
+.kb-board::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0.5rem;
+  width: 2rem;
+  pointer-events: none;
+  background: linear-gradient(to right, var(--background-base, #041c1c) 15%, transparent);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.kb-board[data-scrolled="true"]::before {
+  opacity: 0.9;
 }
 
 /* The rail scrolls horizontally; the page itself does not, so eight
@@ -31,19 +69,28 @@
   display: flex;
   align-items: stretch;
   gap: var(--kb-column-gap);
+  /* A definite height is what makes the columns equal: with only
+     `align-items: stretch` and an auto-height parent each column
+     collapses to its own content and the board reads as ragged
+     rather than as a row of equal lanes. */
+  height: var(--kb-rail-height);
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
   scroll-snap-type: x proximity;
 }
 
 .kb-rail::-webkit-scrollbar {
-  height: 0.5rem;
+  height: 0.4rem;
 }
 
 .kb-rail::-webkit-scrollbar-thumb {
-  background: rgba(255, 230, 203, 0.18);
+  background: rgba(255, 230, 203, 0.22);
   border-radius: 999px;
+}
+
+.kb-rail::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 230, 203, 0.35);
 }
 
 .kb-rail::-webkit-scrollbar-track {
@@ -58,8 +105,10 @@
   flex: 0 0 var(--kb-column-width);
   display: flex;
   flex-direction: column;
+  /* Full height of the rail: Trello's columns are equal-height lanes,
+     and an empty lane still shows its drop target. */
+  height: 100%;
   min-height: 0;
-  max-height: var(--kb-rail-height);
   scroll-snap-align: start;
   background: rgba(255, 230, 203, 0.03);
   border: 1px solid transparent;
