@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { ComponentType, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -17,16 +17,16 @@ export function SkuStatTile({
   label,
   value,
 }: SkuStatTileProps) {
+  const cssVar = cssVarFor(accent);
+
   return (
     <div
-      className={cn(
-        "card h-100 sku-glass",
-        // The tint lives in the icon and a hairline on the tile's edge,
-        // not in a wash behind the whole card: a coloured background on
-        // every tile makes the page read as a colour chart rather than as
-        // numbers.
-        `border-start border-4 border-${accent}`,
-      )}
+      className="card h-100 sku-glass sku-tile"
+      // The tint goes to a custom property rather than to a utility class:
+      // one variable drives the gradient, the shadow and the hover, so the
+      // tile has a single source of colour instead of a hard rule, a
+      // background and an icon each choosing their own.
+      style={{ "--sku-accent": `var(--bs-${cssVar})` } as CSSProperties}
     >
       <div className="card-body d-flex flex-column gap-1">
         <div className="d-flex align-items-center justify-content-between gap-2">
@@ -83,4 +83,16 @@ export interface SkuStatTileProps {
   key: string;
   label: string;
   value: string | number;
+}
+
+/**
+ * The accent as a Bootstrap custom property.
+ *
+ * Every tint is a colour utility, so `--bs-${accent}` is right for six of
+ * the seven. `body` is the exception: Bootstrap has `--bs-body-color` and
+ * `--bs-body-bg` but no `--bs-body`, and a tint that resolves to nothing
+ * would fall back to the inherited value rather than fail visibly.
+ */
+function cssVarFor(accent: SkuAccent): string {
+  return accent === "body" ? "body-color" : accent;
 }

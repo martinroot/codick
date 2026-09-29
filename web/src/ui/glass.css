@@ -62,6 +62,59 @@
 }
 
 /*
+ * A headline tile.
+ *
+ * An earlier version marked each tile with a four-pixel rule in its own
+ * colour. Seven of them read as a set of highlighter pens rather than as
+ * numbers: saturated, hard-edged, and competing with the figures inside.
+ *
+ * What carries the tint now is a gradient behind the surface, falling off
+ * well before the far edge so the tile still reads as one pane rather than
+ * as two. The accent arrives in the icon at full strength and everywhere
+ * else at a fraction of it. The shadow is layered and wide — a tight shadow
+ * reads as a pressed edge, a broad faint one as a surface lifted off the
+ * page.
+ */
+.sku-tile {
+  position: relative;
+  border: 0;
+  background-image:
+    radial-gradient(
+      120% 100% at 0% 0%,
+      color-mix(in srgb, var(--sku-accent) 9%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, #fff 42%, transparent),
+      transparent 38%
+    );
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--bs-body-color) 6%, transparent),
+    0 8px 20px -10px color-mix(in srgb, var(--bs-body-color) 22%, transparent),
+    0 18px 44px -26px color-mix(in srgb, var(--bs-body-color) 26%, transparent);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.sku-tile:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px color-mix(in srgb, var(--bs-body-color) 7%, transparent),
+    0 14px 30px -12px color-mix(in srgb, var(--bs-body-color) 26%, transparent),
+    0 26px 56px -28px color-mix(in srgb, var(--bs-body-color) 30%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sku-tile,
+  .sku-tile:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+/*
  * The specular edge. A one-pixel highlight along the top border is what
  * a real pane of glass catches from the light source; without it the
  * card is translucent but still flat.

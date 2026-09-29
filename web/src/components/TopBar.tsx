@@ -1,4 +1,4 @@
-import { NavLink } from "react-router";
+import { Link, NavLink } from "react-router";
 import { ChevronDown, Settings } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -23,23 +23,25 @@ export function TopBar({ status }: TopBarProps) {
     <div className="z-1 flex-shrink-0 bg-body-tertiary border-bottom px-3 py-2">
       <div className="d-flex align-items-center gap-3">
         {/*
-          The wordmark. The gradient is built from Bootstrap's own theme
-          colours, so it follows the colour mode and introduces no colour
-          the framework does not already have — it is a treatment, not a
-          new palette. `background-clip: text` is what actually paints the
-          letters; the fill colour behind them is only the fallback for a
-          browser that will not clip.
+          The mark, as the artwork rather than as letters set in the
+          interface font. The wordmark spelled it out, but the fox is what
+          the README and the favicon carry, and a header that names the
+          product differently from every other place it appears is the one
+          that looks borrowed.
         */}
-        {/*
-          Two tones, not a gradient: "WEB" in the muted secondary colour
-          and "HERMES" in the primary, so the product reads as two words
-          rather than as one painted blob. The heavier weight and the
-          wide tracking are what make it a wordmark at this size.
-        */}
-        <span className="hermes-wordmark">
-          <span className="hermes-wordmark-dim">Co</span>
-          <span>Dick</span>
-        </span>
+        <Link
+          className="d-inline-flex align-items-center gap-2 text-decoration-none"
+          to="/"
+        >
+          <img
+            alt=""
+            className="codick-mark"
+            height={30}
+            src="/codick-mark.png"
+            width={30}
+          />
+          <span className="hermes-wordmark fw-bold">CoDick</span>
+        </Link>
 
         <div className="ms-auto d-flex align-items-center gap-2">
           <StatusDropdown status={status} />
