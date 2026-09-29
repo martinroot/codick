@@ -2,127 +2,125 @@
   <img src="assets/codick-logo.png" alt="CoDick" width="420">
 </p>
 
+<h1 align="center">CoDick</h1>
+
+<p align="center"><strong>Wake servers. Command workers. Deploy workflows.</strong></p>
+
 <p align="center">
-  <b>A web dashboard for Hermes Agent, rebuilt on Bootstrap 5.</b>
+  An independent, community-built interface for <a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a>.
+  Today: a Bootstrap-powered dashboard. Next: a server fleet, visual pipelines, and an open marketplace of deployable agent workflows.
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License: MIT"></a>
-  <a href="https://github.com/NousResearch/hermes-agent"><img src="https://img.shields.io/badge/Agent%20by-Nous%20Research-blueviolet?style=flat-square" alt="Agent by Nous Research"></a>
-  <a href="https://hermes-agent.nousresearch.com/docs/"><img src="https://img.shields.io/badge/Docs-upstream-FFD700?style=flat-square" alt="Documentation"></a>
-  <img src="https://img.shields.io/badge/UI-Bootstrap%205.3-7952b3?style=flat-square" alt="Bootstrap 5.3">
+  <a href="#what-works-today">What works</a> ·
+  <a href="#the-roadmap">Roadmap</a> ·
+  <a href="#agent-marketplace-preview">Marketplace preview</a> ·
+  <a href="#join-the-build">Join the build</a>
 </p>
 
----
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-182235?style=flat-square" alt="MIT license"></a>
+  <a href="#what-works-today"><img src="https://img.shields.io/badge/Now-Bootstrap%20dashboard-7952B3?style=flat-square" alt="Bootstrap dashboard available"></a>
+  <a href="#the-roadmap"><img src="https://img.shields.io/badge/Next-Fleet%20%2B%20Workflows-FF344C?style=flat-square" alt="Fleet and workflows planned"></a>
+</p>
 
-> ### Not an official Nous Research product
->
-> CoDick is an independent project built on
-> [Hermes Agent](https://github.com/NousResearch/hermes-agent) by
-> [Nous Research](https://nousresearch.com). It is not affiliated with, endorsed
-> by, or supported by Nous Research.
->
-> The agent — CLI, gateway, TUI, tools — is upstream's and is used unmodified.
-> **This repository's work is the web interface.** The upstream `LICENSE`, MIT
-> `Copyright (c) 2025 Nous Research`, is retained byte for byte, as the licence
-> requires.
->
-> Bugs, security reports and support for the *agent* belong
-> [upstream](https://github.com/NousResearch/hermes-agent/issues).
+> **Independent project.** CoDick is built on Hermes Agent by Nous Research. It is not an official Nous Research product and is not affiliated with, endorsed by, or supported by Nous Research. The upstream MIT license and its copyright notice are retained. See [Credits and license](#credits-and-license).
 
-<img src="assets/codick-dashboard.png" alt="The CoDick dashboard" width="100%">
+## What works today
 
-## What this project is
+![The CoDick dashboard](assets/codick-dashboard.png)
 
-Hermes Agent ships a web dashboard. CoDick replaces that interface — not a
-reskin of it, a rebuild. Tailwind and the previous component library are
-**removed**, not reconfigured, and every surface, control and colour comes from
-Bootstrap's own palette.
+**The web dashboard has been migrated to Bootstrap 5.3.** This is the current implemented scope of CoDick. The existing Hermes agent, gateway, CLI, tools, and execution model remain upstream. Fleet enrollment, one-click server setup, the workflow builder, and the marketplace described below are **planned**, not shipped features.
 
-| | |
-|---|---|
-| **Dashboard at `/`** | Gateway state, sessions, models, tokens, spend, per-minute activity and token composition on one screen |
-| **A shell that is only navigation** | Grouped, collapsible sections; identity, status and settings in one strip across the top |
-| **Light by default** | Bootstrap's own light mode, set explicitly so the user's `prefers-color-scheme` cannot decide it |
-| **Charts in SVG** | Reading Bootstrap's variables, so they follow the colour mode instead of importing a chart library's |
+The current dashboard work includes a rebuilt navigation shell, Bootstrap-based components and color modes, an overview of gateway and session activity, and SVG charts backed by existing Hermes APIs. The UI is developed in `web/`; the Python backend serves its built assets from `hermes_cli/web_dist`.
 
-Everything on the dashboard is read from an API that already existed — the
-status poll, the session stats, the usage analytics — settled independently, so
-one failing endpoint leaves a partial dashboard rather than a blank page. The
-per-minute track is bucketed from session timestamps: an idle system draws a
-flat line and says so, rather than showing a plausible curve.
+This repository is where that work lands. The public fork that carries its full commit history remains at [martinroot/hermes-multiserver-web-bootstrap](https://github.com/martinroot/hermes-multiserver-web-bootstrap). Expect changes while the interface settles.
 
-The Bootstrap migration that produced this was carried out on a fork, which
-stays public so the progression of that work remains visible:
-[martinroot/hermes-multiserver-web-bootstrap](https://github.com/martinroot/hermes-multiserver-web-bootstrap).
+## The roadmap
 
-## Running it
+The intended path is deliberately simple for the user: **connect a server → wake it → assemble a workflow → watch agents work**.
 
-The agent is installed and updated exactly as upstream documents — CoDick does
-not replace the installer, and the CLI is still `hermes`:
+| Stage | Status | Intended experience |
+| --- | --- | --- |
+| Bootstrap dashboard | **Available now** | A clearer web surface for managing a Hermes installation. |
+| Easy WakeUP | **Planned** | Add a server, establish SSH access, set up the runtime, and bring the node online from a guided flow. |
+| Server Fleet & Workers | **Planned** | See multiple servers, their agents, health, capacity, and activity in one place. |
+| Kanban Pipelines | **Planned** | Build reusable multi-step workflows with dependencies, reviews, retries, artifacts, and human checkpoints. |
+| Agent Marketplace | **Exploration** | Discover, inspect, install, run, and eventually publish portable agent workflows. |
 
-```bash
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
-```
+These are product directions, not release dates or commitments. Each stage needs a working end-to-end demo before it is marked available.
 
-Then, from a checkout of this repository:
+### Easy WakeUP
 
-```bash
-hermes dashboard
-```
+![Easy WakeUP concept](assets/covers/easy-wakeup.webp)
 
-The interface is built from `web/`; the backend serves the built assets from
-`hermes_cli/web_dist`. To work on the interface itself:
+The goal: turn a clean server into a connected Hermes worker through a guided flow. SSH is the enrollment path; the long-running fleet connection and credentials model still need design and implementation. The first demo should prove the whole journey from a fresh machine to a visible, healthy node.
+
+### Server Fleet & Workers
+
+![Server Fleet and Workers concept](assets/covers/server-fleet-workers.webp)
+
+One operator view across machines: which nodes are online, which profiles and workers they host, what each worker is doing, and where intervention is needed. A fleet view is useful only when actions and results are actually tied to the correct server.
+
+### Kanban Pipelines
+
+![Kanban Pipelines concept](assets/covers/kanban-pipelines.webp)
+
+The ambition is a Trello-like visual layer for serious agent work: stages, assignees, dependencies, review loops, execution history, and deliverables. Hermes already has a [Kanban task model](https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban); CoDick aims to make complex workflows easier to assemble and operate, including across a future fleet.
+
+## Agent marketplace preview
+
+![Agent Marketplace concept](assets/covers/agent-marketplace.webp)
+
+**Don't hire a chatbot. Deploy a workflow.**
+
+The marketplace idea is to share *reproducible outcomes*: the required inputs and access, the steps and agent roles, the models and tools, the approval points, and the artifacts a user should receive. A listing should tell you what it does, what it may change, and what it takes to run. Marketplace installation, publishing, payments, and the listings below are **concepts**, not current product capabilities.
+
+| Build & ship | Servers & operations | Creative & documents | Business & research |
+| --- | --- | --- | --- |
+| Web Agency | Nginx WakeUP | PDF Surgeon | Research Desk |
+| Landing Page Sprint | Minecraft over SSH | Brand Designer | Data Parser |
+| UI Redesign | VPN Backend | Product Card Studio | Bookkeeping Assistant |
+| Code Reviewer | Docker Deploy | SEO Workshop | Contract Reviewer |
+| Bug Hunter | Server Doctor | Video Editor | Legal Draft Assistant |
+| API Builder | Backup Guardian | Audio to Text | Auto Diagnostic Guide |
+| Test Engineer | Migration Crew | Image Editor | Customer Concierge |
+| Release Captain | Uptime Watcher | Translation Desk | CRM Cleanup |
+
+**Example: Web Agency** could move from brief and review to design, frontend, backend, QA, and delivery, with a person approving key handoffs. **Minecraft over SSH** could gather server requirements, provision a host, install and configure the game server, run checks, and hand back access and operational notes. These are proposed workflows; the contracts and tests still need to be built.
+
+For legal, accounting, and vehicle diagnostics, the intended role is to organize evidence and prepare drafts or checks for qualified human review, not to make final professional decisions on a user's behalf.
+
+## Build from source
+
+This is a fork of Hermes Agent, not a separate agent runtime. Follow the [upstream development setup](https://hermes-agent.nousresearch.com/docs/developer-guide/contributing) to prepare a working checkout. In that checkout, the web workspace can be built with:
 
 ```bash
 npm install --workspace web
 npm run build --workspace web
 ```
 
-Full agent documentation — providers, channels, skills, scheduled jobs — is
-upstream's, and unchanged:
-[hermes-agent.nousresearch.com/docs](https://hermes-agent.nousresearch.com/docs/).
-
-## About the agent
-
-**Hermes Agent is by [Nous Research](https://nousresearch.com)** — a
-self-improving AI agent with a built-in learning loop: it creates skills from
-experience, improves them during use, searches its own past conversations, and
-builds a deepening model of who you are across sessions. It runs on a $5 VPS, a
-GPU cluster, or serverless infrastructure that costs nearly nothing when idle.
-
-Use any model you want — [Nous Portal](https://portal.nousresearch.com),
-OpenRouter, OpenAI, your own endpoint, and
-[many others](https://hermes-agent.nousresearch.com/docs/integrations/providers).
-Switch with `hermes model`: no code changes, no lock-in.
-
-| | |
-|---|---|
-| **A real terminal interface** | Full TUI with multiline editing, slash-command autocomplete, conversation history, interrupt-and-redirect, streaming tool output |
-| **Lives where you do** | Telegram, Discord, Slack, WhatsApp, Signal and CLI from a single gateway process |
-| **A closed learning loop** | Agent-curated memory with periodic nudges, autonomous skill creation, FTS5 session search with LLM summarisation |
-| **Scheduled automations** | Built-in cron scheduler with delivery to any platform, in natural language |
-| **Delegates and parallelizes** | Spawns isolated subagents for parallel workstreams |
-| **Runs anywhere** | Local, Docker, SSH, Singularity, Modal, Daytona, Vercel Sandbox |
-
-## Project layout
+Then launch `hermes dashboard` from the configured development installation. The [upstream installer](https://hermes-agent.nousresearch.com/docs/getting-started/installation) installs upstream Hermes; running it alone does **not** install CoDick's dashboard changes.
 
 ```
-web/            the interface — React, Vite, Bootstrap 5.3
-hermes_cli/     upstream's Python package; web_server.py serves the built assets
-apps/           upstream's desktop client
-plugins/        upstream's bundled plugins
+web/            React, Vite, Bootstrap dashboard
+hermes_cli/     Hermes Python package and web backend
+apps/           upstream desktop application
+plugins/        upstream bundled plugins
 ```
 
-## Credits
+## Join the build
 
-This project was built on the generosity of
-[OpenRouter](https://openrouter.ai/stealth/space-bunny-alpha): the work above —
-several thousand class replacements, a shell rebuilt, a dashboard written — ran
-on `stealth/space-bunny-alpha` with the unlimited tokens of the *Boost skill day*
-programme. Were that the norm rather than the occasion, the open-source market
-would move a good deal faster.
+Star or watch this repository to follow progress. If you run Hermes on more than one server, share the workflow that hurts most today. Real deployment stories will shape the first fleet demo.
 
-The agent is by [Nous Research](https://nousresearch.com) and remains under its
-original MIT licence, `Copyright (c) 2025 Nous Research`, retained unchanged.
-CoDick's modifications are the work of this repository's contributors.
+Contributions are welcome: dashboard polish, accessibility, onboarding design, fleet protocols, workflow definitions, documentation, and reproducible test cases. Open an [issue](https://github.com/martinroot/codick/issues) with a focused proposal or a small pull request. Please distinguish implemented behavior from roadmap ideas in contributions and screenshots.
+
+The first milestone worth celebrating is concrete: **fresh server → guided enrollment → visible worker → assigned task → observable result**.
+
+## Credits and license
+
+This project was born out of the generosity of [OpenRouter](https://openrouter.ai/stealth/space-bunny-alpha). The work behind it — a large UI migration, done commit by commit — ran on `stealth/space-bunny-alpha` with the unlimited tokens of the Boost skill day programme. Were that the norm rather than the occasion, the open-source market would move a good deal faster.
+
+[Hermes Agent](https://github.com/NousResearch/hermes-agent) is developed by [Nous Research](https://nousresearch.com). Its CLI, gateway, agent tools, and core runtime are the upstream project's work. CoDick's current contribution is the Bootstrap web dashboard; its future fleet and marketplace ideas are independent plans.
+
+The original [MIT license](LICENSE), including `Copyright (c) 2025 Nous Research`, is retained. CoDick modifications are the work of this repository's contributors.
