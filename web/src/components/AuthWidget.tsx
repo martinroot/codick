@@ -91,7 +91,7 @@ export function AuthWidget({ className }: AuthWidgetProps) {
     return (
       <div
         className={cn(
-          "d-flex flex-column gap-1 px-5 py-2 text-[0.65rem] tracking-[0.05em] text-muted-foreground/70",
+          "d-flex flex-column gap-1 px-5 py-2 text-[0.65rem] tracking-[0.05em] text-body-secondary/70",
           className,
         )}
         role="status"
@@ -114,7 +114,7 @@ export function AuthWidget({ className }: AuthWidgetProps) {
     return (
       <div
         className={cn(
-          "h-9 px-5 py-2 text-[0.65rem] text-muted-foreground/40",
+          "h-9 px-5 py-2 text-[0.65rem] text-body-secondary/40",
           className,
         )}
         aria-busy="true"
@@ -149,7 +149,7 @@ export function AuthWidget({ className }: AuthWidgetProps) {
         <span className="text-truncate font-monospace text-foreground/90" title={me.user_id}>
           {label}
         </span>
-        <span className="text-truncate text-muted-foreground/70">
+        <span className="text-truncate text-body-secondary/70">
           via {me.provider}
         </span>
       </div>
@@ -157,7 +157,7 @@ export function AuthWidget({ className }: AuthWidgetProps) {
         type="button"
         onClick={handleLogout}
         className={cn(
-          "flex-shrink-0 rounded p-2 text-muted-foreground/70",
+          "flex-shrink-0 rounded p-2 text-body-secondary/70",
           "transition hover:bg-current/10 hover:text-foreground",
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-current/40",
         )}

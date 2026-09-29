@@ -1200,7 +1200,7 @@ function SidebarTooltip({ anchor, label, warmRef }: SidebarTooltipProps) {
   return createPortal(
     <span
       className={cn(
-        "position-fixed z-[100] pointer-events-none",
+        "position-fixed z-3 pointer-events-none",
         "px-2 py-1",
         "bg-body border border-current/20 shadow-lg",
         "font-sans fw-semibold fs-6 tracking-[0.1em] text-body text-uppercase",

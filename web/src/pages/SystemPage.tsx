@@ -167,7 +167,7 @@ function ActionLogViewer({
             <X />
           </Button>
         </div>
-        <pre className="max-h-72 overflow-auto text-wrap text-break bg-background/50 border border-secondary p-3 fs-6 font-monospace text-body-secondary">
+        <pre className="max-h-72 overflow-auto text-wrap text-break sku-backdrop border border-secondary p-3 fs-6 font-monospace text-body-secondary">
           {lines.length ? lines.join("\n") : "Starting…"}
         </pre>
       </CardContent>
@@ -789,12 +789,12 @@ export default function SystemPage() {
       {hookModalOpen && (
         <div
           ref={hookModalRef}
-          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
           onClick={(e) => e.target === e.currentTarget && setHookModalOpen(false)}
           role="dialog"
           aria-modal="true"
         >
-          <div className={cn(themedBody, "position-relative w-100 max-w-lg border border-secondary bg-card shadow-2xl d-flex flex-column")}>
+          <div className={cn(themedBody, "position-relative w-100 max-w-lg border border-secondary bg-body shadow-lg d-flex flex-column")}>
             <Button
               ghost
               size="icon"
@@ -1288,7 +1288,7 @@ export default function SystemPage() {
                   {prov.provider}
                 </span>
                 {prov.entries.map((entry) => (
-                  <div key={`${prov.provider}-${entry.index}`} className="d-flex align-items-center gap-3 border border-secondary bg-background/40 px-3 py-2">
+                  <div key={`${prov.provider}-${entry.index}`} className="d-flex align-items-center gap-3 border border-secondary sku-backdrop px-3 py-2">
                     <span className="fs-6 fw-medium">{entry.label}</span>
                     <span className="font-monospace fs-6 text-body-secondary">{entry.token_preview}</span>
                     <Badge tone="outline">{entry.auth_type}</Badge>
@@ -1544,7 +1544,7 @@ export default function SystemPage() {
                 {Object.entries(shareResult.urls).map(([label, url]) => (
                   <div
                     key={label}
-                    className="d-flex align-items-center gap-2 bg-background/50 border border-secondary px-3 py-2"
+                    className="d-flex align-items-center gap-2 sku-backdrop border border-secondary px-3 py-2"
                   >
                     <Link2 className="icon-sm flex-shrink-0 text-body-secondary" />
                     <span className="font-monospace fs-6 flex-shrink-0 w-24 text-truncate text-body-secondary">

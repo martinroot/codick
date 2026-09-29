@@ -220,13 +220,13 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
 
   return (
     <div
-      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
       onClick={handleBackdrop}
       role="dialog"
       aria-modal="true"
       aria-labelledby="oauth-modal-title"
     >
-      <div className={cn(themedBody, "position-relative w-100 max-w-md border border-secondary bg-card shadow-2xl")}>
+      <div className={cn(themedBody, "position-relative w-100 max-w-md border border-secondary bg-body shadow-lg")}>
         <Button
           ghost
           size="icon"

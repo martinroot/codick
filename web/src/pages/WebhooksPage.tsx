@@ -303,13 +303,13 @@ export default function WebhooksPage() {
       {createModalOpen && (
         <div
           ref={createModalRef}
-          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
           onClick={(e) => e.target === e.currentTarget && closeCreateModal()}
           role="dialog"
           aria-modal="true"
           aria-labelledby="create-webhook-title"
         >
-          <div className={cn(themedBody, "position-relative w-100 max-w-lg border border-secondary bg-card shadow-2xl d-flex flex-column max-h-[90vh] overflow-y-auto")}>
+          <div className={cn(themedBody, "position-relative w-100 max-w-lg border border-secondary bg-body shadow-lg d-flex flex-column max-h-[90vh] overflow-y-auto")}>
             <Button
               ghost
               size="icon"
@@ -338,7 +338,7 @@ export default function WebhooksPage() {
 
                 <div className="d-grid gap-2">
                   <Label>Webhook URL</Label>
-                  <div className="d-flex align-items-center gap-2 border border-secondary bg-background/40 px-3 py-2">
+                  <div className="d-flex align-items-center gap-2 border border-secondary sku-backdrop px-3 py-2">
                     <span className="flex-grow-1 min-w-0 text-truncate font-monospace fs-6">
                       {created.url}
                     </span>
@@ -436,7 +436,7 @@ export default function WebhooksPage() {
                   <Label htmlFor="webhook-prompt">Prompt</Label>
                   <textarea
                     id="webhook-prompt"
-                    className="d-flex min-h-[80px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+                    className="d-flex min-h-[80px] w-100 border border-secondary sku-backdrop px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
                     placeholder="Instructions for the agent when this webhook fires (optional)"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}

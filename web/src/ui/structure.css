@@ -315,3 +315,17 @@
 [data-bs-theme="dark"] .codick-logo-invert {
   display: block;
 }
+
+/*
+ * The dimming layer behind a modal or drawer.
+ *
+ * Seventeen dialogs want "the page behind me, dimmed, tinted with the
+ * current colour mode". Bootstrap ships no background-opacity utility, and
+ * writing `bg-body` there would be opaque -- the point is to see the page
+ * through it. Mixing against the body colour keeps the backdrop in step
+ * with light and dark rather than pinning it to a grey that reads wrong
+ * in one of them.
+ */
+.sku-backdrop {
+  background-color: color-mix(in srgb, var(--bs-body-color) 55%, transparent);
+}

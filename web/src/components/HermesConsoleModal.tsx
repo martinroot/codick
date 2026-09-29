@@ -502,7 +502,7 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
   return createPortal(
     <div
       ref={modalRef}
-      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-3 sm:p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-3 sm:p-4"
       onClick={(event) => event.target === event.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
@@ -511,11 +511,11 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
       <div
         className={cn(
           themedBody,
-          "position-relative d-flex h-[min(82dvh,760px)] w-100 max-w-5xl flex-column border border-secondary bg-card shadow-2xl",
+          "position-relative d-flex h-[min(82dvh,760px)] w-100 max-w-5xl flex-column border border-secondary bg-body shadow-lg",
         )}
       >
         <header className="d-flex min-h-14 align-items-center gap-3 border-bottom border-secondary px-4 py-3">
-          <div className="d-flex h-9 w-9 align-items-center justify-content-center border border-secondary bg-background/60 text-primary">
+          <div className="d-flex h-9 w-9 align-items-center justify-content-center border border-secondary sku-backdrop text-primary">
             <Terminal className="icon-md" />
           </div>
           <div className="min-w-0 flex-grow-1">

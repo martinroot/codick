@@ -108,12 +108,12 @@ function NameCheckboxPicker({
   return (
     <div
       id={id}
-      className="max-h-36 overflow-y-auto border border-secondary bg-background/40 p-1"
+      className="max-h-36 overflow-y-auto border border-secondary sku-backdrop p-1"
     >
       {all.map((item) => (
         <label
           key={item.name}
-          className="d-flex cursor-pointer align-items-center gap-2 px-2 py-1 fs-6 hover:bg-muted/40"
+          className="d-flex cursor-pointer align-items-center gap-2 px-2 py-1 fs-6 hover:bg-tertiary-subtle"
           title={item.description || undefined}
         >
           <input
@@ -221,7 +221,7 @@ function CronAdvancedFields({
   const models = selectedProvider?.models ?? [];
 
   return (
-    <details className="border border-secondary bg-background/30 p-3" open>
+    <details className="border border-secondary sku-backdrop p-3" open>
       <summary className="cursor-pointer fs-6 fw-medium text-uppercase ls-wide text-body-secondary">
         Advanced fields
       </summary>
@@ -315,7 +315,7 @@ function CronAdvancedFields({
             <Label htmlFor={`${idPrefix}-context-from`}>context_from job IDs</Label>
             <textarea
               id={`${idPrefix}-context-from`}
-              className="d-flex min-h-[64px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+              className="d-flex min-h-[64px] w-100 border border-secondary sku-backdrop px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
               placeholder="one job id per line"
               value={form.context_from}
               onChange={(e) => update("context_from", e.target.value)}
@@ -392,7 +392,7 @@ function CronJobFormFields({
         <Label htmlFor={`${idPrefix}-prompt`}>{t.cron.prompt}</Label>
         <textarea
           id={`${idPrefix}-prompt`}
-          className="d-flex min-h-[80px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+          className="d-flex min-h-[80px] w-100 border border-secondary sku-backdrop px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
           placeholder={t.cron.promptPlaceholder}
           value={form.prompt}
           onChange={(e) => update("prompt", e.target.value)}
@@ -945,13 +945,13 @@ export default function CronPage() {
       {createModalOpen && (
         <div
           ref={createModalRef}
-          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
           onClick={(e) => e.target === e.currentTarget && setCreateModalOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="create-cron-title"
         >
-          <div className={cn(themedBody, "position-relative w-100 max-w-3xl max-h-[90vh] border border-secondary bg-card shadow-2xl d-flex flex-column")}>
+          <div className={cn(themedBody, "position-relative w-100 max-w-3xl max-h-[90vh] border border-secondary bg-body shadow-lg d-flex flex-column")}>
             <Button
               ghost
               size="icon"
@@ -1020,13 +1020,13 @@ export default function CronPage() {
       {editJob && (
         <div
           ref={editModalRef}
-          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
           onClick={(e) => e.target === e.currentTarget && setEditJob(null)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-cron-title"
         >
-          <div className={cn(themedBody, "position-relative w-100 max-w-3xl max-h-[90vh] border border-secondary bg-card shadow-2xl d-flex flex-column")}>
+          <div className={cn(themedBody, "position-relative w-100 max-w-3xl max-h-[90vh] border border-secondary bg-body shadow-lg d-flex flex-column")}>
             <Button
               ghost
               size="icon"

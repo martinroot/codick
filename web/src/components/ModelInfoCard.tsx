@@ -49,7 +49,7 @@ export function ModelInfoCard({
   const hasCaps = caps && Object.keys(caps).length > 0;
 
   return (
-    <div className="border border-border/60 bg-muted/30 px-3 py-2.5 stack-2">
+    <div className="border border-body-tertiary bg-tertiary-subtle px-3 py-2.5 stack-2">
       <div className="d-flex align-items-center gap-4 fs-6">
         <div className="d-flex align-items-center gap-2 text-body-secondary">
           <Gauge className="icon-sm" />
@@ -101,7 +101,7 @@ export function ModelInfoCard({
             </span>
           )}
           {caps.model_family && (
-            <span className="d-inline-flex align-items-center gap-1 bg-muted px-2 py-0.5 fs-6 fw-medium text-body-secondary">
+            <span className="d-inline-flex align-items-center gap-1 bg-tertiary px-2 py-0.5 fs-6 fw-medium text-body-secondary">
               {caps.model_family}
             </span>
           )}

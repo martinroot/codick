@@ -215,7 +215,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
 
   return createPortal(
     <div
-      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -223,7 +223,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
       <div
         className={cn(
           themedBody,
-          "position-relative w-100 max-w-2xl max-h-[85vh] border border-secondary bg-card shadow-2xl d-flex flex-column",
+          "position-relative w-100 max-w-2xl max-h-[85vh] border border-secondary bg-body shadow-lg d-flex flex-column",
         )}
       >
         <Button
@@ -437,7 +437,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
           {/* Post-setup live log */}
           {(postSetupRunning || postSetupLog.length > 0) && (
             <div className="border border-secondary">
-              <div className="d-flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary bg-muted/30">
+              <div className="d-flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary bg-tertiary-subtle">
                 <Terminal className="icon-sm text-body-secondary" />
                 <span className="fs-6 font-monospace text-body-secondary">
                   post-setup: {postSetupKey}

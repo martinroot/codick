@@ -130,7 +130,7 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
               "min-w-[240px] max-h-[70dvh] overflow-y-auto",
               "border border-secondary bg-body",
               "shadow-[0_12px_32px_-8px_rgba(0,0,0,0.6)]",
-              dropUp ? "position-fixed z-[100]" : "position-absolute z-50 right-0 top-full mt-1",
+              dropUp ? "position-fixed z-3" : "position-absolute z-50 right-0 top-full mt-1",
             )}
             role="listbox"
             style={

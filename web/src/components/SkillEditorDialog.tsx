@@ -183,7 +183,7 @@ function EditorBody({
             <textarea
               id="skill-editor-content"
               spellCheck={false}
-              className="min-h-[320px] max-h-[55vh] w-100 resize-y border border-secondary bg-background/40 px-3 py-2 font-monospace fs-6 leading-relaxed shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+              className="min-h-[320px] max-h-[55vh] w-100 resize-y border border-secondary sku-backdrop px-3 py-2 font-monospace fs-6 leading-relaxed shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
               value={content}
               onChange={(e) => setContent(e.target.value)}
             />

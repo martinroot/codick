@@ -173,7 +173,7 @@ function EnvVarRow({
   // Non-compact unset row
   if (!info.is_set && !isEditing) {
     return (
-      <div className="d-flex align-items-center justify-content-between gap-3 border border-border/50 px-4 py-2.5 min-w-0 overflow-hidden text-body-secondary hover:text-foreground transition">
+      <div className="d-flex align-items-center justify-content-between gap-3 border border-body-tertiary px-4 py-2.5 min-w-0 overflow-hidden text-body-secondary hover:text-foreground transition">
         <div className="d-flex align-items-center gap-3 min-w-0">
           <Label className="font-monospace fs-6">
             {varKey}
@@ -247,7 +247,7 @@ function EnvVarRow({
       {!isEditing && (
         <div className="d-flex align-items-center gap-2">
           <div
-            className={`flex-grow-1 border border-secondary px-3 py-2 font-monospace fs-6 ${ isRevealed ? "bg-background text-body-emphasis select-all" : "bg-muted/30 text-muted-foreground" }`}
+            className={`flex-grow-1 border border-secondary px-3 py-2 font-monospace fs-6 ${ isRevealed ? "bg-background text-body-emphasis select-all" : "bg-tertiary-subtle text-body-secondary" }`}
           >
             {info.is_set ? displayValue : "---"}
           </div>
@@ -541,7 +541,7 @@ function CustomKeysCard({
 
   return (
     <Card id="section-custom">
-      <CardHeader className="border-bottom border-secondary bg-card">
+      <CardHeader className="border-bottom border-secondary bg-body">
         <div className="d-flex align-items-center gap-2">
           <KeyRound className="icon-lg text-body-secondary" />
           <CardTitle className="fs-6">{t.env.customTitle}</CardTitle>
@@ -666,7 +666,7 @@ export default function EnvPage() {
             key={s.id}
             type="button"
             onClick={() => scrollTo(s.id)}
-            className="flex-shrink-0 cursor-pointer px-2 py-0.5 fw-semibold fs-6 ls-wide text-body-secondary hover:text-foreground border border-border/50 hover:border-foreground/30 transition"
+            className="flex-shrink-0 cursor-pointer px-2 py-0.5 fw-semibold fs-6 ls-wide text-body-secondary hover:text-foreground border border-body-tertiary hover:border-foreground/30 transition"
           >
             {s.label}
           </button>
@@ -933,7 +933,7 @@ export default function EnvPage() {
       </div>
 
       <Card id="section-providers">
-        <CardHeader className="border-bottom border-secondary bg-card">
+        <CardHeader className="border-bottom border-secondary bg-body">
           <div className="d-flex align-items-center gap-2">
             <Zap className="icon-lg text-body-secondary" />
             <CardTitle className="fs-6">{t.env.llmProviders}</CardTitle>
@@ -1056,7 +1056,7 @@ function EnvCategoryCard({
   return (
     <Card id={`section-${section.category}`}>
       <CardHeader
-        className={`bg-card${hasContent ? " border-bottom border-border" : ""}`}
+        className={`bg-body${hasContent ? "border-bottom border-body-tertiary" : ""}`}
       >
         <div className="d-flex align-items-center justify-content-between gap-3">
           <div className="d-flex min-w-0 align-items-center gap-2">

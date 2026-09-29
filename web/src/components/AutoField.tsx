@@ -160,7 +160,7 @@ export function AutoField({
         <Label className="fs-6">{label}</Label>
         <FieldHint schema={schema} schemaKey={schemaKey} />
         <textarea
-          className="d-flex min-h-[80px] w-100 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="d-flex min-h-[80px] w-100 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           value={String(value ?? "")}
           onChange={(e) => onChange(e.target.value)}
         />

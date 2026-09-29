@@ -198,7 +198,7 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
           <input
             id="cron-once-at"
             type="datetime-local"
-            className="d-flex h-9 w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+            className="d-flex h-9 w-100 border border-secondary sku-backdrop px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
             value={value.onceAt}
             onChange={(e) => update({ onceAt: e.target.value })}
           />
@@ -250,7 +250,7 @@ function TimeOfDayField({
       <input
         id={id}
         type="time"
-        className="d-flex h-9 w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+        className="d-flex h-9 w-100 border border-secondary sku-backdrop px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

@@ -404,7 +404,7 @@ export default function SkillsPage() {
       <div className="d-flex flex-column sm:flex-row sm:items-start gap-4">
         <aside aria-label={t.skills.title} className="sm:w-56 sm:shrink-0">
           <div className="sm:sticky sm:top-0">
-            <div className="d-flex flex-column rounded-0 border border-secondary bg-muted/20">
+            <div className="d-flex flex-column rounded-0 border border-secondary bg-tertiary-subtle">
               <div className="d-none sm:flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary">
                 <Filter className="icon-sm text-body-tertiary" />
                 <span className="fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
@@ -768,7 +768,7 @@ function SkillRow({
   noDescriptionLabel,
 }: SkillRowProps) {
   return (
-    <div className="group d-flex align-items-start gap-3 px-3 py-2.5 transition hover:bg-muted/40">
+    <div className="group d-flex align-items-start gap-3 px-3 py-2.5 transition hover:bg-tertiary-subtle">
       <div className="pt-0.5 flex-shrink-0">
         <Switch
           checked={skill.enabled}
@@ -779,7 +779,7 @@ function SkillRow({
       <div className="flex-grow-1 min-w-0">
         <div className="d-flex align-items-center gap-2 mb-1">
           <span
-            className={`font-monospace fs-6 ${ skill.enabled ? "text-foreground" : "text-muted-foreground" }`}
+            className={`font-monospace fs-6 ${ skill.enabled ? "text-foreground" : "text-body-secondary" }`}
           >
             {skill.name}
           </span>
@@ -1089,7 +1089,7 @@ function HubBrowser({
                 </Button>
               )}
             </div>
-            <pre className="max-h-48 overflow-auto text-wrap text-break bg-background/50 border border-secondary p-2 fs-6 font-monospace text-body-secondary">
+            <pre className="max-h-48 overflow-auto text-wrap text-break sku-backdrop border border-secondary p-2 fs-6 font-monospace text-body-secondary">
               {actionLog.length ? actionLog.join("\n") : "Starting…"}
             </pre>
           </CardContent>
@@ -1290,7 +1290,7 @@ function HubResultCard({
 }) {
   const trust = trustVisual(result.trust_level);
   return (
-    <Card className="rounded-0 transition hover:bg-muted/30">
+    <Card className="rounded-0 transition hover:bg-tertiary-subtle">
       <CardContent className="py-3 d-flex align-items-start gap-3">
         <button
           type="button"
@@ -1522,7 +1522,7 @@ function SkillDetailDialog({
                     <span className="font-monospace">{preview.files.join("                                                                                                                                                                                                                                                                ")}</span>
                   </div>
                 )}
-                <pre className="text-wrap text-break bg-background/50 border border-secondary p-3 fs-6 font-monospace text-body-secondary leading-relaxed">
+                <pre className="text-wrap text-break sku-backdrop border border-secondary p-3 fs-6 font-monospace text-body-secondary leading-relaxed">
                   {(preview.skill_md || "").trim() || "(SKILL.md is empty)"}
                 </pre>
               </div>

@@ -110,7 +110,7 @@ function SortHeader({
       onClick={() => toggle(col)}
       className={`cursor-pointer user-select-none ${className ?? ""}`}
     >
-      <span className="d-inline-flex align-items-center gap-2 rounded px-1 -mx-1 py-0.5 hover:bg-muted/40 transition">
+      <span className="d-inline-flex align-items-center gap-2 rounded px-1 -mx-1 py-0.5 hover:bg-tertiary-subtle transition">
         {label}
         {active ? (
           sortDir === "asc" ? (
@@ -183,7 +183,7 @@ function TokenBarChart({ daily }: { daily: AnalyticsDailyEntry[] }) {
                 style={{ height: CHART_HEIGHT_PX }}
               >
                 <div className="position-absolute bottom-full left-1/2 -translate-x-1/2 mb-2 d-none group-hover:block z-10 pointer-events-none">
-                  <div className="text-lowercase bg-card border border-secondary px-2.5 py-2 fs-6 text-body-emphasis shadow-lg text-nowrap">
+                  <div className="text-lowercase bg-body border border-secondary px-2.5 py-2 fs-6 text-body-emphasis shadow-lg text-nowrap">
                     <div className="fw-medium">{formatDate(d.day)}</div>
                     <div>
                       {t.analytics.input}: {formatTokens(d.input_tokens)}
@@ -264,7 +264,7 @@ function DailyTable({ daily }: { daily: AnalyticsDailyEntry[] }) {
               {sorted.map((d) => (
                 <tr
                     key={d.day}
-                    className="border-bottom border-border/50 hover:bg-secondary/20 transition"
+                    className="border-bottom border-body-tertiary hover:bg-secondary/20 transition"
                   >
                   <td className="py-2 pr-4 fw-medium">
                       {formatDate(d.day)}
@@ -322,7 +322,7 @@ function ModelTable({ models }: { models: AnalyticsModelEntry[] }) {
               {sorted.map((m) => (
                 <tr
                   key={m.model}
-                  className="border-bottom border-border/50 hover:bg-secondary/20 transition"
+                  className="border-bottom border-body-tertiary hover:bg-secondary/20 transition"
                 >
                   <td className="py-2 pr-4">
                     <span className="font-monospace fs-6">{m.model}</span>
@@ -379,7 +379,7 @@ function SkillTable({ skills }: { skills: AnalyticsSkillEntry[] }) {
               {sorted.map((skill) => (
                 <tr
                   key={skill.skill}
-                  className="border-bottom border-border/50 hover:bg-secondary/20 transition"
+                  className="border-bottom border-body-tertiary hover:bg-secondary/20 transition"
                 >
                   <td className="py-2 pr-4">
                     <span className="font-monospace fs-6">{skill.skill}</span>

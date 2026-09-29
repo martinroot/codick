@@ -127,7 +127,7 @@ function ProfileActionsMenu({
   };
 
   const itemClass =
-    "flex w-full items-center gap-2.5 px-3 py-2 text-xs uppercase tracking-wider hover:bg-muted/50 disabled:opacity-40";
+    "flex w-full items-center gap-2.5 px-3 py-2 text-xs uppercase tracking-wider hover:bg-tertiary-subtle disabled:opacity-40";
 
   return (
     <div className="position-relative" data-profile-actions ref={containerRef}>
@@ -146,7 +146,7 @@ function ProfileActionsMenu({
       {open && (
         <div
           role="menu"
-          className="position-absolute right-0 top-full z-50 mt-1 min-w-[200px] border border-secondary bg-card shadow-lg"
+          className="position-absolute right-0 top-full z-50 mt-1 min-w-[200px] border border-secondary bg-body shadow-lg"
         >
           {!isActive && (
             <button
@@ -229,7 +229,7 @@ function ProfileActionsMenu({
             <button
               type="button"
               role="menuitem"
-              className={cn(itemClass, "border-top border-border/50")}
+              className={cn(itemClass, "border-top border-body-tertiary")}
               onClick={run(onRename)}
             >
               <Pencil className="icon-md" />
@@ -805,7 +805,7 @@ export default function ProfilesPage() {
       {createModalOpen && (
         <div
           ref={createModalRef}
-          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
           onClick={(e) =>
             e.target === e.currentTarget && setCreateModalOpen(false)
           }
@@ -816,7 +816,7 @@ export default function ProfilesPage() {
           <div
             className={cn(
               themedBody,
-              "position-relative w-100 max-w-md border border-secondary bg-card shadow-2xl d-flex flex-column max-h-[90vh]",
+              "position-relative w-100 max-w-md border border-secondary bg-body shadow-lg d-flex flex-column max-h-[90vh]",
             )}
           >
             <Button
@@ -889,7 +889,7 @@ export default function ProfilesPage() {
 
                 <textarea
                   id="profile-description"
-                  className="d-flex min-h-[64px] w-100 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="d-flex min-h-[64px] w-100 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   placeholder={L.descriptionPlaceholder}
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
@@ -999,7 +999,7 @@ export default function ProfilesPage() {
             </span>
 
             {activeInfo.current !== activeInfo.active && (
-              <span className="font-monospace text-muted-foreground/80">
+              <span className="font-monospace text-body-secondary/80">
                 ({activeInfo.current})
               </span>
             )}
@@ -1169,7 +1169,7 @@ export default function ProfilesPage() {
                             "h-1.5 w-1.5 rounded-circle",
                             p.gateway_running
                               ? "bg-success"
-                              : "bg-muted-foreground/40",
+                              : "bg-tertiary-foreground/40",
                           )}
                         />
 
@@ -1192,7 +1192,7 @@ export default function ProfilesPage() {
                             "line-clamp-2",
                             p.description
                               ? "text-body-secondary"
-                              : "text-muted-foreground/60 fst-italic",
+                              : "text-body-secondary/60 fst-italic",
                           )}
                         >
                           {p.description || L.noDescription}
@@ -1232,7 +1232,7 @@ export default function ProfilesPage() {
       {editorName && (
         <div
           ref={editorModalRef}
-          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
           onClick={(e) => e.target === e.currentTarget && closeEditor()}
           role="dialog"
           aria-modal="true"
@@ -1241,7 +1241,7 @@ export default function ProfilesPage() {
           <div
             className={cn(
               themedBody,
-              "position-relative w-100 max-w-lg border border-secondary bg-card shadow-2xl d-flex flex-column max-h-[90vh]",
+              "position-relative w-100 max-w-lg border border-secondary bg-body shadow-lg d-flex flex-column max-h-[90vh]",
             )}
           >
             <Button
@@ -1341,7 +1341,7 @@ export default function ProfilesPage() {
 
                   <textarea
                     id="profile-desc-editor"
-                    className="d-flex min-h-[96px] w-100 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="d-flex min-h-[96px] w-100 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     placeholder={L.descriptionPlaceholder}
                     value={descText}
                     onChange={(e) => setDescText(e.target.value)}
@@ -1371,7 +1371,7 @@ export default function ProfilesPage() {
 
                   <textarea
                     id="profile-soul-editor"
-                    className="d-flex min-h-[280px] w-100 border border-input bg-transparent px-3 py-2 fs-6 font-monospace shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="d-flex min-h-[280px] w-100 border border-input bg-transparent px-3 py-2 fs-6 font-monospace shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     placeholder={t.profiles.soulPlaceholder}
                     value={soulText}
                     onChange={(e) => setSoulText(e.target.value)}

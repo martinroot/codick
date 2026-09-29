@@ -1842,8 +1842,11 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             aria-label={t.app.closeModelTools}
             onClick={closeMobilePanel}
             className={cn(
-              "position-fixed top-0 start-0 w-100 h-100 z-[55] p-0 d-block",
-              "bg-black/60",
+              "position-fixed top-0 start-0 w-100 h-100 z-3 p-0 d-block",
+              // `bg-black/60` is an opacity utility Bootstrap does not
+              // have; the backdrop class is the one that mixes against
+              // the current colour mode.
+              "sku-backdrop",
             )}
           />
         )}

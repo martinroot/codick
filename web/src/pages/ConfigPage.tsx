@@ -439,7 +439,7 @@ export default function ConfigPage() {
       <div className="d-flex min-w-0 flex-column gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="d-flex min-w-0 align-items-center gap-2 sm:flex-1">
           <Settings2 className="icon-md flex-shrink-0 text-body-secondary" />
-          <code className="min-w-0 flex-grow-1 text-break fs-6 text-body-secondary bg-muted/50 px-2 py-0.5">
+          <code className="min-w-0 flex-grow-1 text-break fs-6 text-body-secondary bg-tertiary-subtle px-2 py-0.5">
             {configPath ?? t.config.configPath}
           </code>
         </div>
@@ -539,7 +539,7 @@ export default function ConfigPage() {
               </div>
             ) : (
               <textarea
-                className="d-flex min-h-[600px] w-100 bg-transparent px-4 py-3 fs-6 font-monospace leading-relaxed placeholder:text-muted-foreground focus-visible:outline-none border-top border-secondary"
+                className="d-flex min-h-[600px] w-100 bg-transparent px-4 py-3 fs-6 font-monospace leading-relaxed placeholder:text-body-secondary focus-visible:outline-none border-top border-secondary"
                 value={yamlText}
                 onChange={(e) => setYamlText(e.target.value)}
                 spellCheck={false}
@@ -551,7 +551,7 @@ export default function ConfigPage() {
         <div className="d-flex flex-column sm:flex-row gap-4">
           <aside aria-label={t.config.filters} className="sm:w-56 sm:shrink-0">
             <div className="sm:sticky sm:top-4">
-              <div className="d-flex flex-column border border-secondary bg-muted/20">
+              <div className="d-flex flex-column border border-secondary bg-tertiary-subtle">
                 <div className="d-none sm:flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary">
                   <Filter className="icon-sm text-body-tertiary" />
                   <span className="fw-semibold fs-6 tracking-[0.12em] text-body-secondary">

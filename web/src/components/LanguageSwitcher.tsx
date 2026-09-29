@@ -114,7 +114,7 @@ export function LanguageSwitcher({ collapsed = false, dropUp = false }: Language
             aria-label={sheetTitle}
             className={cn(
               "min-w-[10rem] border border-secondary bg-popover shadow-md py-1 max-h-80 overflow-y-auto",
-              dropUp ? "position-fixed z-[100]" : "position-absolute z-50 right-0 top-full mt-1",
+              dropUp ? "position-fixed z-3" : "position-absolute z-50 right-0 top-full mt-1",
             )}
             role="listbox"
             style={

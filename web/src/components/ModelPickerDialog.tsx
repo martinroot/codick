@@ -11,7 +11,6 @@ import { Check, RefreshCw, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
-import { cn, themedBody } from "@/lib/utils";
 import { queryMatchesProviderOnly } from "@/lib/model-picker-filter";
 import { fuzzyRank, modelSearchText } from "@hermes/shared";
 import { errorMessage } from "@/lib/api-error";
@@ -338,13 +337,22 @@ export function ModelPickerDialog(props: Props) {
   // Toast.tsx for the same pattern.
   return createPortal(
     <div
-      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
       aria-labelledby="model-picker-title"
     >
-      <div className={cn(themedBody, "position-relative w-100 max-w-3xl max-h-[80vh] border border-secondary bg-card shadow-2xl d-flex flex-column")}>
+      {/*
+        The width cap and the height cap are inline because Bootstrap has no
+        max-w or max-h utility, and leaving the old `max-w-3xl` in place was
+        not a cosmetic miss: with no cap the panel takes the full `w-100` and
+        the dialog fills the viewport, which is what it did.
+      */}
+      <div
+        className="position-relative d-flex flex-column bg-body border border-body-tertiary rounded-3 shadow-lg overflow-hidden"
+        style={{ width: "min(48rem, 100%)", maxHeight: "80vh" }}
+      >
         <Button
           ghost
           size="icon"
@@ -381,7 +389,10 @@ export function ModelPickerDialog(props: Props) {
           </div>
         </div>
 
-        <div className="flex-grow-1 min-h-0 d-grid grid-cols-[200px_1fr] overflow-hidden">
+        <div
+          className="flex-grow-1 min-h-0 d-grid overflow-hidden"
+          style={{ gridTemplateColumns: "13rem 1fr" }}
+        >
           <ProviderColumn
             loading={loading}
             error={error}
@@ -508,7 +519,10 @@ function ProviderColumn({
   onClose(): void;
 }) {
   return (
-    <div className="border-r border-secondary overflow-y-auto">
+    // `list-group` belongs on the column, not on a wrapper inside it: the
+    // items draw their borders from the group's own rules, and a group that
+    // is not the scroll container loses its rounded ends.
+    <div className="list-group list-group-flush overflow-y-auto border-end border-body-tertiary">
       {loading && (
         <div className="d-flex align-items-center gap-2 p-4 fs-6 text-body-secondary">
           <Spinner className="fs-6" /> loading…
@@ -544,7 +558,7 @@ function ProviderColumn({
             key={p.slug}
             active={active}
             onClick={() => onSelect(p.slug)}
-            className={`align-items-start fs-6 border-l-2 ${ active ? "border-l-primary" : "border-l-transparent" }`}
+            className={`d-flex fs-6 border-start-2 ${active ? "border-start-primary" : "border-start-transparent"}`}
           >
             <div className="flex-grow-1 min-w-0">
               <div className="d-flex align-items-center gap-2">

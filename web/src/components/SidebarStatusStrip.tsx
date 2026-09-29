@@ -78,7 +78,7 @@ export function gatewayLine(
   }
   return status.gateway_running
     ? { label: g.running, tone: "text-success" }
-    : { label: g.off, tone: "text-muted-foreground" };
+    : { label: g.off, tone: "text-body-secondary" };
 }
 
 interface SidebarStatusStripProps {

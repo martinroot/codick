@@ -73,7 +73,7 @@ function SetupCommandBlock({ code, label }: { code: string; label: string }) {
         <span className="text-[0.6875rem] text-body-secondary">{label}</span>
         <CopyButton text={code} />
       </div>
-      <div className="border border-secondary bg-background/40 px-3 py-2 font-monospace text-[0.6875rem] leading-relaxed">
+      <div className="border border-secondary sku-backdrop px-3 py-2 font-monospace text-[0.6875rem] leading-relaxed">
         <code className="break-all">{code}</code>
       </div>
     </div>
@@ -92,14 +92,14 @@ function setupResultClass(status: string) {
     return "border-success/50 text-success";
   }
   if (status === "missing") return "border-warning/50 text-warning";
-  return "border-border text-muted-foreground";
+  return "border-body-tertiary text-body-secondary";
 }
 
 function MemoryProviderSetupResults({ results }: { results: MemoryProviderSetupResult[] }) {
   if (!results.length) return null;
 
   return (
-    <div className="d-grid gap-2 border border-secondary bg-background/20 p-3">
+    <div className="d-grid gap-2 border border-secondary sku-backdrop p-3">
       <p className="text-body-secondary">Setup results</p>
       {results.map((result, index) => {
         const detail = result.stderr || result.stdout;
@@ -120,12 +120,12 @@ function MemoryProviderSetupResults({ results }: { results: MemoryProviderSetupR
               </span>
             </div>
             {result.command ? (
-              <code className="d-block break-all border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem]">
+              <code className="d-block break-all border border-secondary sku-backdrop px-2 py-1 font-monospace text-[0.6875rem]">
                 {result.command}
               </code>
             ) : null}
             {detail ? (
-              <pre className="max-h-32 overflow-auto text-wrap text-break border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem] text-body-secondary">
+              <pre className="max-h-32 overflow-auto text-wrap text-break border border-secondary sku-backdrop px-2 py-1 font-monospace text-[0.6875rem] text-body-secondary">
                 {detail}
               </pre>
             ) : null}
@@ -233,7 +233,7 @@ function MemoryProviderSetupHint({
                 {setup.pip_dependencies.map((dep) => (
                   <code
                     key={dep}
-                    className="border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem]"
+                    className="border border-secondary sku-backdrop px-2 py-1 font-monospace text-[0.6875rem]"
                   >
                     {dep}
                   </code>
@@ -253,7 +253,7 @@ function MemoryProviderSetupHint({
             {setup.required_env.map((envKey) => (
               <code
                 key={envKey}
-                className="border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem]"
+                className="border border-secondary sku-backdrop px-2 py-1 font-monospace text-[0.6875rem]"
               >
                 {envKey}
               </code>
@@ -1354,7 +1354,7 @@ function CatalogEntryCard(props: CatalogEntryCardProps) {
             {chips.map((chip) => (
               <code
                 key={chip}
-                className="border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem]"
+                className="border border-secondary sku-backdrop px-2 py-1 font-monospace text-[0.6875rem]"
               >
                 {chip}
               </code>

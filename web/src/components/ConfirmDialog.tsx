@@ -66,13 +66,13 @@ export function ConfirmDialog({
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
-      className="position-fixed top-0 start-0 w-100 h-100 z-[200] d-flex align-items-center justify-content-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-4 d-flex align-items-center justify-content-center sku-backdrop p-4"
     >
       <div
         ref={dialogRef}
         className={cn(
           themedBody,
-          "position-relative w-100 max-w-md border border-secondary bg-card shadow-2xl",
+          "position-relative w-100 max-w-md border border-secondary bg-body shadow-lg",
         )}
       >
         <div className="d-flex align-items-start gap-3 p-4 border-bottom border-secondary">

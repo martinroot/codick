@@ -344,7 +344,7 @@ export default function McpPage() {
       {createModalOpen && (
         <div
           ref={createModalRef}
-          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
           onClick={(e) => e.target === e.currentTarget && closeCreateModal()}
           role="dialog"
           aria-modal="true"
@@ -353,7 +353,7 @@ export default function McpPage() {
           <div
             className={cn(
               themedBody,
-              "position-relative w-100 max-w-lg border border-secondary bg-card shadow-2xl d-flex flex-column",
+              "position-relative w-100 max-w-lg border border-secondary bg-body shadow-lg d-flex flex-column",
             )}
           >
             <Button
@@ -481,7 +481,7 @@ export default function McpPage() {
                     </Label>
                     <textarea
                       id="mcp-env"
-                      className="d-flex min-h-[80px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+                      className="d-flex min-h-[80px] w-100 border border-secondary sku-backdrop px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-body-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
                       placeholder={"API_KEY=secret\nDEBUG=1"}
                       value={env}
                       onChange={(e) => setEnv(e.target.value)}
@@ -510,7 +510,7 @@ export default function McpPage() {
       {installEntry && (
         <div
           ref={installModalRef}
-          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
           onClick={(e) => e.target === e.currentTarget && setInstallEntry(null)}
           role="dialog"
           aria-modal="true"
@@ -519,7 +519,7 @@ export default function McpPage() {
           <div
             className={cn(
               themedBody,
-              "position-relative w-100 max-w-lg border border-secondary bg-card shadow-2xl d-flex flex-column",
+              "position-relative w-100 max-w-lg border border-secondary bg-body shadow-lg d-flex flex-column",
             )}
           >
             <Button

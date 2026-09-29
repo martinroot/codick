@@ -183,7 +183,7 @@ function CapabilityBadges({
         </span>
       )}
       {capabilities.model_family && (
-        <span className="d-inline-flex align-items-center bg-muted px-2 py-0.5 fs-6 fw-medium text-body-secondary">
+        <span className="d-inline-flex align-items-center bg-tertiary px-2 py-0.5 fs-6 fw-medium text-body-secondary">
           {capabilities.model_family}
         </span>
       )}
@@ -281,12 +281,12 @@ function UseAsMenu({
         Use as <ChevronDown className="icon-sm" />
       </Button>
       {open && (
-        <div className="position-absolute right-0 top-full mt-1 z-50 min-w-[220px] border border-secondary bg-card shadow-lg">
+        <div className="position-absolute right-0 top-full mt-1 z-50 min-w-[220px] border border-secondary bg-body shadow-lg">
           <button
             type="button"
             onClick={() => assign("main", "")}
             disabled={busy}
-            className="d-flex w-100 align-items-center justify-content-between px-3 py-2 fs-6 text-uppercase hover:bg-muted/50 disabled:opacity-40"
+            className="d-flex w-100 align-items-center justify-content-between px-3 py-2 fs-6 text-uppercase hover:bg-tertiary-subtle disabled:opacity-40"
           >
             <span className="d-flex align-items-center gap-2">
               <Star className="icon-sm" />
@@ -299,7 +299,7 @@ function UseAsMenu({
             )}
           </button>
 
-          <div className="border-top border-border/50 px-3 py-2 fw-semibold fs-6 ls-wide text-body-tertiary">
+          <div className="border-top border-body-tertiary px-3 py-2 fw-semibold fs-6 ls-wide text-body-tertiary">
             Auxiliary task
           </div>
 
@@ -307,7 +307,7 @@ function UseAsMenu({
             type="button"
             onClick={() => assign("auxiliary", "")}
             disabled={busy}
-            className="d-flex w-100 align-items-center justify-content-between px-3 py-2 fs-6 text-uppercase hover:bg-muted/50 disabled:opacity-40"
+            className="d-flex w-100 align-items-center justify-content-between px-3 py-2 fs-6 text-uppercase hover:bg-tertiary-subtle disabled:opacity-40"
           >
             <span>All auxiliary tasks</span>
           </button>
@@ -318,7 +318,7 @@ function UseAsMenu({
               type="button"
               onClick={() => assign("auxiliary", t.key)}
               disabled={busy}
-              className="d-flex w-100 align-items-center justify-content-between px-3 py-2 fs-6 text-uppercase hover:bg-muted/50 disabled:opacity-40"
+              className="d-flex w-100 align-items-center justify-content-between px-3 py-2 fs-6 text-uppercase hover:bg-tertiary-subtle disabled:opacity-40"
             >
               <span>{t.label}</span>
               {mainAuxTask === t.key && (
@@ -330,7 +330,7 @@ function UseAsMenu({
           ))}
 
           {error && (
-            <div className="px-3 py-2 fs-6 text-danger border-top border-border/50">
+            <div className="px-3 py-2 fs-6 text-danger border-top border-body-tertiary">
               {error}
             </div>
           )}
@@ -503,7 +503,7 @@ function ModelCard({
           </>
         )}
 
-        <div className="d-flex align-items-center justify-content-between fs-6 text-body-secondary border-top border-border/30 pt-2">
+        <div className="d-flex align-items-center justify-content-between fs-6 text-body-secondary border-top border-body-tertiary pt-2">
           <div className="d-flex align-items-center gap-3">
             {showTokens && entry.estimated_cost > 0 && (
               <span className="d-flex align-items-center gap-0.5">
@@ -576,13 +576,13 @@ function AuxiliaryTasksModal({
   return (
     <div
       ref={modalRef}
-      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center sku-backdrop p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
       aria-labelledby="aux-modal-title"
     >
-      <div className={cn(themedBody, "position-relative w-100 max-w-2xl max-h-[80vh] border border-secondary bg-card shadow-2xl d-flex flex-column")}>
+      <div className={cn(themedBody, "position-relative w-100 max-w-2xl max-h-[80vh] border border-secondary bg-body shadow-lg d-flex flex-column")}>
         <Button
           ghost
           size="icon"
@@ -628,7 +628,7 @@ function AuxiliaryTasksModal({
             return (
               <div
                 key={t.key}
-                className="d-flex align-items-center justify-content-between gap-3 px-3 py-2 border border-border/30 bg-card/50 hover:bg-muted/20 transition"
+                className="d-flex align-items-center justify-content-between gap-3 px-3 py-2 border border-body-tertiary bg-body/50 hover:bg-tertiary-subtle transition"
               >
                 <div className="min-w-0 flex-grow-1">
                   <div className="d-flex align-items-baseline gap-2">
@@ -852,7 +852,7 @@ function MoaModelsModal({
               <div
                 key={`${selected}-${slot.provider}-${slot.model}-${index}`}
                 className={cn(
-                  "d-flex align-items-center gap-2 border border-border/50 bg-muted/20 px-3 py-2",
+                  "d-flex align-items-center gap-2 border border-body-tertiary bg-tertiary-subtle px-3 py-2",
                   slot.enabled === false && "opacity-60"
                 )}
               >
@@ -877,7 +877,7 @@ function MoaModelsModal({
 
           <div className="stack-2">
             <div className="fw-semibold fs-6 fw-medium ls-wide">Aggregator</div>
-            <div className="d-flex align-items-center gap-2 border border-border/50 bg-muted/20 px-3 py-2">
+            <div className="d-flex align-items-center gap-2 border border-body-tertiary bg-tertiary-subtle px-3 py-2">
               <div className="min-w-0 flex-grow-1 text-truncate font-monospace fs-6 text-body-secondary">{slotLabel(preset.aggregator)}</div>
               <Button size="sm" outlined onClick={() => setPicker({ kind: "aggregator" })}>Change</Button>
             </div>
@@ -985,7 +985,7 @@ function ModelSettingsPanel({
 
       <CardContent className="min-w-0 stack-3 pt-3">
         {/* Main row */}
-        <div className="d-flex min-w-0 flex-column gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="d-flex min-w-0 flex-column gap-2 bg-tertiary-subtle border border-body-tertiary px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-grow-1">
             <div className="d-flex align-items-center gap-2 mb-1">
               <Star className="icon-sm text-primary" />
@@ -1009,7 +1009,7 @@ function ModelSettingsPanel({
         </div>
 
         {/* Auxiliary tasks summary + open modal */}
-        <div className="d-flex min-w-0 flex-column gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="d-flex min-w-0 flex-column gap-2 bg-tertiary-subtle border border-body-tertiary px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-grow-1">
             <div className="d-flex align-items-center gap-2 mb-1">
               <Cpu className="icon-sm text-body-tertiary" />
@@ -1033,7 +1033,7 @@ function ModelSettingsPanel({
           </Button>
         </div>
 
-        <div className="d-flex min-w-0 flex-column gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="d-flex min-w-0 flex-column gap-2 bg-tertiary-subtle border border-body-tertiary px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-grow-1">
             <div className="d-flex align-items-center gap-2 mb-1">
               <Brain className="icon-sm text-body-tertiary" />

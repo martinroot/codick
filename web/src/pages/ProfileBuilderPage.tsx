@@ -302,7 +302,7 @@ export default function ProfileBuilderPage() {
               s.id === step
                 ? "bg-primary text-primary-foreground"
                 : i <= stepIndex
-                  ? "bg-muted text-body-emphasis"
+                  ? "bg-tertiary text-body-emphasis"
                   : "text-body-secondary",
               i > 0 && !nameValid && "cursor-not-allowed opacity-50",
             )}
@@ -368,7 +368,7 @@ export default function ProfileBuilderPage() {
                     onClick={() => setModelChoice("")}
                     className={cn(
                       "d-block w-100 rounded px-3 py-2 text-start fs-6",
-                      modelChoice === "" ? "bg-primary/10" : "hover:bg-muted",
+                      modelChoice === "" ? "bg-primary/10" : "hover:bg-tertiary",
                     )}
                   >
                     Use default (set later)
@@ -383,7 +383,7 @@ export default function ProfileBuilderPage() {
                           "d-block w-100 rounded px-3 py-2 text-start fs-6",
                           modelChoice === key
                             ? "bg-primary/10"
-                            : "hover:bg-muted",
+                            : "hover:bg-tertiary",
                         )}
                       >
                         {c.label}
@@ -426,7 +426,7 @@ export default function ProfileBuilderPage() {
                       {filteredSkills.map((s) => (
                         <label
                           key={s.name}
-                          className="d-flex align-items-start gap-2 rounded px-2 py-2 fs-6 hover:bg-muted"
+                          className="d-flex align-items-start gap-2 rounded px-2 py-2 fs-6 hover:bg-tertiary"
                         >
                           <Checkbox
                             checked={keptSkills.has(s.name)}
@@ -479,7 +479,7 @@ export default function ProfileBuilderPage() {
                     {hubResults.map((r) => (
                       <div
                         key={r.identifier}
-                        className="d-flex align-items-center justify-content-between rounded px-2 py-2 fs-6 hover:bg-muted"
+                        className="d-flex align-items-center justify-content-between rounded px-2 py-2 fs-6 hover:bg-tertiary"
                       >
                         <span className="flex-grow-1">
                           <span className="fw-medium">{r.name}</span>
@@ -539,7 +539,7 @@ export default function ProfileBuilderPage() {
                 </span>
               </div>
 
-              <div className="stack-4 border border-secondary bg-background/20 p-4 md:p-5">
+              <div className="stack-4 border border-secondary sku-backdrop p-4 md:p-5">
                 <h4 className="fw-medium">Add server</h4>
 
                 <div className="d-grid gap-4 md:grid-cols-2">
@@ -557,7 +557,7 @@ export default function ProfileBuilderPage() {
                   <div className="d-grid gap-2">
                     <Label>Transport</Label>
                     <div
-                      className="d-grid grid-cols-2 border border-secondary bg-background/30 p-0.5"
+                      className="d-grid grid-cols-2 border border-secondary sku-backdrop p-0.5"
                       role="group"
                       aria-label="MCP transport"
                     >
@@ -575,7 +575,7 @@ export default function ProfileBuilderPage() {
                             "px-3 py-2 fs-6 fw-medium transition",
                             mcpDraft.transport === value
                               ? "bg-primary text-primary-foreground"
-                              : "text-body-secondary hover:bg-muted hover:text-foreground",
+                              : "text-body-secondary hover:bg-tertiary hover:text-foreground",
                           )}
                           onClick={() => setMcpTransport(value)}
                         >
@@ -602,7 +602,7 @@ export default function ProfileBuilderPage() {
                     <div className="d-grid gap-2">
                       <Label>Authentication</Label>
                       <div
-                        className="d-grid grid-cols-3 border border-secondary bg-background/30 p-0.5 md:max-w-md"
+                        className="d-grid grid-cols-3 border border-secondary sku-backdrop p-0.5 md:max-w-md"
                         role="group"
                         aria-label="HTTP authentication"
                       >
@@ -621,7 +621,7 @@ export default function ProfileBuilderPage() {
                               "px-2 py-2 fs-6 fw-medium transition",
                               mcpDraft.httpAuth === value
                                 ? "bg-primary text-primary-foreground"
-                                : "text-body-secondary hover:bg-muted hover:text-foreground",
+                                : "text-body-secondary hover:bg-tertiary hover:text-foreground",
                             )}
                             onClick={() => setMcpHttpAuth(value)}
                           >
@@ -696,7 +696,7 @@ export default function ProfileBuilderPage() {
                       </Label>
                       <textarea
                         id="pb-mcp-env"
-                        className="d-flex min-h-[80px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30"
+                        className="d-flex min-h-[80px] w-100 border border-secondary sku-backdrop px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-body-secondary focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30"
                         placeholder={"API_KEY=secret\nDEBUG=1"}
                         value={mcpDraft.env}
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -717,7 +717,7 @@ export default function ProfileBuilderPage() {
                   {mcpServers.map((s) => (
                     <div
                       key={s.name}
-                      className="d-flex align-items-center justify-content-between gap-4 border border-secondary bg-muted/40 p-4 fs-6"
+                      className="d-flex align-items-center justify-content-between gap-4 border border-secondary bg-tertiary-subtle p-4 fs-6"
                     >
                       <span className="min-w-0">
                         <span className="d-flex flex-wrap align-items-center gap-2">

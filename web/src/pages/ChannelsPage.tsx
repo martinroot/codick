@@ -362,7 +362,7 @@ export default function ChannelsPage() {
         <div
           ref={editModalRef}
           className={cn(
-            "position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex min-h-dvh align-items-start justify-content-center overflow-y-auto bg-background/85 px-4",
+            "position-fixed top-0 start-0 w-100 h-100 z-3 d-flex min-h-dvh align-items-start justify-content-center overflow-y-auto sku-backdrop px-4",
             "pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))]",
             "sm:items-center sm:p-4",
           )}
@@ -374,7 +374,7 @@ export default function ChannelsPage() {
           <div
             className={cn(
               themedBody,
-              "position-relative d-flex max-h-[calc(100dvh-2rem)] w-100 max-w-lg flex-column border border-secondary bg-card shadow-2xl sm:max-h-[90dvh]",
+              "position-relative d-flex max-h-[calc(100dvh-2rem)] w-100 max-w-lg flex-column border border-secondary bg-body shadow-lg sm:max-h-[90dvh]",
             )}
           >
             <Button
@@ -892,7 +892,7 @@ function WhatsAppOnboardingPanel({
         : "If no allowed numbers were entered, Hermes replies with a pairing code. Approve it from the dashboard Pairing page.";
 
   return (
-    <div className="rounded-1 border border-secondary bg-background/35 p-4">
+    <div className="rounded-1 border border-secondary sku-backdrop p-4">
       <div className="d-grid gap-3">
         <div className="d-flex flex-wrap align-items-center gap-2">
           <Button
@@ -978,7 +978,7 @@ function WhatsAppOnboardingPanel({
 
               {(phase === "connected" || phase === "applying") && (
                 <div className="d-grid gap-3">
-                  <div className="border border-secondary bg-background/45 p-3 fs-6">
+                  <div className="border border-secondary sku-backdrop p-3 fs-6">
                     <div className="fw-medium">
                       {linkedAccountLabel
                         ? `Linked as ${linkedAccountLabel}`
@@ -1028,14 +1028,14 @@ function WhatsAppOnboardingPanel({
                   className="h-60 w-60 bg-white p-2"
                 />
               ) : phase === "connected" || phase === "applying" ? (
-                <div className="d-flex h-60 w-60 flex-column align-items-center justify-content-center gap-2 border border-secondary bg-background/50 p-4 text-center">
+                <div className="d-flex h-60 w-60 flex-column align-items-center justify-content-center gap-2 border border-secondary sku-backdrop p-4 text-center">
                   <Badge tone="success">Linked</Badge>
                   <div className="fs-6 text-body-secondary">
                     {linkedAccountLabel || "Existing WhatsApp session found"}
                   </div>
                 </div>
               ) : (
-                <div className="d-flex h-60 w-60 flex-column align-items-center justify-content-center gap-3 border border-secondary bg-background/50 p-4 text-center">
+                <div className="d-flex h-60 w-60 flex-column align-items-center justify-content-center gap-3 border border-secondary sku-backdrop p-4 text-center">
                   <Spinner className="fs-3" />
                   <div className="fs-6 text-body-secondary">
                     Waiting for WhatsApp to provide a QR code…
@@ -1273,7 +1273,7 @@ function TelegramOnboardingPanel({
   );
 
   return (
-    <div className="rounded-1 border border-secondary bg-background/35 p-4">
+    <div className="rounded-1 border border-secondary sku-backdrop p-4">
       <div className="d-grid gap-1">
         <span className="fs-6 text-body-emphasis">
           Choose how to connect your Telegram bot

@@ -91,8 +91,8 @@ const SOURCE_CONFIG: Record<string, { icon: typeof Terminal; color: string }> =
     cron: { icon: Clock, color: "text-warning" },
     tool: { icon: Play, color: "text-warning" },
     oneshot: { icon: Terminal, color: "text-warning" },
-    api_server: { icon: Globe, color: "text-muted-foreground" },
-    acp: { icon: Database, color: "text-muted-foreground" },
+    api_server: { icon: Globe, color: "text-body-secondary" },
+    acp: { icon: Database, color: "text-body-secondary" },
     hermes_flow: { icon: Play, color: "text-warning" },
     vulcan_delegate: { icon: Play, color: "text-warning" },
     webhook: { icon: Globe, color: "text-warning" },
@@ -317,8 +317,8 @@ function MessageBubble({
       label: t.sessions.roles.assistant,
     },
     system: {
-      bg: "bg-muted",
-      text: "text-muted-foreground",
+      bg: "bg-tertiary",
+      text: "text-body-secondary",
       label: t.sessions.roles.system,
     },
     tool: {
@@ -330,8 +330,8 @@ function MessageBubble({
     // distinctive label so they can't be mistaken for real assistant
     // replies during a scroll-back review (#29824).
     compaction: {
-      bg: "bg-muted/50",
-      text: "text-muted-foreground italic",
+      bg: "bg-tertiary-subtle",
+      text: "text-body-secondary italic",
       label: "Context handoff",
     },
   };
@@ -504,7 +504,7 @@ function SessionRow({
   const sourceKey = session.source?.split(":")[0];
   const sourceInfo = (session.source
     ? SOURCE_CONFIG[session.source] ?? (sourceKey ? SOURCE_CONFIG[sourceKey] : null)
-    : null) ?? { icon: Globe, color: "text-muted-foreground" };
+    : null) ?? { icon: Globe, color: "text-body-secondary" };
   const SourceIcon = sourceInfo.icon;
   const hasTitle = session.title && session.title !== "Untitled";
 
@@ -685,7 +685,7 @@ function SessionRow({
                   </div>
                 ) : (
                   <span
-                    className={`text-lowercase min-w-0 flex-grow-1 text-truncate fs-6 ${hasTitle ? "font-medium" : "text-muted-foreground italic"}`}
+                    className={`text-lowercase min-w-0 flex-grow-1 text-truncate fs-6 ${hasTitle ? "font-medium" : "text-body-secondary italic"}`}
                   >
                     {hasTitle
                       ? session.title
@@ -707,7 +707,7 @@ function SessionRow({
                     <span className="max-w-[min(100%,12rem)] text-truncate sm:max-w-[180px]">
                       {session.model.split("/").pop()}
                     </span>
-                    <span className="text-border">&#183;</span>
+                    <span className="text-body-tertiary">&#183;</span>
                   </>
                 )}
                 <span className="flex-shrink-0">
@@ -715,13 +715,13 @@ function SessionRow({
                 </span>
                 {session.tool_call_count > 0 && (
                   <>
-                    <span className="text-border">&#183;</span>
+                    <span className="text-body-tertiary">&#183;</span>
                     <span className="flex-shrink-0">
                       {session.tool_call_count} {t.common.tools}
                     </span>
                   </>
                 )}
-                <span className="text-border">&#183;</span>
+                <span className="text-body-tertiary">&#183;</span>
                 <span className="flex-shrink-0">{timeAgo(session.last_active)}</span>
               </div>
               {snippet && <SnippetHighlight snippet={snippet} />}
@@ -739,7 +739,7 @@ function SessionRow({
       </div>
 
       {isExpanded && (
-        <div className="min-w-0 border-top border-secondary bg-background/50 p-4">
+        <div className="min-w-0 border-top border-secondary sku-backdrop p-4">
           {messages === null && !error && (
             <div className="d-flex align-items-center justify-content-center py-8">
               <Spinner className="fs-4 text-primary" />
@@ -2205,7 +2205,7 @@ export default function SessionsPage() {
                   >
                     <div className="d-flex min-w-0 flex-grow-1 flex-column gap-1">
                       <span
-                        className={`text-lowercase min-w-0 text-truncate fs-6 ${s.title ? "font-medium" : "text-muted-foreground italic"}`}
+                        className={`text-lowercase min-w-0 text-truncate fs-6 ${s.title ? "font-medium" : "text-body-secondary italic"}`}
                       >
                         {s.title ??
                           (s.preview
