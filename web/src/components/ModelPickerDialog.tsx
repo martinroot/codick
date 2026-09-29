@@ -544,9 +544,7 @@ function ProviderColumn({
             key={p.slug}
             active={active}
             onClick={() => onSelect(p.slug)}
-            className={`items-start text-xs border-l-2 ${
-              active ? "border-l-primary" : "border-l-transparent"
-            }`}
+            className={`align-items-start fs-6 border-l-2 ${ active ? "border-l-primary" : "border-l-transparent" }`}
           >
             <div className="flex-grow-1 min-w-0">
               <div className="d-flex align-items-center gap-2">

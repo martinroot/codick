@@ -602,7 +602,7 @@ function SessionRow({
     ? "border-primary/40 bg-primary/[0.06]"
     : session.is_active
       ? "border-success/30 bg-success/[0.03]"
-      : "border-border";
+      : "border-secondary";
 
   // Clicking the checkbox must NOT toggle row expansion; selection and
   // expansion are independent gestures. We bind ``onClick`` directly on
@@ -782,7 +782,7 @@ function SessionsPagination({
     >
       {!compact && (
         <span className="fs-6 text-body-secondary">
-          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{" "}
+          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{"  "}
           {t.common.of} {total}
         </span>
       )}
@@ -1924,7 +1924,7 @@ export default function SessionsPage() {
                         const selected = selectedSourceSet.has(source);
                         const SourceIcon = SOURCE_CONFIG[source]?.icon ?? Terminal;
                         const sourceColor =
-                          SOURCE_CONFIG[source]?.color ?? "text-muted-foreground";
+                          SOURCE_CONFIG[source]?.color ?? "text-body-secondary";
 
                         return (
                           <div
@@ -2218,11 +2218,11 @@ export default function SessionsPage() {
                           <>
                             <span className="font-monospace">
                               {s.model.split("/").pop()}
-                            </span>{" "}
-                            ·{" "}
+                            </span>{"  "}
+                            ·{"  "}
                           </>
                         )}
-                        {s.message_count} {t.common.msgs} ·{" "}
+                        {s.message_count} {t.common.msgs} ·{"  "}
                         {timeAgo(s.last_active)}
                       </span>
 

@@ -198,11 +198,11 @@ export function ChatSessionList({
               onClick={() => pick(s.id)}
               aria-current={isActive ? "true" : undefined}
               className={cn(
-                "flex-col items-start gap-0.5 rounded px-2 py-1.5",
-                "normal-case tracking-normal",
+                "flex-column align-items-start gap-0.5 rounded px-2 py-2",
+                "text-lowercase ls-normal",
                 isActive
-                  ? "bg-primary/10 text-foreground border-l-2 border-primary"
-                  : "text-text-secondary hover:bg-midground/5 hover:text-foreground",
+                  ? "bg-primary/10 text-body-emphasis border-l-2 border-primary"
+                  : "text-body-secondary hover:bg-midground/5 hover:text-foreground",
               )}
             >
               <span className="w-100 text-truncate fs-6 fw-medium">
@@ -233,7 +233,7 @@ export function ChatSessionList({
   return (
     <aside
       className={cn(
-        "flex h-full w-full min-w-0 shrink-0 flex-col overflow-hidden",
+        "d-flex h-100 w-100 min-w-0 flex-shrink-0 flex-column overflow-hidden",
         className,
       )}
     >

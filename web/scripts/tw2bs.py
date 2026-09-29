@@ -361,26 +361,52 @@ def main() -> int:
     LITERAL = re.compile(
         QUOTED.pattern + "|" + TEMPLATE.pattern, re.S
     )
-    # Only lines that actually carry a class list are eligible.
-    CLASSY = re.compile(r"className|\bcn\(")
+    # Eligibility is tracked per statement, not per line. `cn(` opens on
+    # one line and the class strings land on the next several, so a
+    # per-line test silently skipped every multi-line call — which is
+    # how the style was written nearly everywhere, including the rail.
+    #
+    # A statement is armed by `className` or `cn(` and stays armed until
+    # its terminating semicolon. Class strings do not contain one, so
+    # nothing is cut short in practice.
+    LITERAL = re.compile(
+        QUOTED.pattern + "|" + TEMPLATE.pattern, re.S
+    )
+    ARM = re.compile(r"className|\bcn\(")
 
-    def convert_line(line: str) -> str:
-        if not CLASSY.search(line):
-            return line
+    def convert_text(text: str) -> str:
+        out: list[str] = []
+        pos = 0
+        armed_at: int | None = None
 
-        def on_literal(m: re.Match) -> str:
-            lit = m.group(0)
-            quote = lit[0]
-            body = lit[1:-1]
-            return quote + convert_tokens(body, stats, unmapped) + quote
+        while True:
+            lit = LITERAL.search(text, pos)
+            if not lit:
+                break
+            if armed_at is None:
+                # Is there an arming token between where we last stopped
+                # and this literal?
+                between = text[pos : lit.start()]
+                if ARM.search(between):
+                    armed_at = pos
+                else:
+                    out.append(text[pos : lit.end()])
+                    pos = lit.end()
+                    continue
+            quote = lit.group(0)[0]
+            body = lit.group(0)[1:-1]
+            out.append(text[pos : lit.start()])
+            out.append(quote + convert_tokens(body, stats, unmapped) + quote)
+            pos = lit.end()
+            if ";" in text[lit.end() : lit.end() + 200].split("\n")[0]:
+                armed_at = None
 
-        return LITERAL.sub(on_literal, line)
+        out.append(text[pos:])
+        return "".join(out)
 
     for path in targets:
         original = path.read_text()
-        new_text = "".join(
-            convert_line(line) for line in original.splitlines(keepends=True)
-        )
+        new_text = convert_text(original)
         if new_text != original:
             n = sum(
                 1

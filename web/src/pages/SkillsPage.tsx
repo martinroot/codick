@@ -465,11 +465,7 @@ export default function SkillsPage() {
                           >
                             <span className="flex-grow-1 text-truncate">{name}</span>
                             <span
-                              className={`text-xs tabular-nums ${
-                                isActive
-                                  ? "text-text-secondary"
-                                  : "text-text-tertiary"
-                              }`}
+                              className={`fs-6 tabular-nums ${ isActive ? "text-text-secondary" : "text-text-tertiary" }`}
                             >
                               {count}
                             </span>
@@ -717,7 +713,7 @@ export default function SkillsPage() {
                 Local file or directory
               </label>
               <Input
-                placeholder="~/projects/some-sdk  (read with read_file / search_files)"
+                placeholder="~/projects/some-sdk (read with read_file / search_files)"
                 value={learnDir}
                 onChange={(e) => setLearnDir(e.target.value)}
               />
@@ -727,7 +723,7 @@ export default function SkillsPage() {
                 URL
               </label>
               <Input
-                placeholder="https://docs.example.com/api  (fetched with web_extract)"
+                placeholder="https://docs.example.com/api (fetched with web_extract)"
                 value={learnUrl}
                 onChange={(e) => setLearnUrl(e.target.value)}
               />
@@ -783,9 +779,7 @@ function SkillRow({
       <div className="flex-grow-1 min-w-0">
         <div className="d-flex align-items-center gap-2 mb-1">
           <span
-            className={`font-mono-ui text-sm ${
-              skill.enabled ? "text-foreground" : "text-muted-foreground"
-            }`}
+            className={`font-monospace fs-6 ${ skill.enabled ? "text-foreground" : "text-muted-foreground" }`}
           >
             {skill.name}
           </span>
@@ -814,8 +808,8 @@ function PanelItem({ active, icon: Icon, label, onClick }: PanelItemProps) {
       active={active}
       onClick={onClick}
       className={cn(
-        "rounded-none whitespace-nowrap px-2.5 py-1.5",
-        "font-mondwest text-[0.7rem] tracking-[0.08em] uppercase",
+        "rounded-0 text-nowrap px-2.5 py-2",
+        "font-mondwest text-[0.7rem] tracking-[0.08em] text-uppercase",
         active && "bg-foreground/90 text-background hover:text-background",
       )}
     >
@@ -1207,7 +1201,7 @@ function ConnectedHubs({
   if (sources.length === 0) {
     return (
       <p className="fs-6 text-body-secondary">
-        Results come from the same sources as{" "}
+        Results come from the same sources as{"  "}
         <span className="font-monospace">hermes skills search</span>.
       </p>
     );
@@ -1434,7 +1428,7 @@ function SkillDetailDialog({
             )}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Preview the SKILL.md source and run a security scan for {result.name}{" "}
+            Preview the SKILL.md source and run a security scan for {result.name}{"  "}
             before installing.
           </DialogDescription>
         </DialogHeader>
@@ -1523,9 +1517,9 @@ function SkillDetailDialog({
                 {preview.files.length > 0 && (
                   <div className="fs-6 text-body-tertiary">
                     <span className="font-mondwest tracking-[0.1em] text-uppercase">
-                      Files:{" "}
+                      Files:{"  "}
                     </span>
-                    <span className="font-monospace">{preview.files.join("        ")}</span>
+                    <span className="font-monospace">{preview.files.join("                ")}</span>
                   </div>
                 )}
                 <pre className="text-wrap text-break bg-background/50 border border-secondary p-3 fs-6 font-monospace text-body-secondary leading-relaxed">
@@ -1593,7 +1587,7 @@ function ScanPanel({
       <div className="d-flex flex-wrap align-items-center gap-2 border border-secondary p-3">
         <v.Icon
           className={cn(
-            "h-6 w-6",
+            "icon-xl",
             scan.verdict === "safe"
               ? "text-emerald-400"
               : scan.verdict === "dangerous"

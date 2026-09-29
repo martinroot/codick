@@ -108,7 +108,7 @@ function MemoryProviderSetupResults({ results }: { results: MemoryProviderSetupR
             <div className="d-flex flex-wrap align-items-center gap-2">
               <span
                 className={cn(
-                  "border px-2 py-0.5 font-mono text-[0.6875rem]",
+                  "border px-2 py-0.5 font-monospace text-[0.6875rem]",
                   setupResultClass(result.status),
                 )}
               >
@@ -172,8 +172,8 @@ function MemoryProviderSetupHint({
   return (
     <div
       className={cn(
-        "grid gap-3 border px-3 py-3 text-xs text-foreground",
-        isBlocked ? "border-destructive/50" : "border-border",
+        "d-grid gap-3 border px-3 py-3 fs-6 text-body-emphasis",
+        isBlocked ? "border-destructive/50" : "border-secondary",
       )}
     >
       <p className={isBlocked ? "text-danger" : "text-body-secondary"}>
@@ -901,7 +901,7 @@ export default function PluginsPage() {
             </div>
           ) : catalogEntries.length === 0 ? (
             <p className="fs-6 text-body-tertiary">
-              {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{" "}
+              {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{"  "}
               <a
                 className="text-decoration-underline"
                 href="https://hermes-agent.nousresearch.com/docs/plugins"
@@ -1144,9 +1144,9 @@ function PluginRowCard(props: PluginRowCardProps) {
 
               <Link
                 className={cn(
-                  "inline-flex items-center rounded-none px-3 py-1.5",
+                  "d-inline-flex align-items-center rounded-0 px-3 py-2",
                   "border border-current/25 hover:bg-current/10",
-                  "font-mondwest text-display text-xs tracking-[0.1em]",
+                  "font-mondwest fs-4 fw-semibold fs-6 tracking-[0.1em]",
                 )}
                 to={tabPath}
               >

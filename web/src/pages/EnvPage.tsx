@@ -247,11 +247,7 @@ function EnvVarRow({
       {!isEditing && (
         <div className="d-flex align-items-center gap-2">
           <div
-            className={`flex-1 border border-border px-3 py-2 font-mono-ui text-xs ${
-              isRevealed
-                ? "bg-background text-foreground select-all"
-                : "bg-muted/30 text-muted-foreground"
-            }`}
+            className={`flex-grow-1 border border-secondary px-3 py-2 font-monospace fs-6 ${ isRevealed ? "bg-background text-body-emphasis select-all" : "bg-muted/30 text-muted-foreground" }`}
           >
             {info.is_set ? displayValue : "---"}
           </div>
@@ -1081,7 +1077,7 @@ function EnvCategoryCard({
         </div>
 
         <CardDescription>
-          {section.setEntries.length} {t.common.of} {section.totalEntries}{" "}
+          {section.setEntries.length} {t.common.of} {section.totalEntries}{"  "}
           {t.common.configured}
         </CardDescription>
 

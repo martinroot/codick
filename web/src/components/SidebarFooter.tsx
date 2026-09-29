@@ -9,9 +9,9 @@ export function SidebarFooter({ status }: SidebarFooterProps) {
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-between gap-2",
+        "d-flex flex-shrink-0 align-items-center justify-content-between gap-2",
         "px-5 py-2.5",
-        "border-t border-current/10",
+        "border-top border-current/10",
       )}
     >
       <Typography
@@ -25,7 +25,7 @@ export function SidebarFooter({ status }: SidebarFooterProps) {
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
-          "font-sans text-display text-xs tracking-[0.12em] text-midground",
+          "font-sans fs-4 fw-semibold fs-6 tracking-[0.12em] text-midground",
           "transition-opacity hover:opacity-90",
           "focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground/40",
         )}

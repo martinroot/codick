@@ -816,7 +816,7 @@ export default function ProfilesPage() {
           <div
             className={cn(
               themedBody,
-              "relative w-full max-w-md border border-border bg-card shadow-2xl flex flex-col max-h-[90vh]",
+              "position-relative w-100 max-w-md border border-secondary bg-card shadow-2xl d-flex flex-column max-h-[90vh]",
             )}
           >
             <Button
@@ -939,7 +939,7 @@ export default function ProfilesPage() {
 
                   <Label
                     className={cn(
-                      "font-mondwest normal-case tracking-normal text-sm cursor-pointer",
+                      "font-mondwest text-lowercase ls-normal fs-6 cursor-pointer",
                       !cloning && "opacity-50",
                     )}
                     htmlFor="clone-all"
@@ -958,7 +958,7 @@ export default function ProfilesPage() {
 
                   <Label
                     className={cn(
-                      "font-mondwest normal-case tracking-normal text-sm cursor-pointer",
+                      "font-mondwest text-lowercase ls-normal fs-6 cursor-pointer",
                       cloning && "opacity-50",
                     )}
                     htmlFor="no-skills"
@@ -991,7 +991,7 @@ export default function ProfilesPage() {
               <Check className="icon-sm text-success" />
 
               <span>
-                {L.activeProfile}:{" "}
+                {L.activeProfile}:{"  "}
                 <span className="fw-medium text-body-emphasis">
                   {activeInfo.active}
                 </span>
@@ -1061,10 +1061,10 @@ export default function ProfilesPage() {
                         return (
                           <p
                             className={cn(
-                              "text-xs",
+                              "fs-6",
                               invalid
-                                ? "text-destructive"
-                                : "text-muted-foreground",
+                                ? "text-danger"
+                                : "text-body-secondary",
                             )}
                           >
                             {invalid
@@ -1166,7 +1166,7 @@ export default function ProfilesPage() {
                       <div className="d-flex align-items-center gap-2 fs-6">
                         <span
                           className={cn(
-                            "h-1.5 w-1.5 rounded-full",
+                            "h-1.5 w-1.5 rounded-circle",
                             p.gateway_running
                               ? "bg-success"
                               : "bg-muted-foreground/40",
@@ -1177,7 +1177,7 @@ export default function ProfilesPage() {
                           className={cn(
                             p.gateway_running
                               ? "text-success"
-                              : "text-muted-foreground",
+                              : "text-body-secondary",
                           )}
                         >
                           {p.gateway_running
@@ -1191,8 +1191,8 @@ export default function ProfilesPage() {
                           className={cn(
                             "line-clamp-2",
                             p.description
-                              ? "text-muted-foreground"
-                              : "text-muted-foreground/60 italic",
+                              ? "text-body-secondary"
+                              : "text-muted-foreground/60 fst-italic",
                           )}
                         >
                           {p.description || L.noDescription}
@@ -1241,7 +1241,7 @@ export default function ProfilesPage() {
           <div
             className={cn(
               themedBody,
-              "relative w-full max-w-lg border border-border bg-card shadow-2xl flex flex-col max-h-[90vh]",
+              "position-relative w-100 max-w-lg border border-secondary bg-card shadow-2xl d-flex flex-column max-h-[90vh]",
             )}
           >
             <Button
@@ -1270,7 +1270,7 @@ export default function ProfilesPage() {
 
             <div
               className={cn(
-                "p-5 grid gap-4",
+                "p-5 d-grid gap-4",
                 editorKind === "soul" && "min-h-0 overflow-y-auto",
               )}
             >

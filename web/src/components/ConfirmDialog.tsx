@@ -72,7 +72,7 @@ export function ConfirmDialog({
         ref={dialogRef}
         className={cn(
           themedBody,
-          "relative w-full max-w-md border border-border bg-card shadow-2xl",
+          "position-relative w-100 max-w-md border border-secondary bg-card shadow-2xl",
         )}
       >
         <div className="d-flex align-items-start gap-3 p-4 border-bottom border-secondary">

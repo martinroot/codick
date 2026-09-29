@@ -68,8 +68,8 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
         onClick={() => setOpen((o) => !o)}
         className={cn(
           collapsed
-            ? "text-text-secondary hover:text-foreground hover:bg-transparent"
-            : "px-2 py-1 normal-case tracking-normal font-normal text-xs text-text-secondary hover:text-foreground",
+            ? "text-body-secondary hover:text-foreground hover:bg-transparent"
+            : "px-2 py-1 text-lowercase ls-normal fw-normal fs-6 text-body-secondary hover:text-foreground",
         )}
         title={`${t.theme?.switchTheme ?? "Switch theme"}: ${label}`}
         aria-label={t.theme?.switchTheme ?? "Switch theme"}
@@ -122,7 +122,7 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
               "min-w-[240px] max-h-[70dvh] overflow-y-auto",
               "border border-current/20 bg-background-base/95",
               "shadow-[0_12px_32px_-8px_rgba(0,0,0,0.6)]",
-              dropUp ? "fixed z-[100]" : "absolute z-50 right-0 top-full mt-1",
+              dropUp ? "position-fixed z-[100]" : "position-absolute z-50 right-0 top-full mt-1",
             )}
             role="listbox"
             style={
@@ -203,7 +203,7 @@ function ThemeSwitcherOptions({
 
             <Check
               className={cn(
-                "h-3 w-3 shrink-0 text-midground",
+                "icon-sm flex-shrink-0 text-midground",
                 isActive ? "opacity-100" : "opacity-0",
               )}
             />
@@ -258,7 +258,7 @@ function FontSection({ fontChoices, fontId, setFont }: FontSectionProps) {
         </div>
         <Check
           className={cn(
-            "h-3 w-3 shrink-0 text-midground",
+            "icon-sm flex-shrink-0 text-midground",
             fontId === THEME_DEFAULT_FONT_ID ? "opacity-100" : "opacity-0",
           )}
         />
@@ -298,7 +298,7 @@ function FontSection({ fontChoices, fontId, setFont }: FontSectionProps) {
                   </div>
                   <Check
                     className={cn(
-                      "h-3 w-3 shrink-0 text-midground",
+                      "icon-sm flex-shrink-0 text-midground",
                       isActive ? "opacity-100" : "opacity-0",
                     )}
                   />

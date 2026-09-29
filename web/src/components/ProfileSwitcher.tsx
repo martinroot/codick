@@ -40,7 +40,7 @@ export function ProfileSwitcher({ collapsed }: ProfileSwitcherProps) {
     >
       <Users
         className={cn(
-          "shrink-0",
+          "flex-shrink-0",
           isOther ? "text-warning" : "text-body-secondary",
         )}
       />

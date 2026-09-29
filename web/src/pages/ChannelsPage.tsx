@@ -344,7 +344,7 @@ export default function ChannelsPage() {
             <WifiOff className="icon-md flex-shrink-0" />
             <span>
               The gateway is not running. Configure channels here, then start the
-              gateway with <code className="font-courier">{gatewayStartCommand}</code>{"    "}
+              gateway with <code className="font-courier">{gatewayStartCommand}</code>{"        "}
               (or the Restart button above).
             </span>
           </CardContent>
@@ -362,7 +362,7 @@ export default function ChannelsPage() {
         <div
           ref={editModalRef}
           className={cn(
-            "fixed inset-0 z-[100] flex min-h-dvh items-start justify-center overflow-y-auto bg-background/85 px-4",
+            "position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex min-h-dvh align-items-start justify-content-center overflow-y-auto bg-background/85 px-4",
             "pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))]",
             "sm:items-center sm:p-4",
           )}
@@ -374,7 +374,7 @@ export default function ChannelsPage() {
           <div
             className={cn(
               themedBody,
-              "relative flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col border border-border bg-card shadow-2xl sm:max-h-[90dvh]",
+              "position-relative d-flex max-h-[calc(100dvh-2rem)] w-100 max-w-lg flex-column border border-secondary bg-card shadow-2xl sm:max-h-[90dvh]",
             )}
           >
             <Button
@@ -551,13 +551,13 @@ export default function ChannelsPage() {
                   <div className="d-flex align-items-start gap-3 min-w-0">
                     <StateIcon
                       className={cn(
-                        "h-5 w-5 shrink-0 mt-0.5",
+                        "icon-lg flex-shrink-0 mt-1",
                         platform.state === "connected"
                           ? "text-success"
                           : platform.state === "fatal" ||
                               platform.state === "startup_failed"
-                            ? "text-destructive"
-                            : "text-muted-foreground",
+                            ? "text-danger"
+                            : "text-body-secondary",
                       )}
                     />
                     <div className="d-flex flex-column gap-0.5 min-w-0">
@@ -577,7 +577,7 @@ export default function ChannelsPage() {
                       )}
                       {platform.ingress_url && (
                         <span className="fs-6 text-body-secondary break-all">
-                          Callback URL (shared listener):{" "}
+                          Callback URL (shared listener):{"  "}
                           <code className="font-monospace">{platform.ingress_url}</code>
                         </span>
                       )}

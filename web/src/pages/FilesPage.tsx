@@ -332,9 +332,7 @@ export default function FilesPage() {
         onDrop={handleDrop}
         disabled={!canUpload}
         aria-label="Upload files"
-        className={`dropzone w-100 d-flex align-items-center justify-content-between gap-3 p-3${
-          draggingFiles ? " dropzone-active" : ""
-        }`}
+        className={`dropzone w-100 d-flex align-items-center justify-content-between gap-3 p-3${ draggingFiles ? " dropzone-active" : "" }`}
       >
         <span className="d-flex align-items-center gap-3 min-w-0">
           <span className="dropzone-icon d-flex align-items-center justify-content-center">

@@ -165,11 +165,7 @@ export function MemoryPressureBanner({
     <div
       role="alert"
       data-testid="memory-pressure-banner"
-      className={`flex items-center gap-2 border-b px-4 py-1.5 text-xs ${
-        critical
-          ? "border-red-500/40 bg-red-500/10 text-red-300"
-          : "border-amber-500/40 bg-amber-500/10 text-amber-300"
-      }`}
+      className={`d-flex align-items-center gap-2 border-bottom px-4 py-2 fs-6 ${ critical ? "border-red-500/40 bg-red-500/10 text-red-300" : "border-amber-500/40 bg-amber-500/10 text-amber-300" }`}
     >
       <AlertTriangle className="icon-sm flex-shrink-0" />
       <span className="min-w-0 flex-grow-1">{message}</span>

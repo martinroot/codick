@@ -524,9 +524,9 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         aria-expanded={mobilePanelOpen}
         aria-controls="chat-side-panel"
         className={cn(
-          "shrink-0 rounded border border-current/20",
-          "px-2 py-1 text-xs font-medium tracking-wide",
-          "text-text-secondary hover:text-midground hover:bg-midground/5",
+          "flex-shrink-0 rounded border border-current/20",
+          "px-2 py-1 fs-6 fw-medium tracking-wide",
+          "text-body-secondary hover:text-midground hover:bg-midground/5",
         )}
       >
         <span className="d-inline-flex align-items-center gap-2">
@@ -1842,7 +1842,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             aria-label={t.app.closeModelTools}
             onClick={closeMobilePanel}
             className={cn(
-              "fixed inset-0 z-[55] p-0 block",
+              "position-fixed top-0 start-0 w-100 h-100 z-[55] p-0 d-block",
               "bg-black/60",
             )}
           />
@@ -1853,7 +1853,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           role="complementary"
           aria-label={modelToolsLabel}
           className={cn(
-            "font-mondwest fixed top-0 right-0 z-[60] flex h-dvh max-h-dvh w-64 min-w-0 flex-col antialiased",
+            "font-mondwest position-fixed top-0 right-0 z-[60] d-flex h-dvh max-h-dvh w-64 min-w-0 flex-column antialiased",
             "border-l border-current/20 text-midground",
             "bg-background-base/95",
             "transition-transform duration-200 ease-out",
@@ -1867,7 +1867,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         >
           <div
             className={cn(
-              "flex h-14 shrink-0 items-center justify-between gap-2 border-b border-current/20 px-5",
+              "d-flex h-14 flex-shrink-0 align-items-center justify-content-between gap-2 border-bottom border-current/20 px-5",
             )}
           >
             <Typography
@@ -1892,8 +1892,8 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
 
           <div
             className={cn(
-              "min-h-0 flex-1 overflow-y-auto overflow-x-hidden",
-              "border-t border-current/10",
+              "min-h-0 flex-grow-1 overflow-y-auto overflow-x-hidden",
+              "border-top border-current/10",
             )}
           >
             <div className="border-bottom border-current/10 px-1 py-2">
@@ -1941,7 +1941,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         <div
           ref={termWrapRef}
           className={cn(
-            "relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg",
+            "position-relative d-flex min-h-0 min-w-0 flex-grow-1 flex-column overflow-hidden rounded-3",
             "p-2 sm:p-3",
           )}
           style={{
@@ -2039,13 +2039,13 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             title="Copy last assistant response as raw markdown"
             aria-label="Copy last assistant response"
             className={cn(
-              "absolute z-10",
-              "normal-case tracking-normal font-normal",
+              "position-absolute z-10",
+              "text-lowercase ls-normal fw-normal",
               "rounded border border-current/30",
               "bg-black/20",
               "opacity-70 hover:opacity-100 hover:border-current/60",
               "transition-opacity duration-150",
-              "bottom-2 right-2 px-2 py-1 text-xs sm:bottom-3 sm:right-3 sm:px-2.5 sm:py-1.5",
+              "bottom-2 right-2 px-2 py-1 fs-6 sm:bottom-3 sm:right-3 sm:px-2.5 sm:py-1.5",
               "lg:bottom-4 lg:right-4",
             )}
             style={{ color: terminalFg }}
@@ -2065,13 +2065,13 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
               title="Show side panel (model + sessions)"
               aria-label="Show chat side panel"
               className={cn(
-                "absolute z-10",
-                "normal-case tracking-normal font-normal",
+                "position-absolute z-10",
+                "text-lowercase ls-normal fw-normal",
                 "rounded border border-current/30",
                 "bg-black/20",
                 "opacity-70 hover:opacity-100 hover:border-current/60",
                 "transition-opacity duration-150",
-                "top-2 right-2 px-2 py-1 text-xs sm:top-3 sm:right-3",
+                "top-2 right-2 px-2 py-1 fs-6 sm:top-3 sm:right-3",
               )}
               style={{ color: terminalFg }}
             >

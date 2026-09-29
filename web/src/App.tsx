@@ -540,14 +540,14 @@ export default function App() {
       <header
         className={cn(
           // Native Bootstrap display utilities, deliberately. This used to
-          // be `lg:hidden` (a generated utility) fighting a bare `flex`
+          // be `lg:hidden` (a generated utility) fighting a bare `d-flex`
           // (also generated) for the same property, from two different
           // layers — and the header stayed on screen at desktop widths.
           // `d-lg-none` and `d-flex` are ordered correctly within
           // Bootstrap's own utilities, so the responsive one wins by
           // construction instead of by luck.
-          "d-lg-none d-flex flex-column fixed top-0 start-0 end-0 z-40 min-h-14",
-          "flex-row items-center gap-2 px-4 py-2",
+          "d-lg-none d-flex flex-column position-fixed top-0 start-0 end-0 z-40 min-h-14",
+          "flex-row align-items-center gap-2 px-4 py-2",
           "border-bottom",
           "bg-body-tertiary",
         )}
@@ -628,13 +628,13 @@ export default function App() {
           >
             <div
               className={cn(
-                "d-flex shrink-0 align-items-center gap-2 pb-2 mb-2 border-bottom",
+                "d-flex flex-shrink-0 align-items-center gap-2 pb-2 mb-2 border-bottom",
                 collapsed ? "lg:justify-content-center" : "justify-content-between",
               )}
             >
               <div
                 className={cn(
-                  "flex items-center gap-2",
+                  "d-flex align-items-center gap-2",
                   collapsed && "lg:hidden",
                 )}
               >
@@ -706,7 +706,7 @@ export default function App() {
                   <span
                     className={cn(
                       "px-5 pt-2.5 pb-1",
-                      "font-sans text-display text-xs tracking-[0.12em] text-text-tertiary",
+                      "font-sans fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary",
                       isDesktopCollapsed && "lg:hidden",
                     )}
                     id="hermes-sidebar-plugin-nav-heading"
@@ -739,17 +739,17 @@ export default function App() {
 
             <div
               className={cn(
-                "flex shrink-0 items-center gap-2",
+                "d-flex flex-shrink-0 align-items-center gap-2",
                 "px-3 py-2",
-                "border-t border-current/20",
+                "border-top border-current/20",
                 isDesktopCollapsed
                   ? "lg:flex-col lg:items-start lg:gap-3 lg:py-3"
-                  : "justify-between",
+                  : "justify-content-between",
               )}
             >
               <div
                 className={cn(
-                  "flex min-w-0 items-center gap-2",
+                  "d-flex min-w-0 align-items-center gap-2",
                   isDesktopCollapsed && "lg:flex-col lg:items-start",
                 )}
               >
@@ -775,7 +775,7 @@ export default function App() {
 
             <div
               className={cn(
-                "flex shrink-0 flex-col",
+                "d-flex flex-shrink-0 flex-column",
                 isDesktopCollapsed && "lg:hidden",
               )}
             >
@@ -807,7 +807,7 @@ export default function App() {
                   !isChatRoute &&
                     "pb-[calc(2rem+env(safe-area-inset-bottom,0px))] lg:pb-4",
                   (isDocsRoute || isChatRoute) &&
-                    "min-h-0 flex flex-1 flex-col",
+                    "min-h-0 d-flex flex-grow-1 flex-column",
                 )}
               >
                 <ProfileKeyedRoutes>
@@ -837,7 +837,7 @@ export default function App() {
                       data-chat-active={isChatRoute ? "true" : "false"}
                       className={cn(
                         "min-h-0 min-w-0",
-                        isChatRoute ? "flex flex-1 flex-col" : "hidden",
+                        isChatRoute ? "d-flex flex-grow-1 flex-column" : "d-none",
                       )}
                       aria-hidden={!isChatRoute}
                     >
@@ -1056,15 +1056,15 @@ function SidebarSystemActions({
     <>
     <div
       className={cn(
-        "shrink-0 flex flex-col",
-        "border-t border-current/10",
+        "flex-shrink-0 d-flex flex-column",
+        "border-top border-current/10",
         "py-1",
       )}
     >
       <span
         className={cn(
           "px-5 pt-0.5 pb-0.5",
-          "font-sans text-display text-xs tracking-[0.12em] text-text-tertiary",
+          "font-sans fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary",
           collapsed && "lg:hidden",
         )}
       >
@@ -1166,14 +1166,14 @@ function SystemActionButton({
         onBlur={collapsed ? hideTooltip : undefined}
         type="button"
         className={cn(
-          "group/action relative flex w-full items-center gap-3",
+          "group/action position-relative d-flex w-100 align-items-center gap-3",
           "px-5 py-2.5",
-          "font-sans text-display text-xs tracking-[0.1em]",
-          "whitespace-nowrap transition-colors cursor-pointer",
+          "font-sans fs-4 fw-semibold fs-6 tracking-[0.1em]",
+          "text-nowrap transition-colors cursor-pointer",
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground",
           busy
             ? "text-midground"
-            : "text-text-secondary hover:text-midground",
+            : "text-body-secondary hover:text-midground",
           "disabled:text-text-disabled disabled:cursor-not-allowed",
         )}
       >
@@ -1184,14 +1184,14 @@ function SystemActionButton({
         ) : (
           <Icon
             className={cn(
-              "h-3.5 w-3.5 shrink-0",
+              "icon-sm flex-shrink-0",
               isActionRunning && !spin && "animate-pulse",
             )}
           />
         )}
 
         <span className={cn(
-          "truncate transition-opacity duration-300",
+          "text-truncate transition-opacity duration-300",
           collapsed ? "lg:opacity-0" : "lg:opacity-100",
         )}>
           {displayLabel}
@@ -1237,7 +1237,7 @@ function SidebarIconWithTooltip({
   return (
     <div
       className={cn(
-        "relative w-fit",
+        "position-relative fit-content",
         collapsed && "group/icon",
       )}
       onMouseEnter={collapsed ? showTooltip : undefined}
@@ -1267,8 +1267,8 @@ function GatewayDot({ collapsed, status, tooltipWarmRef }: GatewayDotProps) {
   const toneToColor: Record<string, string> = {
     "text-success": "bg-success",
     "text-warning": "bg-warning",
-    "text-destructive": "bg-destructive",
-    "text-muted-foreground": "bg-muted-foreground",
+    "text-danger": "bg-destructive",
+    "text-body-secondary": "bg-muted-foreground",
   };
 
   let color: string;
@@ -1294,7 +1294,7 @@ function GatewayDot({ collapsed, status, tooltipWarmRef }: GatewayDotProps) {
   return (
     <div
       className={cn(
-        "hidden lg:flex py-3 pl-[1.625rem] transition-opacity duration-300",
+        "d-none lg:flex py-3 pl-[1.625rem] transition-opacity duration-300",
         collapsed ? "lg:opacity-100" : "lg:opacity-0 lg:h-0 lg:py-0 lg:overflow-hidden",
       )}
       role="status"
@@ -1339,10 +1339,10 @@ function SidebarTooltip({ anchor, label, warmRef }: SidebarTooltipProps) {
   return createPortal(
     <span
       className={cn(
-        "fixed z-[100] pointer-events-none",
+        "position-fixed z-[100] pointer-events-none",
         "px-2 py-1",
-        "bg-background-base border border-current/20 shadow-lg",
-        "font-sans text-display text-xs tracking-[0.1em] text-midground uppercase",
+        "bg-body border border-current/20 shadow-lg",
+        "font-sans fs-4 fw-semibold fs-6 tracking-[0.1em] text-midground text-uppercase",
       )}
       style={{
         top: rect.top + rect.height / 2,

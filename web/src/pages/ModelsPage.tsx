@@ -668,10 +668,7 @@ function AuxiliaryTasksModal({
             key={`picker-${refreshKey}`}
             loader={api.getModelOptions}
             alwaysGlobal
-            title={`Set Auxiliary: ${
-              AUX_TASKS.find((t) => t.key === picker.task)?.label ??
-              picker.task
-            }`}
+            title={`Set Auxiliary: ${ AUX_TASKS.find((t) => t.key === picker.task)?.label ?? picker.task }`}
             onApply={async ({ provider, model, confirmExpensiveModel }) => {
               const result = await api.setModelAssignment({
                 confirm_expensive_model: confirmExpensiveModel,
@@ -817,7 +814,7 @@ function MoaModelsModal({
         className={cn(
           themedBody,
           DASHBOARD_MODAL_PANEL,
-          "max-h-[85vh] max-w-2xl overflow-auto flex flex-col",
+          "max-h-[85vh] max-w-2xl overflow-auto d-flex flex-column",
         )}
       >
         <header className="p-5 pb-3 border-bottom border-secondary">
@@ -862,7 +859,7 @@ function MoaModelsModal({
               <div
                 key={`${selected}-${slot.provider}-${slot.model}-${index}`}
                 className={cn(
-                  "flex items-center gap-2 border border-border/50 bg-muted/20 px-3 py-2",
+                  "d-flex align-items-center gap-2 border border-border/50 bg-muted/20 px-3 py-2",
                   slot.enabled === false && "opacity-60"
                 )}
               >
@@ -1305,8 +1302,8 @@ export default function ModelsPage() {
                   Token & cost analytics are hidden because the local counts
                   exclude auxiliary calls (compression, vision, web extract,
                   …) and provider retries, so they diverge from your provider
-                  bill. Enable{" "}
-                  <span className="font-monospace">dashboard.show_token_analytics</span>{"    "}
+                  bill. Enable{"  "}
+                  <span className="font-monospace">dashboard.show_token_analytics</span>{"        "}
                   in <a href="/config" className="text-decoration-underline">Config</a> to
                   show the local debug estimate anyway.
                 </p>

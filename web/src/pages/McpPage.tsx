@@ -353,7 +353,7 @@ export default function McpPage() {
           <div
             className={cn(
               themedBody,
-              "relative w-full max-w-lg border border-border bg-card shadow-2xl flex flex-col",
+              "position-relative w-100 max-w-lg border border-secondary bg-card shadow-2xl d-flex flex-column",
             )}
           >
             <Button
@@ -519,7 +519,7 @@ export default function McpPage() {
           <div
             className={cn(
               themedBody,
-              "relative w-full max-w-lg border border-border bg-card shadow-2xl flex flex-col",
+              "position-relative w-100 max-w-lg border border-secondary bg-card shadow-2xl d-flex flex-column",
             )}
           >
             <Button
@@ -632,7 +632,7 @@ export default function McpPage() {
             <Card key={server.name}>
               <CardContent
                 className={cn(
-                  "flex items-start gap-4 py-4",
+                  "d-flex align-items-start gap-4 py-4",
                   !server.enabled && "opacity-60",
                 )}
               >
@@ -648,7 +648,7 @@ export default function McpPage() {
                     </Badge>
                     {server.auth && (
                       <Badge tone="outline">
-                        auth:{" "}
+                        auth:{"  "}
                         {server.auth === "header" ? "bearer" : server.auth}
                       </Badge>
                     )}
@@ -663,7 +663,7 @@ export default function McpPage() {
                       <span className="font-monospace text-truncate">
                         {[server.command, ...(server.args ?? [])]
                           .filter(Boolean)
-                          .join(" ") || "—"}
+                          .join("  ") || "—"}
                       </span>
                     )}
                     {envCount > 0 && (
@@ -678,9 +678,7 @@ export default function McpPage() {
                         <p className="text-success">
                           {result.tools.length === 0
                             ? "Connected — no tools"
-                            : `Tools: ${result.tools
-                                .map((tool) => tool.name)
-                                .join(", ")}`}
+                            : `Tools: ${result.tools .map((tool) => tool.name) .join(", ")}`}
                         </p>
                       ) : (
                         <p className="text-danger">
@@ -823,15 +821,15 @@ export default function McpPage() {
                   {/* Connection detail: what the agent actually talks to. */}
                   {entry.transport === "http" && entry.url && (
                     <p className="mt-1 fs-6 text-body-secondary">
-                      <span className="fw-medium">Endpoint:</span>{"    "}
+                      <span className="fw-medium">Endpoint:</span>{"        "}
                       <code className="font-monospace">{entry.url}</code>
                     </p>
                   )}
                   {entry.transport === "stdio" && entry.command && (
                     <p className="mt-1 fs-6 text-body-secondary break-all">
-                      <span className="fw-medium">Runs:</span>{"    "}
+                      <span className="fw-medium">Runs:</span>{"        "}
                       <code className="font-monospace">
-                        {[entry.command, ...entry.args].join(" ")}
+                        {[entry.command, ...entry.args].join("  ")}
                       </code>
                     </p>
                   )}
@@ -839,7 +837,7 @@ export default function McpPage() {
                       before they install (matches the docs trust model). */}
                   {entry.install_url && (
                     <p className="mt-1 fs-6 text-body-secondary break-all">
-                      <span className="fw-medium">Installs from:</span>{"    "}
+                      <span className="fw-medium">Installs from:</span>{"        "}
                       {isHttpUrl(entry.install_url) ? (
                         <a
                           href={entry.install_url}

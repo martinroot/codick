@@ -73,4 +73,73 @@
     width: 2rem;
     height: 2rem;
   }
+
+/*
+ * `offcanvas-lg` on the <aside> already splits the two modes for us:
+ * below lg Bootstrap treats it as a fixed off-canvas drawer, from lg up
+ * it un-fixes it into a static flex child. So the only thing left to say
+ * here is how wide the static version is, and how it animates between
+ * the expanded and collapsed widths.
+ *
+ * `flex` is set alongside `width` on purpose — with `flex: 1` the rail
+ * would grow to swallow the content column, and with `flex-shrink: 0`
+ * alone the transition would snap because the basis is the content's
+ * intrinsic size.
+ */
+.app-rail {
+  --app-rail-w: 17rem;
+  --bs-offcanvas-width: var(--app-rail-w);
+}
+
+.app-rail-collapsed {
+  --app-rail-w: 3.5rem;
+}
+
+@media (min-width: 64rem) {
+  .app-rail {
+    width: var(--app-rail-w);
+    flex: 0 0 var(--app-rail-w);
+    /* The rail scrolls with the page, so it pins to the top of the
+       viewport and takes the full height of the shell. */
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    transition:
+      width 0.3s ease,
+      flex-basis 0.3s ease;
+  }
+
+  .app-rail-collapsed {
+    padding: 0.5rem;
+  }
+}
+
+/*
+ * Everything inside the rail is a flex item on the way down to the link
+ * label, and a flex item's `min-width` defaults to `auto` — meaning it
+ * refuses to shrink below its content. The plugin section carries
+ * unmigrated markup, so without an explicit floor the nav grew past the
+ * rail and the surplus was painted over the content column (the nav
+ * clips it with `overflow-x: hidden`, which is what left stray letters
+ * hanging off the rail's right edge).
+ *
+ * `min-width: 0` at each level lets the chain actually shrink, and the
+ * `text-truncate` labels then ellipsise inside the rail instead.
+ */
+.app-rail nav,
+.app-rail > *,
+.app-rail nav > *,
+.app-rail ul,
+.app-rail li,
+.app-rail a,
+.app-rail button {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.app-rail nav ul,
+.app-rail > div > ul {
+  width: 100%;
+}
 }

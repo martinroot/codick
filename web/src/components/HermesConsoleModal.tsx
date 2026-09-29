@@ -511,7 +511,7 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
       <div
         className={cn(
           themedBody,
-          "relative flex h-[min(82dvh,760px)] w-full max-w-5xl flex-col border border-border bg-card shadow-2xl",
+          "position-relative d-flex h-[min(82dvh,760px)] w-100 max-w-5xl flex-column border border-secondary bg-card shadow-2xl",
         )}
       >
         <header className="d-flex min-h-14 align-items-center gap-3 border-bottom border-secondary px-4 py-3">

@@ -50,15 +50,7 @@ export function PlatformsCard({ platforms }: PlatformsCardProps) {
             >
               <div className="d-flex align-items-center gap-3 min-w-0 w-100">
                 <IconComponent
-                  className={`h-4 w-4 shrink-0 ${
-                    info.state === "connected"
-                      ? "text-success"
-                      : info.state === "fatal"
-                        ? "text-destructive"
-                        : info.state === "disabled"
-                          ? "text-muted-foreground"
-                          : "text-warning"
-                  }`}
+                  className={`icon-md flex-shrink-0 ${ info.state === "connected" ? "text-success" : info.state === "fatal" ? "text-destructive" : info.state === "disabled" ? "text-muted-foreground" : "text-warning" }`}
                 />
 
                 <div className="d-flex flex-column gap-0.5 min-w-0">
@@ -68,11 +60,7 @@ export function PlatformsCard({ platforms }: PlatformsCardProps) {
 
                   {info.error_message && (
                     <span
-                      className={`font-mondwest normal-case text-xs ${
-                        info.state === "disabled"
-                          ? "text-muted-foreground"
-                          : "text-destructive"
-                      }`}
+                      className={`font-mondwest text-lowercase fs-6 ${ info.state === "disabled" ? "text-muted-foreground" : "text-destructive" }`}
                     >
                       {info.error_message}
                     </span>

@@ -223,7 +223,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
       <div
         className={cn(
           themedBody,
-          "relative w-full max-w-2xl max-h-[85vh] border border-border bg-card shadow-2xl flex flex-col",
+          "position-relative w-100 max-w-2xl max-h-[85vh] border border-secondary bg-card shadow-2xl d-flex flex-column",
         )}
       >
         <Button
@@ -286,7 +286,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                 <div
                   key={provider.name}
                   className={cn(
-                    "border border-border p-3",
+                    "border border-secondary p-3",
                     isActive && "border-emerald-500/60 bg-emerald-500/5",
                   )}
                 >
@@ -397,7 +397,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                     <div className="mt-3 border-top border-secondary pt-3">
                       <p className="fs-6 text-body-secondary mb-1.5">
                         This backend needs a one-time install
-                        {" "}
+                        {"  "}
                         <span className="font-monospace">
                           ({provider.post_setup})
                         </span>

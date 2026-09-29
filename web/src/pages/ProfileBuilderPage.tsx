@@ -298,12 +298,12 @@ export default function ProfileBuilderPage() {
             disabled={i > 0 && !nameValid}
             onClick={() => setStep(s.id)}
             className={cn(
-              "rounded-full px-3 py-1 transition-colors",
+              "rounded-circle px-3 py-1 transition-colors",
               s.id === step
                 ? "bg-primary text-primary-foreground"
                 : i <= stepIndex
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground",
+                  ? "bg-muted text-body-emphasis"
+                  : "text-body-secondary",
               i > 0 && !nameValid && "cursor-not-allowed opacity-50",
             )}
           >
@@ -367,7 +367,7 @@ export default function ProfileBuilderPage() {
                   <button
                     onClick={() => setModelChoice("")}
                     className={cn(
-                      "block w-full rounded px-3 py-2 text-left text-sm",
+                      "d-block w-100 rounded px-3 py-2 text-start fs-6",
                       modelChoice === "" ? "bg-primary/10" : "hover:bg-muted",
                     )}
                   >
@@ -380,7 +380,7 @@ export default function ProfileBuilderPage() {
                         key={key}
                         onClick={() => setModelChoice(key)}
                         className={cn(
-                          "block w-full rounded px-3 py-2 text-left text-sm",
+                          "d-block w-100 rounded px-3 py-2 text-start fs-6",
                           modelChoice === key
                             ? "bg-primary/10"
                             : "hover:bg-muted",
@@ -572,10 +572,10 @@ export default function ProfileBuilderPage() {
                           type="button"
                           aria-pressed={mcpDraft.transport === value}
                           className={cn(
-                            "px-3 py-2 text-sm font-medium transition-colors",
+                            "px-3 py-2 fs-6 fw-medium transition-colors",
                             mcpDraft.transport === value
                               ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                              : "text-body-secondary hover:bg-muted hover:text-foreground",
                           )}
                           onClick={() => setMcpTransport(value)}
                         >
@@ -618,10 +618,10 @@ export default function ProfileBuilderPage() {
                             type="button"
                             aria-pressed={mcpDraft.httpAuth === value}
                             className={cn(
-                              "px-2 py-2 text-sm font-medium transition-colors",
+                              "px-2 py-2 fs-6 fw-medium transition-colors",
                               mcpDraft.httpAuth === value
                                 ? "bg-primary text-primary-foreground"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                                : "text-body-secondary hover:bg-muted hover:text-foreground",
                             )}
                             onClick={() => setMcpHttpAuth(value)}
                           >
@@ -732,7 +732,7 @@ export default function ProfileBuilderPage() {
                           )}
                         </span>
                         <span className="mt-1 d-block break-all fs-6 text-body-secondary">
-                          {s.url || [s.command, ...(s.args || [])].join(" ")}
+                          {s.url || [s.command, ...(s.args || [])].join("  ")}
                         </span>
                       </span>
                       <Button

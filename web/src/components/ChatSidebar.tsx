@@ -452,7 +452,7 @@ export function ChatSidebar({
   return (
     <aside
       className={cn(
-        'flex h-full w-full min-w-0 shrink-0 flex-col gap-3 overflow-y-auto overflow-x-hidden pr-1',
+        'd-flex h-100 w-100 min-w-0 flex-shrink-0 flex-column gap-3 overflow-y-auto overflow-x-hidden pr-1',
         className
       )}
     >
@@ -466,7 +466,7 @@ export function ChatSidebar({
             onClick={() => setModelOpen(true)}
             className={cn(
               'max-w-full min-w-0 px-0 py-0',
-              'self-start normal-case tracking-normal text-sm font-medium',
+              'align-self-start text-lowercase ls-normal fs-6 fw-medium',
               'hover:underline disabled:no-underline'
             )}
             title={modelName === '—' ? 'switch model' : modelName}

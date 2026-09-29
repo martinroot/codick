@@ -8,9 +8,9 @@ import { PluginSlot } from "@/plugins";
 export const HERMES_DOCS_URL = "https://hermes-agent.nousresearch.com/docs/";
 
 const DS_BUTTON_OUTLINED_LINK_CN = cn(
-  "group relative inline-grid grid-cols-[auto_1fr_auto] items-center",
+  "group position-relative inline-grid grid-cols-[auto_1fr_auto] align-items-center",
   "px-[.9em_.75em] py-[1.25em] gap-2",
-  "leading-0 font-bold tracking-[0.2em] uppercase",
+  "leading-0 fw-bold tracking-[0.2em] text-uppercase",
   "text-midground bg-transparent shadow-midground",
   "shadow-[inset_-1px_-1px_0_0_#00000080,inset_1px_1px_0_0_#ffffff80]",
 );
@@ -39,7 +39,7 @@ export default function DocsPage() {
   return (
     <div
       className={cn(
-        "flex min-h-0 w-full min-w-0 flex-1 flex-col",
+        "d-flex min-h-0 w-100 min-w-0 flex-grow-1 flex-column",
         "pt-1 sm:pt-2",
       )}
     >
@@ -48,8 +48,8 @@ export default function DocsPage() {
         title={t.app.nav.documentation}
         src={HERMES_DOCS_URL}
         className={cn(
-          "min-h-0 w-full min-w-0 flex-1",
-          "rounded-sm border border-current/20",
+          "min-h-0 w-100 min-w-0 flex-grow-1",
+          "rounded-1 border border-current/20",
           // Docusaurus paints over a transparent <html> / <body> and
           // relies on the browser's canvas color (light by default) to
           // fill the viewport. Inheriting the dashboard's dark color

@@ -77,22 +77,22 @@ export function PageHeaderProvider({
           >
             <div
               className={cn(
-                "flex min-w-0 flex-1 gap-2 sm:gap-3",
+                "d-flex min-w-0 flex-grow-1 gap-2 sm:gap-3",
                 afterTitle && isEnvRoute
-                  ? "flex-col items-start sm:flex-row sm:items-center"
+                  ? "flex-column align-items-start sm:flex-row sm:items-center"
                   : afterTitle
-                    ? "flex-row flex-wrap items-center"
-                    : "flex-row items-center",
+                    ? "flex-row flex-wrap align-items-center"
+                    : "flex-row align-items-center",
               )}
             >
               <h1
                 className={cn(
-                  "font-expanded min-w-0 text-sm font-bold tracking-[0.08em] text-midground",
+                  "font-expanded min-w-0 fs-6 fw-bold tracking-[0.08em] text-midground",
                   afterTitle && isEnvRoute
                     ? "max-w-full sm:min-w-0 sm:shrink sm:truncate"
                     : afterTitle
-                      ? "shrink truncate"
-                      : "truncate",
+                      ? "flex-shrink-1 text-truncate"
+                      : "text-truncate",
                 )}
               >
                 {displayTitle}
@@ -102,8 +102,8 @@ export function PageHeaderProvider({
                   className={cn(
                     "min-w-0 scrollbar-none",
                     isEnvRoute
-                      ? "w-full overflow-x-auto sm:flex-1 sm:overflow-x-auto"
-                      : "shrink-0 overflow-visible",
+                      ? "w-100 overflow-x-auto sm:flex-1 sm:overflow-x-auto"
+                      : "flex-shrink-0 overflow-visible",
                   )}
                 >
                   {afterTitle}
@@ -114,10 +114,10 @@ export function PageHeaderProvider({
             {end ? (
               <div
                 className={cn(
-                  "flex min-w-0 sm:max-w-md sm:flex-1",
+                  "d-flex min-w-0 sm:max-w-md sm:flex-1",
                   isChatRoute
-                    ? "w-auto shrink-0 justify-end"
-                    : "w-full justify-start sm:justify-end",
+                    ? "w-auto flex-shrink-0 justify-content-end"
+                    : "w-100 justify-content-start sm:justify-end",
                 )}
               >
                 {end}
@@ -128,9 +128,9 @@ export function PageHeaderProvider({
 
         <main
           className={cn(
-            "min-h-0 w-full min-w-0 flex-1 flex flex-col",
+            "min-h-0 w-100 min-w-0 flex-grow-1 d-flex flex-column",
             // Bottom inset for scrolled pages lives on the route outlet wrapper in
-            // `App.tsx` (`w-full min-w-0`) so it pads scrollable content, not flex chrome.
+            // `App.tsx` (`w-100 min-w-0`) so it pads scrollable content, not flex chrome.
             isChatRoute
               ? "overflow-hidden"
               : "overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable]",

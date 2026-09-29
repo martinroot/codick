@@ -28,7 +28,7 @@ export function LoadErrorNotice({ what, detail, onRetry, className }: LoadErrorN
     <Card
       role="alert"
       className={cn(
-        "flex items-start gap-2 border-destructive/40 bg-destructive/5 px-3 py-2 text-xs",
+        "d-flex align-items-start gap-2 border-destructive/40 bg-destructive/5 px-3 py-2 fs-6",
         className,
       )}
     >
