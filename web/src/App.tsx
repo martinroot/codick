@@ -539,10 +539,17 @@ export default function App() {
 
       <header
         className={cn(
-          "lg:hidden fixed top-0 left-0 right-0 z-40 min-h-14",
-          "flex items-center gap-2 px-4 py-2",
-          "border-b border-current/20",
-          "bg-background-base",
+          // Native Bootstrap display utilities, deliberately. This used to
+          // be `lg:hidden` (a generated utility) fighting a bare `flex`
+          // (also generated) for the same property, from two different
+          // layers — and the header stayed on screen at desktop widths.
+          // `d-lg-none` and `d-flex` are ordered correctly within
+          // Bootstrap's own utilities, so the responsive one wins by
+          // construction instead of by luck.
+          "d-lg-none d-flex flex-column fixed top-0 start-0 end-0 z-40 min-h-14",
+          "flex-row items-center gap-2 px-4 py-2",
+          "border-bottom",
+          "bg-body-tertiary",
         )}
         style={{
           background:
@@ -574,7 +581,7 @@ export default function App() {
           aria-label={t.app.closeNavigation}
           onClick={closeMobile}
           className={cn(
-            "lg:hidden fixed inset-0 z-40 p-0 block",
+            "d-lg-none position-fixed top-0 start-0 w-100 h-100 z-40 p-0",
             "bg-black/70",
           )}
         />
@@ -604,14 +611,19 @@ export default function App() {
             id="app-sidebar"
             aria-label={t.app.navigation}
             className={cn(
+              // `offcanvas-lg` is the mechanism doing the work here: below
+              // the lg breakpoint the rail is a fixed, off-canvas drawer
+              // that slides in when `.show` is present; from lg up
+              // Bootstrap un-fixes it into an ordinary flex child. That is
+              // exactly the reference template's split — a drawer on
+              // mobile, a static rail on desktop — and it means no two
+              // utilities ever contend for `position`, which is what left
+              // the rail overlaying the content at desktop widths.
+              "offcanvas-lg offcanvas-start app-rail",
               "d-flex flex-column align-items-stretch p-3",
-              "fixed top-0 start-0 z-50 h-dvh min-h-0 w-64",
               "bg-body-tertiary border-end",
-              "transition-transform duration-200",
-              mobileOpen ? "" : "-translate-x-full",
-              "lg:sticky lg:top-0 lg:translate-x-0 lg:shrink-0 lg:overflow-hidden",
-              "lg:transition-[width] lg:duration-300",
-              collapsed && "lg:w-14 lg:p-2",
+              collapsed && "app-rail-collapsed",
+              mobileOpen && "show",
             )}
           >
             <div
@@ -640,7 +652,7 @@ export default function App() {
                 size="icon"
                 onClick={closeMobile}
                 aria-label={t.app.closeNavigation}
-                className="lg:hidden text-text-secondary hover:text-midground"
+                className="d-lg-none text-text-secondary hover:text-midground"
               >
                 <X />
               </Button>
@@ -652,7 +664,7 @@ export default function App() {
                 aria-label={
                   collapsed ? t.common.expand : t.common.collapse
                 }
-                className="hidden lg:flex text-text-secondary hover:text-midground"
+                className="d-none d-lg-flex text-text-secondary hover:text-midground"
               >
                 {collapsed ? (
                   <PanelLeftOpen className="h-4 w-4" />

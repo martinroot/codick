@@ -313,6 +313,36 @@ def esc(tok: str) -> str:
     return out
 
 
+# Tailwind resolves same-specificity conflicts by emitting utilities in a
+# deliberate order, not alphabetically. Sorting this stylesheet by name
+# silently inverted that: `.hidden` came out before `.inline-flex`, so a
+# component carrying both rendered as a flex box and the `hidden` (or
+# `lg:hidden`) that was supposed to remove it lost. `hidden` must be the
+# last display utility, exactly as Tailwind emits it.
+DISPLAY_ORDER = {
+    "block": 0,
+    "inline-block": 1,
+    "inline": 2,
+    "flex": 3,
+    "inline-flex": 4,
+    "grid": 5,
+    "inline-grid": 6,
+    "table": 7,
+    "contents": 8,
+    "hidden": 9,
+}
+
+
+def sort_key(selector: str) -> tuple:
+    """Order a generated selector so overrides land last, as Tailwind does."""
+    name = selector.lstrip(".")
+    if name in DISPLAY_ORDER:
+        # Display utilities first, in their canonical order, with `hidden`
+        # last so a hiding utility always beats a showing one.
+        return (0, DISPLAY_ORDER[name], selector)
+    return (1, 0, selector)
+
+
 def resolve(tok: str):
     """Return a list of declarations for a utility token, or None."""
     if tok in STATIC:
@@ -814,7 +844,7 @@ def main():
 
     out.append("@layer legacy-utilities {")
     out.append("  /* --- base --- */")
-    for sel, items in sorted(rules.items()):
+    for sel, items in sorted(rules.items(), key=lambda kv: sort_key(kv[0])):
         for tok, body in items:
             out.append(f"  {sel} {{ {body} }}")
 
@@ -836,7 +866,7 @@ def main():
         out.append("")
         out.append(f"  /* --- {bp} and up --- */")
         out.append(f"  @media (min-width: {BREAKPOINTS[bp]}) {{")
-        for sel, bodies in sorted(merged.items()):
+        for sel, bodies in sorted(merged.items(), key=lambda kv: sort_key(kv[0])):
             out.append(f"    {sel} {{ {' '.join(bodies)} }}")
         out.append("  }")
     out.append("}")

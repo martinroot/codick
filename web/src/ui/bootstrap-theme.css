@@ -762,6 +762,51 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* The rail                                                          */
+/* ------------------------------------------------------------------ */
+
+/*
+ * `offcanvas-lg` on the <aside> already splits the two modes for us:
+ * below lg Bootstrap treats it as a fixed off-canvas drawer, from lg up
+ * it un-fixes it into a static flex child. So the only thing left to say
+ * here is how wide the static version is, and how it animates between
+ * the expanded and collapsed widths.
+ *
+ * `flex` is set alongside `width` on purpose — with `flex: 1` the rail
+ * would grow to swallow the content column, and with `flex-shrink: 0`
+ * alone the transition would snap because the basis is the content's
+ * intrinsic size.
+ */
+.app-rail {
+  --app-rail-w: 17rem;
+  --bs-offcanvas-width: var(--app-rail-w);
+}
+
+.app-rail-collapsed {
+  --app-rail-w: 3.5rem;
+}
+
+@media (min-width: 64rem) {
+  .app-rail {
+    width: var(--app-rail-w);
+    flex: 0 0 var(--app-rail-w);
+    /* The rail scrolls with the page, so it pins to the top of the
+       viewport and takes the full height of the shell. */
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    transition:
+      width 0.3s ease,
+      flex-basis 0.3s ease;
+  }
+
+  .app-rail-collapsed {
+    padding: 0.5rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Reduced motion — honour the OS setting rather than animating anyway */
 /* ------------------------------------------------------------------ */
 
