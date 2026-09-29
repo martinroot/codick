@@ -50,8 +50,8 @@ export const zhHant: Translations = {
   },
 
   app: {
-    brand: "Hermes Agent",
-    brandShort: "HA",
+    brand: "CoDick",
+    brandShort: "CD",
     closeNavigation: "關閉導覽",
     closeModelTools: "關閉模型與工具",
     footer: {

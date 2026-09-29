@@ -19,7 +19,6 @@ import type {
 } from "@/lib/api";
 import { getManagementProfile } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { useI18n } from "@/i18n";
 import { SkuStatTile } from "./SkuStatTile";
 import { SkuBarChart, type SkuSegment } from "./SkuCharts";
 import { SkuActivityChart, SkuPie, bucketActivity } from "./SkuActivity";
@@ -34,7 +33,6 @@ import { SkuActivityChart, SkuPie, bucketActivity } from "./SkuActivity";
  * an API that already exists rather than approximated client-side.
  */
 export default function DashboardPage() {
-  const { t } = useI18n();
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<SessionStoreStats | null>(null);
   const [usage, setUsage] = useState<AnalyticsResponse | null>(null);
@@ -199,7 +197,7 @@ export default function DashboardPage() {
       </div>
 
       <p className="small text-body-secondary mb-0">
-        {t.app.footer.org} — figures refresh every 30 seconds.
+        CoDick, based on Hermes Agent — figures refresh every 30 seconds.
       </p>
       </div>
     </div>

@@ -5,7 +5,7 @@
 [project]
 name = "hermes-agent"
 version = "0.0.0"
-description = "The self-improving AI agent — creates skills from experience, improves them during use, and runs anywhere"
+description = "CoDick — an independent project based on Hermes Agent by Nous Research. Not an official Nous Research product."
 readme = "README.md"
 # 3.14 is the newest python we know we have wheels for.
 # we *only* support 3.14, BUT we need to allow old hermes installs on <3.14

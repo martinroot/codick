@@ -37,8 +37,8 @@ export function TopBar({ status }: TopBarProps) {
           wide tracking are what make it a wordmark at this size.
         */}
         <span className="hermes-wordmark">
-          <span className="hermes-wordmark-dim">Web</span>
-          <span>Hermes</span>
+          <span className="hermes-wordmark-dim">Co</span>
+          <span>Dick</span>
         </span>
 
         <div className="ms-auto d-flex align-items-center gap-2">

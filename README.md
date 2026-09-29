@@ -1,8 +1,40 @@
+> ## ⚠️ CoDick
+>
+> **CoDick is an independent project built on [Hermes Agent](https://github.com/NousResearch/hermes-agent)
+> by [Nous Research](https://nousresearch.com). It is not an official Nous Research product,
+> and is not affiliated with, endorsed by, or supported by Nous Research.**
+>
+> The upstream `LICENSE` — MIT, `Copyright (c) 2025 Nous Research` — is retained
+> unchanged, as the licence requires. This repository's own modifications are
+> authored separately and are described in the commit history.
+>
+> **This repository stays here, and its web interface is modified as it stands.**
+> The entire work in this fork is the web layer: `web/` has been rebuilt on
+> Bootstrap 5, and the shell, dashboard and navigation changed accordingly.
+> Nothing outside `web/` was touched. The agent, the CLI and the backend are
+> upstream's, unmodified.
+>
+> The continuing project lives at
+> **[github.com/martinroot/codick](https://github.com/martinroot/codick)** →
+> <a href="https://github.com/martinroot/codick"><img src="https://img.shields.io/badge/CoDick-martinroot%2Fcodick-crimson?style=for-the-badge" alt="Continue at martinroot/codick"></a>
+>
+> Issues, security reports and support requests for the underlying agent belong
+> upstream, not here. What lives here is the web dashboard: a Bootstrap rebuild of
+> the multi-server web UI.
+>
+> If you are looking for the official Hermes Agent, see
+> [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent).
+
 <p align="center">
-  <img src="assets/banner.png" alt="Hermes Agent" width="100%">
+  <img src="assets/banner.png" alt="CoDick, based on Hermes Agent" width="100%">
 </p>
 
-# Hermes Agent ☤
+# CoDick
+
+**An independent web dashboard for Hermes Agent.** The agent itself is the work
+of [Nous Research](https://nousresearch.com) and is documented below as shipped;
+this project rebuilds its web interface on Bootstrap 5 and adds a system
+dashboard. Not an official Nous Research product.
 <p align="center">
   <a href="https://hermes-agent.nousresearch.com/">Hermes Agent</a> | <a href="https://hermes-agent.nousresearch.com/">Hermes Desktop</a>
 </p>
@@ -10,7 +42,7 @@
   <a href="https://hermes-agent.nousresearch.com/docs/"><img src="https://img.shields.io/badge/Docs-hermes--agent.nousresearch.com-FFD700?style=for-the-badge" alt="Documentation"></a>
   <a href="https://discord.gg/NousResearch"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/NousResearch/hermes-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://nousresearch.com"><img src="https://img.shields.io/badge/Built%20by-Nous%20Research-blueviolet?style=for-the-badge" alt="Built by Nous Research"></a>
+  <a href="https://github.com/NousResearch/hermes-agent"><img src="https://img.shields.io/badge/Agent%20by-Nous%20Research-blueviolet?style=for-the-badge" alt="Agent by Nous Research"></a>
   <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/Lang-中文-red?style=for-the-badge" alt="中文"></a>
   <a href="README.ur-pk.md"><img src="https://img.shields.io/badge/Lang-اردو-green?style=for-the-badge" alt="اردو"></a>
   <a href="README.es.md"><img src="https://img.shields.io/badge/Lang-Español-orange?style=for-the-badge" alt="Español"></a>
@@ -240,4 +272,6 @@ for activation, daily use, dependency changes, and leaving the environment.
 
 MIT — see [LICENSE](LICENSE).
 
-Built by [Nous Research](https://nousresearch.com).
+The agent is by [Nous Research](https://nousresearch.com) and remains under its
+original MIT licence, `Copyright (c) 2025 Nous Research`, retained unchanged.
+CoDick's modifications are the work of this repository's contributors.
