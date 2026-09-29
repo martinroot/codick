@@ -1,5 +1,14 @@
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
+// Bootstrap's behaviour, not its styles. The dropdown, modal, offcanvas and
+// collapse components are driven by `data-bs-toggle` attributes, and
+// without this bundle those attributes are inert markup: the stylesheet
+// ships the component's appearance and none of its behaviour, so a control
+// looks like a dropdown and does nothing when pressed.
+//
+// The bundle rather than the individual modules, so Popper comes with it —
+// the dropdown positions itself with it.
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./index.css";
 import App from "./App";
 import { SystemActionsProvider } from "./contexts/SystemActions";
