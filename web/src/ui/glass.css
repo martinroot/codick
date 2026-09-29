@@ -14,16 +14,18 @@
 /*
  * The wash behind the dashboard.
  *
- * Absolute inside the page, not fixed to the viewport. The main column
- * carries an opaque `bg-body`, so anything painted behind it is hidden —
- * the wash has to sit on top of that surface and underneath the cards
- * for the glass to have anything to refract.
+ * This is the main column's own background, not a layer sitting inside the
+ * page. It was an absolutely positioned block in the content, which meant
+ * the colour stopped at the content's padding: a flat band behind the title
+ * bar, flat margins down both sides, and a flat strip below the footer —
+ * the page read as a coloured rectangle floating on white. Painting the
+ * column itself makes the wash reach every edge it is meant to reach.
+ *
+ * It composites over the body colour rather than replacing it, so the
+ * column still matches the rest of the app wherever the gradients fade out,
+ * and it scrolls with the column instead of with the viewport.
  */
-.sku-wash {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+.sku-main {
   background:
     radial-gradient(
       42rem 32rem at 12% -8%,
@@ -39,7 +41,11 @@
       46rem 34rem at 50% 108%,
       color-mix(in srgb, var(--bs-success) 26%, transparent),
       transparent 68%
-    );
+    ),
+    /* The opaque floor. Without it the column loses the `bg-body` it
+       inherits, and where every gradient has faded to transparent the page
+       shows whatever is behind it — the rail, or the browser. */
+    var(--bs-body-bg);
 }
 
 /*

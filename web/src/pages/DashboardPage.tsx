@@ -83,11 +83,9 @@ export default function DashboardPage() {
   );
 
   return (
+    // The wash the glass cards refract is the main column's background
+    // (.sku-main), not a layer here — see App.tsx.
     <div className="position-relative">
-      {/* The wash the glass cards refract. Painted over the column's own
-          background, under the cards — see .sku-wash. */}
-      <div aria-hidden className="sku-wash" />
-
       <div className="d-flex flex-column gap-4 position-relative">
       {error && (
         <div className="alert alert-warning mb-0" role="alert">

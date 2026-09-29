@@ -536,6 +536,13 @@ export default function App() {
   const sidebarStatus = useSidebarStatus();
   const isDocsRoute = pathname === "/docs" || pathname === "/docs/";
   const normalizedPath = pathname.replace(/\/$/, "") || "/";
+  /*
+   * The dashboard's wash is the main column's background, which means the
+   * route has to be known here rather than inside the page. Painted any
+   * lower it stops at the content's padding, leaving flat bands above, on
+   * both sides and below.
+   */
+  const isDashboardRoute = normalizedPath === "/";
   const isChatRoute = normalizedPath === "/chat";
   const embeddedChat = isDashboardEmbeddedChatEnabled();
   // Defer mounting the persistent chat host (and its xterm chunk) until the
@@ -872,6 +879,7 @@ export default function App() {
           <div
             className={cn(
               "d-flex flex-column flex-grow-1 min-w-0 min-h-0 position-relative z-2 bg-body",
+              isDashboardRoute && "sku-main",
               isChatRoute && "pb-0 pt-0",
               isDocsRoute && "min-h-0 flex-grow-1",
             )}
