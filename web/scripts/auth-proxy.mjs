@@ -18,7 +18,7 @@
 
 import { createServer, request as httpRequest } from "node:http";
 import { connect } from "node:net";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 function arg(name, fallback) {
@@ -43,7 +43,33 @@ function safeEqual(a, b) {
   return timingSafeEqual(ha, hb);
 }
 
-function authorized(req) {
+/**
+ * Browsers do not send an `Authorization` header on a WebSocket upgrade,
+ * so a basic-auth gate alone kills every WS the dashboard opens (chat,
+ * event stream, PTY). A cookie is sent on the upgrade automatically,
+ * so a successful basic-auth exchange mints one and later requests —
+ * upgrades included — authenticate with it instead.
+ */
+const COOKIE_NAME = "hermes_preview_auth";
+const COOKIE_SECRET = randomBytes(32);
+const COOKIE_VALUE = createHmac("sha256", COOKIE_SECRET).update(PASS).digest("hex");
+
+function readCookie(req, name) {
+  const header = req.headers.cookie;
+  if (!header) return null;
+  for (const part of header.split(";")) {
+    const [key, ...rest] = part.trim().split("=");
+    if (key === name) return rest.join("=");
+  }
+  return null;
+}
+
+function hasValidCookie(req) {
+  const value = readCookie(req, COOKIE_NAME);
+  return value !== null && safeEqual(value, COOKIE_VALUE);
+}
+
+function hasBasicAuth(req) {
   const header = req.headers.authorization ?? "";
   if (!header.startsWith("Basic ")) return false;
   const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
@@ -52,6 +78,10 @@ function authorized(req) {
   return (
     safeEqual(decoded.slice(0, separator), USER) && safeEqual(decoded.slice(separator + 1), PASS)
   );
+}
+
+function authorized(req) {
+  return hasBasicAuth(req) || hasValidCookie(req);
 }
 
 function challenge(res) {
@@ -74,7 +104,13 @@ const HOP_BY_HOP = new Set([
 ]);
 
 const server = createServer((req, res) => {
+  // A WebSocket upgrade arrives with a cookie but no Authorization
+  // header; challenge it on basic auth alone and the browser cannot
+  // answer, so the socket dies silently. Accept the cookie first.
   if (!authorized(req)) return challenge(res);
+
+  const headers = {};
+  for (const [key, value] of Object.entries(req.headers)) headers[key] = value;
 
   const upstreamReq = httpRequest(
     {
@@ -82,14 +118,22 @@ const server = createServer((req, res) => {
       port: UPSTREAM.port || 80,
       path: req.url,
       method: req.method,
-      headers: { ...req.headers, host: UPSTREAM.host },
+      headers: { ...headers, host: UPSTREAM.host },
     },
     (upstreamRes) => {
-      const headers = {};
+      const outHeaders = {};
       for (const [key, value] of Object.entries(upstreamRes.headers)) {
-        if (!HOP_BY_HOP.has(key.toLowerCase()) && value !== undefined) headers[key] = value;
+        if (!HOP_BY_HOP.has(key.toLowerCase()) && value !== undefined) outHeaders[key] = value;
       }
-      res.writeHead(upstreamRes.statusCode ?? 502, headers);
+      // Mint the cookie only on the exchange that carried the password,
+      // so a stolen cookie is useless without it and the response that
+      // sets it is the one the browser just authenticated.
+      if (hasBasicAuth(req)) {
+        outHeaders["set-cookie"] = [
+          `${COOKIE_NAME}=${COOKIE_VALUE}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400`,
+        ];
+      }
+      res.writeHead(upstreamRes.statusCode ?? 502, outHeaders);
       upstreamRes.pipe(res);
     },
   );
@@ -107,9 +151,42 @@ const server = createServer((req, res) => {
 /* need this, and a plain HTTP proxy silently breaks them.             */
 /* ------------------------------------------------------------------ */
 
-server.on("upgrade", (req, socket, head) => {
+/**
+ * The backend's HTTP middleware rejects a WS upgrade that carries no
+ * `Authorization` header — and a browser cannot set one on an upgrade.
+ * The token is the one the backend already inlines into `index.html`,
+ * so read it once from upstream and attach it to upgrades here.
+ */
+const TOKEN_RE = /__HERMES_SESSION_TOKEN__\s*=\s*"([^"]+)"/;
+let upstreamToken = null;
+
+async function fetchUpstreamToken() {
+  if (upstreamToken) return upstreamToken;
+  try {
+    const res = await fetch(UPSTREAM.origin, { headers: { accept: "text/html" } });
+    const match = TOKEN_RE.exec(await res.text());
+    if (match) upstreamToken = match[1];
+  } catch {
+    /* the dashboard may still be starting; retry on the next upgrade */
+  }
+  return upstreamToken;
+}
+
+/** Headers that must survive a WS upgrade. `Connection` and `Upgrade` are
+ *  hop-by-hop in general, but the RFC 6455 handshake requires both, so
+ *  dropping them turns every upgrade into a 404. */
+const WS_PRESERVED = new Set(["connection", "upgrade"]);
+
+server.on("upgrade", async (req, socket, head) => {
   if (!authorized(req)) {
     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+    socket.destroy();
+    return;
+  }
+
+  const token = await fetchUpstreamToken();
+  if (!token) {
+    socket.write("HTTP/1.1 503 Service Unavailable\r\n\r\n");
     socket.destroy();
     return;
   }
@@ -117,8 +194,11 @@ server.on("upgrade", (req, socket, head) => {
   const upstreamSocket = connect(
     { host: UPSTREAM.hostname, port: Number(UPSTREAM.port || 80) },
     () => {
-      const headers = Object.entries(req.headers)
-        .filter(([key]) => !HOP_BY_HOP.has(key.toLowerCase()) || key.toLowerCase() === "upgrade")
+      const headers = Object.entries({
+        ...req.headers,
+        authorization: `Bearer ${token}`,
+      })
+        .filter(([key]) => !HOP_BY_HOP.has(key.toLowerCase()) || WS_PRESERVED.has(key.toLowerCase()))
         .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`);
       upstreamSocket.write(`${req.method} ${req.url} HTTP/1.1\r\n${headers.join("\r\n")}\r\n\r\n`);
       if (head?.length) upstreamSocket.write(head);
