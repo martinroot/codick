@@ -1,8 +1,17 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
 
+/**
+ * Class-name joiner.
+ *
+ * `tailwind-merge` used to sit here to make the last utility win, which
+ * only made sense while Tailwind generated the utilities. With the
+ * framework gone there is nothing to merge against: the generated
+ * `ui/legacy-utilities.css` rules and Bootstrap's own cascade resolve
+ * each class on their own, so a plain clsx join is the honest
+ * implementation.
+ */
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return clsx(inputs);
 }
 
 /** Mondwest font only — use on layout shells; do not force normal-case here or `text-display` chrome (Segmented, badges) stops uppercasing. */

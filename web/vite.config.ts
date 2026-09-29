@@ -11,7 +11,6 @@ function compilerPreset() {
   preset.rolldown.filter.code = /\/>|<\/|from\s*['"][^'"]*react/;
   return preset;
 }
-import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { fileURLToPath } from "node:url";
 
@@ -80,7 +79,7 @@ export default defineConfig({
   plugins: [
     react(),
     babel({ presets: [compilerPreset()] }),
-    tailwindcss(),
+    // Tailwind's Vite plugin removed along with the framework itself.
     hermesDevToken(),
   ],
   resolve: {
