@@ -50,23 +50,29 @@ export function PageHeaderProvider({
 
   return (
     <PageHeaderContext.Provider value={value}>
-      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="d-flex flex-column flex-grow-1 min-h-0 w-100 min-w-0 overflow-hidden">
+        {/*
+          Reference template: the page header is a `bg-body-tertiary` band
+          with `p-3`, matching the rail's surface so the two read as one
+          piece of chrome. It previously reused the page canvas and a
+          `border-current/20` hairline, which made the header blend into
+          the content below it.
+        */}
         <header
           className={cn(
-            "z-1 w-full shrink-0",
-            "box-border border-b border-current/20",
-            "bg-background-base",
-            // Mobile stacks title + toolbar — fixed h-14 clips content; desktop stays one row.
-            "min-h-0 overflow-x-hidden overflow-y-visible py-3 sm:h-14 sm:min-h-[3.5rem] sm:overflow-hidden sm:py-0",
+            "z-1 w-100 flex-shrink-0 bg-body-tertiary border-bottom",
+            // Mobile stacks title + toolbar — a fixed height clips content;
+            // desktop stays one row.
+            "min-h-0 overflow-x-hidden overflow-y-visible p-3 sm:py-2",
           )}
           role="banner"
         >
           <div
             className={cn(
-              "flex w-full min-w-0 flex-1 gap-3 px-3 sm:h-full sm:gap-3 sm:px-6",
+              "d-flex w-100 min-w-0 flex-grow-1 gap-2",
               isChatRoute
-                ? "flex-row items-center"
-                : "flex-col justify-center sm:flex-row sm:items-center",
+                ? "flex-row align-items-center"
+                : "flex-column justify-content-center sm:flex-row sm:align-items-center",
             )}
           >
             <div

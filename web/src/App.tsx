@@ -590,33 +590,34 @@ export default function App() {
       <MemoryPressureBanner status={sidebarStatus} />
       <MultiplexStandaloneBanner status={sidebarStatus} />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex min-h-0 min-w-0 flex-1">
+      <div className="d-flex flex-column overflow-hidden flex-grow-1 min-h-0 min-w-0">
+        <div className="d-flex flex-grow-1 min-h-0 min-w-0">
+          {/*
+            Bootstrap dashboard template: the rail is a `bg-body-tertiary`
+            column with real padding, not a second copy of the canvas
+            divided by a hairline. `align-items-stretch` is what lets the
+            nav-pill links span the full rail width, and the padding lives
+            on the rail itself so the sections inside it do not each
+            re-declare an inset.
+          */}
           <aside
             id="app-sidebar"
             aria-label={t.app.navigation}
             className={cn(
-              "fixed top-0 left-0 z-50 flex h-dvh max-h-dvh w-64 min-h-0 flex-col font-sans",
-              "border-r border-current/20",
-              "bg-background-base",
-              "transition-[transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
-              mobileOpen ? "translate-x-0" : "-translate-x-full",
+              "d-flex flex-column align-items-stretch p-3",
+              "fixed top-0 start-0 z-50 h-dvh min-h-0 w-64",
+              "bg-body-tertiary border-end",
+              "transition-transform duration-200",
+              mobileOpen ? "" : "-translate-x-full",
               "lg:sticky lg:top-0 lg:translate-x-0 lg:shrink-0 lg:overflow-hidden",
-              "lg:transition-[width] lg:duration-300 lg:ease-[cubic-bezier(0.23,1,0.32,1)]",
-              collapsed && "lg:w-14",
+              "lg:transition-[width] lg:duration-300",
+              collapsed && "lg:w-14 lg:p-2",
             )}
-            style={{
-              background:
-                "var(--component-sidebar-background, var(--background-base))",
-              clipPath: "var(--component-sidebar-clip-path)",
-              borderImage: "var(--component-sidebar-border-image)",
-            }}
           >
             <div
               className={cn(
-                "flex h-14 shrink-0 items-center gap-2",
-                "border-b border-current/20",
-                collapsed ? "lg:justify-center lg:px-0" : "px-4 justify-between",
+                "d-flex shrink-0 align-items-center gap-2 pb-2 mb-2 border-bottom",
+                collapsed ? "lg:justify-content-center" : "justify-content-between",
               )}
             >
               <div
@@ -663,11 +664,15 @@ export default function App() {
 
             <ProfileSwitcher collapsed={isDesktopCollapsed} />
 
+            {/* The reference template's nav is `nav nav-pills flex-column gap-2`
+                on a scrolling track. The `px-3 py-3` that used to live here is
+                dropped: the rail already carries `p-3`, and keeping both
+                indented the links twice. */}
             <nav
-              className="nav flex-column gap-1 min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden border-top border-current/10 px-3 py-3"
+              className="nav nav-pills flex-column gap-1 flex-grow-1 overflow-y-auto overflow-x-hidden pb-2 mb-2 border-bottom"
               aria-label={t.app.navigation}
             >
-              <ul className="nav flex-column gap-1">
+              <ul className="nav nav-pills flex-column gap-1">
                 {sidebarNav.coreItems.map((item) => (
                   <SidebarNavLink
                     closeMobile={closeMobile}
@@ -768,22 +773,27 @@ export default function App() {
           </aside>
 
           <PageHeaderProvider pluginTabs={pluginTabMeta}>
+            {/*
+              The reference template's main column: the page header sits on
+              `bg-body-tertiary` (the same surface as the rail) and the
+              content below sits on the plain `bg-body` canvas, separated by
+              a `border-bottom`. The old version floated both on the same
+              dark background with no such band, which is why the header
+              read as part of the page rather than as chrome.
+            */}
             <div
               className={cn(
-                "relative z-2 flex min-w-0 min-h-0 flex-1 flex-col",
-                "px-3 sm:px-6",
-                isChatRoute
-                  ? "pb-0 pt-1 sm:pt-2 lg:pt-4"
-                  : "pt-2 sm:pt-4 lg:pt-6",
-                isDocsRoute && "min-h-0 flex-1",
+                "d-flex flex-column flex-grow-1 min-w-0 min-h-0 position-relative z-2 bg-body",
+                isChatRoute && "pb-0 pt-0",
+                isDocsRoute && "min-h-0 flex-grow-1",
               )}
             >
               <PluginSlot name="pre-main" />
               <div
                 className={cn(
-                  "w-full min-w-0",
+                  "w-100 min-w-0",
                   !isChatRoute &&
-                    "pb-[calc(2rem+env(safe-area-inset-bottom,0px))] lg:pb-8",
+                    "pb-[calc(2rem+env(safe-area-inset-bottom,0px))] lg:pb-4",
                   (isDocsRoute || isChatRoute) &&
                     "min-h-0 flex flex-1 flex-col",
                 )}
@@ -885,6 +895,7 @@ function SidebarNavLink({
 
   return (
     <li
+      className="nav-item"
       onMouseEnter={collapsed ? showTooltip : undefined}
       onMouseLeave={collapsed ? hideTooltip : undefined}
     >
@@ -896,37 +907,25 @@ function SidebarNavLink({
         onFocus={collapsed ? showTooltip : undefined}
         onBlur={collapsed ? hideTooltip : undefined}
         className={({ isActive }) =>
-          cn(
-            // Bootstrap dashboard sidebar item: a nav-pill, sentence case.
-            "nav-link d-flex align-items-center gap-2 rounded-3 px-3 py-2",
-            "text-truncate text-body-secondary fw-semibold",
-            "hover:text-body-emphasis",
-            isActive && "active text-body-emphasis",
-          )
+          // The reference template's rail item. The parent <ul> carries
+          // `nav-pills`, so the pill shape, padding and active background
+          // all come from Bootstrap — spelling them out here as well just
+          // fought the cascade.
+          `nav-link d-flex align-items-center gap-2${isActive ? " active" : ""}`
         }
-        style={{
-          clipPath: "var(--component-tab-clip-path)",
-        }}
       >
-        {({ isActive }) => (
+        {() => (
           <>
             <Icon className="shrink-0 h-4 w-4" />
 
             <span
               className={cn(
-                "truncate transition-opacity duration-300",
+                "text-truncate",
                 collapsed ? "lg:opacity-0" : "lg:opacity-100",
               )}
             >
               {navLabel}
             </span>
-
-            {isActive && (
-              <span
-                aria-hidden
-                className="visually-hidden"
-              />
-            )}
           </>
         )}
       </NavLink>
