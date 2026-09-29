@@ -358,26 +358,26 @@ export default function FilesPage() {
             </div>
           )}
 
-          <div className="files-row files-row-head">
-            <span>Name</span>
-            <span>Size</span>
-            <span>Modified</span>
-            <span className="text-end">Actions</span>
+          <div className="row g-0 px-3 py-2 border-bottom small text-body-secondary fw-semibold">
+            <div className="col">Name</div>
+            <div className="col-2">Size</div>
+            <div className="col-3">Modified</div>
+            <div className="col-2 text-end">Actions</div>
           </div>
 
           {listing?.parent && (
             <button
               type="button"
               onClick={() => setCurrentPath(listing.parent ?? undefined)}
-              className="files-row files-row-button w-100 text-start"
+              className="row g-0 w-100 text-start px-3 py-2 border-0 border-bottom bg-transparent hover:bg-body-tertiary"
             >
-              <span className="d-flex align-items-center gap-2 font-monospace text-body-secondary min-w-0">
-                <ArrowUp className="files-icon" />
+              <div className="col d-flex align-items-center gap-2 font-monospace text-body-secondary">
+                <ArrowUp className="icon-sm flex-shrink-0" />
                 ..
-              </span>
-              <span />
-              <span />
-              <span />
+              </div>
+              <div className="col-2" />
+              <div className="col-3" />
+              <div className="col-2" />
             </button>
           )}
 
@@ -392,25 +392,27 @@ export default function FilesPage() {
             listing?.entries.map((entry) => (
               <div
                 key={entry.path}
-                className="files-row"
+                className="row g-0 px-3 py-2 border-bottom"
               >
-                <button
-                  type="button"
-                  onClick={() => (entry.is_directory ? openDirectory(entry) : void downloadFile(entry))}
-                  className="d-flex align-items-center gap-2 text-start font-monospace text-body min-w-0"
-                >
-                  {entry.is_directory ? (
-                    <Folder className="files-icon text-warning" />
-                  ) : (
-                    <FileIcon className="files-icon" />
-                  )}
-                  <span className="text-truncate">{entry.name}</span>
-                </button>
-                <span className="small text-body-secondary">{formatBytes(entry.size)}</span>
-                <span className="small text-body-secondary text-truncate">
+                <div className="col">
+                  <button
+                    type="button"
+                    onClick={() => (entry.is_directory ? openDirectory(entry) : void downloadFile(entry))}
+                    className="d-flex align-items-center gap-2 border-0 bg-transparent p-0 text-start font-monospace text-body min-w-0"
+                  >
+                    {entry.is_directory ? (
+                      <Folder className="icon-sm flex-shrink-0 text-warning" />
+                    ) : (
+                      <FileIcon className="icon-sm flex-shrink-0" />
+                    )}
+                    <span className="text-truncate">{entry.name}</span>
+                  </button>
+                </div>
+                <div className="col-2 small text-body-secondary">{formatBytes(entry.size)}</div>
+                <div className="col-3 small text-body-secondary text-truncate">
                   {Number.isFinite(entry.mtime) ? DATE_FORMAT.format(entry.mtime * 1000) : "-"}
-                </span>
-                <span className="d-flex justify-content-end gap-1">
+                </div>
+                <div className="col-2 d-flex justify-content-end gap-1">
                   {entry.is_directory ? (
                     <Button
                       ghost
@@ -442,7 +444,7 @@ export default function FilesPage() {
                   >
                     <Trash2 />
                   </Button>
-                </span>
+                </div>
               </div>
             ))
           )}
