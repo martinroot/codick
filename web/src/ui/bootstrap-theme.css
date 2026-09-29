@@ -53,23 +53,21 @@
   --bs-secondary-color-rgb: 255, 230, 203;
   --bs-secondary-border-color: rgba(255, 230, 203, 0.16);
 
-  --bs-primary: #2dd4bf;
-  --bs-primary-rgb: 45, 212, 191;
+  /*
+   * The accent and status colours are deliberately NOT overridden. They
+   * were set to the theme's teal, which is what made the whole app read
+   * as the old design system's palette wearing Bootstrap's layout — nav
+   * links, badges and buttons came out green no matter what the markup
+   * said. Stock Bootstrap values apply instead, which is also what the
+   * reference template renders. Only the `*-color` foregrounds are set,
+   * so a filled button still gets dark text on Bootstrap's own fills.
+   */
   --bs-primary-color: #04211f;
-  --bs-primary-bg-subtle: rgba(45, 212, 191, 0.14);
-  --bs-primary-border-subtle: rgba(45, 212, 191, 0.32);
-
-  --bs-success: #4ade80;
-  --bs-success-rgb: 74, 222, 128;
+  --bs-primary-bg-subtle: rgba(13, 110, 253, 0.15);
+  --bs-primary-border-subtle: rgba(13, 110, 253, 0.35);
   --bs-success-color: #04211f;
-  --bs-warning: #fbbf24;
-  --bs-warning-rgb: 251, 191, 36;
   --bs-warning-color: #04211f;
-  --bs-danger: #fb2c36;
-  --bs-danger-rgb: 251, 44, 54;
   --bs-danger-color: #ffffff;
-  --bs-info: #38bdf8;
-  --bs-info-rgb: 56, 189, 248;
   --bs-info-color: #04211f;
 
   /* Typography — the dashboard's theme tokens, not Bootstrap's defaults,

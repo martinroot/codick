@@ -732,7 +732,7 @@ export default function ProfileBuilderPage() {
                           )}
                         </span>
                         <span className="mt-1 d-block break-all fs-6 text-body-secondary">
-                          {s.url || [s.command, ...(s.args || [])].join("  ")}
+                          {s.url || [s.command, ...(s.args || [])].join("    ")}
                         </span>
                       </span>
                       <Button

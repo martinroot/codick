@@ -604,7 +604,7 @@ function AuxiliaryTasksModal({
           <div className="d-flex align-items-center justify-content-between gap-3 pr-8">
             <h2
               id="aux-modal-title"
-              className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
+              className="fs-4 fw-semibold fs-6 ls-wide"
             >
               Auxiliary Tasks
             </h2>
@@ -820,7 +820,7 @@ function MoaModelsModal({
         <header className="p-5 pb-3 border-bottom border-secondary">
           <h2
             id="moa-modal-title"
-            className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
+            className="fs-4 fw-semibold fs-6 ls-wide"
           >
             Configure Mixture of Agents presets
           </h2>
@@ -1302,8 +1302,8 @@ export default function ModelsPage() {
                   Token & cost analytics are hidden because the local counts
                   exclude auxiliary calls (compression, vision, web extract,
                   …) and provider retries, so they diverge from your provider
-                  bill. Enable{"  "}
-                  <span className="font-monospace">dashboard.show_token_analytics</span>{"        "}
+                  bill. Enable{"    "}
+                  <span className="font-monospace">dashboard.show_token_analytics</span>{"                "}
                   in <a href="/config" className="text-decoration-underline">Config</a> to
                   show the local debug estimate anyway.
                 </p>

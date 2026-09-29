@@ -666,7 +666,7 @@ export default function EnvPage() {
             key={s.id}
             type="button"
             onClick={() => scrollTo(s.id)}
-            className="flex-shrink-0 cursor-pointer px-2 py-0.5 font-mondwest fs-4 fw-semibold fs-6 ls-wide text-body-secondary hover:text-foreground border border-border/50 hover:border-foreground/30 transition-colors"
+            className="flex-shrink-0 cursor-pointer px-2 py-0.5 fs-4 fw-semibold fs-6 ls-wide text-body-secondary hover:text-foreground border border-border/50 hover:border-foreground/30 transition-colors"
           >
             {s.label}
           </button>
@@ -1069,7 +1069,7 @@ function EnvCategoryCard({
               type="button"
               onClick={() => setShowAll((open) => !open)}
               aria-expanded={showAll}
-              className="flex-shrink-0 cursor-pointer border-0 bg-transparent p-0 font-mondwest fs-6 tracking-[0.08em] text-body-secondary transition-colors hover:text-foreground"
+              className="flex-shrink-0 cursor-pointer border-0 bg-transparent p-0 fs-6 tracking-[0.08em] text-body-secondary transition-colors hover:text-foreground"
             >
               {showAll ? t.env.showLess : t.env.showMore}
             </button>
@@ -1077,7 +1077,7 @@ function EnvCategoryCard({
         </div>
 
         <CardDescription>
-          {section.setEntries.length} {t.common.of} {section.totalEntries}{"  "}
+          {section.setEntries.length} {t.common.of} {section.totalEntries}{"    "}
           {t.common.configured}
         </CardDescription>
 

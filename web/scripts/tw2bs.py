@@ -103,6 +103,24 @@ MAP = {
     "py-1": "py-1",
     "py-2": "py-2",
     "py-3": "py-3",
+    # The old design system's own tokens. These are the last of the old
+    # vocabulary, and they are what kept the interface reading as the
+    # previous UI: a bespoke display face on section headings, and
+    # semantic paint names that resolve to nothing under Bootstrap.
+    # `font-mondwest` maps to nothing at all — Bootstrap sets the type
+    # stack, and the stock headings are what the reference uses.
+    "font-mondwest": "",
+    "text-midground": "text-body",
+    "bg-midground": "bg-body-tertiary",
+    "text-text-disabled": "text-body-tertiary",
+    "border-current/10": "border-secondary",
+    "border-current/20": "border-secondary",
+    "bg-background-base": "bg-body",
+    "ring-midground": "focus-ring",
+    "focus-visible:ring-1": "focus-ring-1",
+    "focus-visible:outline-none": "",
+    "focus-visible:ring-inset": "",
+
     # Spacing.
     #
     # Tailwind's 0–5 scale and Bootstrap's are the same values
@@ -328,7 +346,11 @@ def convert_tokens(text: str, stats: Counter, unmapped: Counter) -> str:
                 continue
         if name in MAP:
             stats[f"{prefix}{name} -> {MAP[name]}"] += 1
-            out.append(prefix + MAP[name])
+            # An empty mapping means the class carried the old design
+            # system's look and its replacement is "nothing" — the element
+            # should simply inherit, or take the class it now sits beside.
+            if MAP[name]:
+                out.append(prefix + MAP[name])
         else:
             unmapped[tok] += 1
             out.append(tok)

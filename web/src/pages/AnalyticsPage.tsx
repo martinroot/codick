@@ -146,7 +146,7 @@ function TokenBarChart({ daily }: { daily: AnalyticsDailyEntry[] }) {
             {t.analytics.dailyTokenUsage}
           </CardTitle>
         </div>
-        <div className="d-flex align-items-center gap-4 font-mondwest text-lowercase fs-6 text-body-secondary">
+        <div className="d-flex align-items-center gap-4 text-lowercase fs-6 text-body-secondary">
           <div className="d-flex align-items-center gap-2">
             <div
               className="h-2.5 w-2.5"
@@ -183,7 +183,7 @@ function TokenBarChart({ daily }: { daily: AnalyticsDailyEntry[] }) {
                 style={{ height: CHART_HEIGHT_PX }}
               >
                 <div className="position-absolute bottom-full left-1/2 -translate-x-1/2 mb-2 d-none group-hover:block z-10 pointer-events-none">
-                  <div className="font-mondwest text-lowercase bg-card border border-secondary px-2.5 py-2 fs-6 text-body-emphasis shadow-lg text-nowrap">
+                  <div className="text-lowercase bg-card border border-secondary px-2.5 py-2 fs-6 text-body-emphasis shadow-lg text-nowrap">
                     <div className="fw-medium">{formatDate(d.day)}</div>
                     <div>
                       {t.analytics.input}: {formatTokens(d.input_tokens)}
@@ -219,7 +219,7 @@ function TokenBarChart({ daily }: { daily: AnalyticsDailyEntry[] }) {
           })}
         </div>
 
-        <div className="d-flex justify-content-between mt-2 font-mondwest text-lowercase fs-6 text-body-tertiary">
+        <div className="d-flex justify-content-between mt-2 text-lowercase fs-6 text-body-tertiary">
           <span>{daily.length > 0 ? formatDate(daily[0].day) : ""}</span>
           {daily.length > 2 && (
             <span>{formatDate(daily[Math.floor(daily.length / 2)].day)}</span>
@@ -251,7 +251,7 @@ function DailyTable({ daily }: { daily: AnalyticsDailyEntry[] }) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-100 font-mondwest text-lowercase fs-6">
+          <table className="w-100 text-lowercase fs-6">
             <thead>
               <tr className="border-bottom border-secondary text-body-secondary fs-6">
                 <SortHeader label={t.analytics.date} col="day" sortKey={sortKey} sortDir={sortDir} toggle={toggle} className="text-start py-2 pr-4 fw-medium" />
@@ -310,7 +310,7 @@ function ModelTable({ models }: { models: AnalyticsModelEntry[] }) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-100 font-mondwest text-lowercase fs-6">
+          <table className="w-100 text-lowercase fs-6">
             <thead>
               <tr className="border-bottom border-secondary text-body-secondary fs-6">
                 <SortHeader label={t.analytics.model} col="model" sortKey={sortKey} sortDir={sortDir} toggle={toggle} className="text-start py-2 pr-4 fw-medium" />
@@ -365,7 +365,7 @@ function SkillTable({ skills }: { skills: AnalyticsSkillEntry[] }) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-100 font-mondwest text-lowercase fs-6">
+          <table className="w-100 text-lowercase fs-6">
             <thead>
               <tr className="border-bottom border-secondary text-body-secondary fs-6">
                 <SortHeader label={t.analytics.skill} col="skill" sortKey={sortKey} sortDir={sortDir} toggle={toggle} className="text-start py-2 pr-4 fw-medium" />
@@ -490,13 +490,13 @@ export default function AnalyticsPage() {
         <Card>
           <CardContent className="py-12">
             <div className="mx-auto d-flex max-w-2xl flex-column gap-3 fs-6 text-body-secondary">
-              <h2 className="font-mondwest fs-4 fw-semibold fs-6 ls-wide text-body-emphasis">
+              <h2 className="fs-4 fw-semibold fs-6 ls-wide text-body-emphasis">
                 Token analytics hidden
               </h2>
               <p>
                 The token, cost, and per-day analytics on this page are a
                 local debug estimate. They only count successful main-agent
-                responses with a usable <span className="font-monospace">usage</span>{"        "}
+                responses with a usable <span className="font-monospace">usage</span>{"                "}
                 block, and silently exclude auxiliary calls (context
                 compression, title generation, vision, session search, web
                 extract, smart approvals, MCP routing, plugin LLM access)
@@ -512,10 +512,10 @@ export default function AnalyticsPage() {
               <p>
                 Check your provider dashboard (OpenRouter, Anthropic, etc.)
                 for actual usage and billing. To re-enable the local debug
-                estimate anyway, set{"  "}
+                estimate anyway, set{"    "}
                 <span className="font-monospace">
                   dashboard.show_token_analytics: true
-                </span>{"  "}
+                </span>{"    "}
                 in <a href="/config" className="text-decoration-underline">Config</a>.
               </p>
             </div>

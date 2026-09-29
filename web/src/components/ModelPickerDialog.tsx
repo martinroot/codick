@@ -358,7 +358,7 @@ export function ModelPickerDialog(props: Props) {
         <header className="p-5 pb-3 border-bottom border-secondary">
           <h2
             id="model-picker-title"
-            className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
+            className="fs-4 fw-semibold fs-6 ls-wide"
           >
             {title}
           </h2>
@@ -432,7 +432,7 @@ export function ModelPickerDialog(props: Props) {
               />
 
               <Label
-                className="font-mondwest text-lowercase ls-normal fs-6 text-body-secondary cursor-pointer"
+                className="text-lowercase ls-normal fs-6 text-body-secondary cursor-pointer"
                 htmlFor="model-picker-persist-global"
               >
                 Persist globally (otherwise this session only)

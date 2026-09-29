@@ -180,7 +180,7 @@ export function OAuthProvidersCard({ onError, onSuccess }: Props) {
                         {p.status.token_preview}
                         {p.status.source_label && (
                           <span className="text-body-tertiary">
-                            {"  "}
+                            {"    "}
                             · {p.status.source_label}
                           </span>
                         )}

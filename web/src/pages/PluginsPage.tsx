@@ -877,7 +877,7 @@ export default function PluginsPage() {
 
         <div className="d-flex flex-column gap-3" data-testid="plugin-catalog-section">
 
-          <h3 className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
+          <h3 className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
             {t.pluginsPage.catalogHeading ?? "Plugin catalog"}
           </h3>
 
@@ -901,7 +901,7 @@ export default function PluginsPage() {
             </div>
           ) : catalogEntries.length === 0 ? (
             <p className="fs-6 text-body-tertiary">
-              {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{"  "}
+              {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{"    "}
               <a
                 className="text-decoration-underline"
                 href="https://hermes-agent.nousresearch.com/docs/plugins"
@@ -930,7 +930,7 @@ export default function PluginsPage() {
 
         <div className="d-flex flex-column gap-3">
 
-          <h3 className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
+          <h3 className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
             {t.pluginsPage.pluginListHeading}
           </h3>
 
@@ -968,7 +968,7 @@ export default function PluginsPage() {
 
           <div className="d-flex flex-column gap-3 opacity-95">
 
-            <h3 className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
+            <h3 className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
               {t.pluginsPage.orphanHeading}
             </h3>
 
@@ -1146,7 +1146,7 @@ function PluginRowCard(props: PluginRowCardProps) {
                 className={cn(
                   "d-inline-flex align-items-center rounded-0 px-3 py-2",
                   "border border-current/25 hover:bg-current/10",
-                  "font-mondwest fs-4 fw-semibold fs-6 tracking-[0.1em]",
+                  "fs-4 fw-semibold fs-6 tracking-[0.1em]",
                 )}
                 to={tabPath}
               >
@@ -1251,7 +1251,7 @@ function PluginRowCard(props: PluginRowCardProps) {
         {!row.has_dashboard_manifest && !dm ? (
 
 
-          <p className="fs-6 fst-italic text-text-disabled">
+          <p className="fs-6 fst-italic text-body-tertiary">
             {t.pluginsPage.noDashboardTab}
           </p>
         ) : null}

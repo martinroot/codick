@@ -203,7 +203,7 @@ function ThemeSwitcherOptions({
 
             <Check
               className={cn(
-                "icon-sm flex-shrink-0 text-midground",
+                "icon-sm flex-shrink-0 text-body",
                 isActive ? "opacity-100" : "opacity-0",
               )}
             />
@@ -258,7 +258,7 @@ function FontSection({ fontChoices, fontId, setFont }: FontSectionProps) {
         </div>
         <Check
           className={cn(
-            "icon-sm flex-shrink-0 text-midground",
+            "icon-sm flex-shrink-0 text-body",
             fontId === THEME_DEFAULT_FONT_ID ? "opacity-100" : "opacity-0",
           )}
         />
@@ -298,7 +298,7 @@ function FontSection({ fontChoices, fontId, setFont }: FontSectionProps) {
                   </div>
                   <Check
                     className={cn(
-                      "icon-sm flex-shrink-0 text-midground",
+                      "icon-sm flex-shrink-0 text-body",
                       isActive ? "opacity-100" : "opacity-0",
                     )}
                   />

@@ -191,7 +191,7 @@ function SnippetHighlight({ snippet }: { snippet: string }) {
     parts.push(snippet.slice(last));
   }
   return (
-    <p className="font-mondwest text-lowercase mt-1 min-w-0 max-w-full text-truncate fs-6 text-body-secondary">
+    <p className="text-lowercase mt-1 min-w-0 max-w-full text-truncate fs-6 text-body-secondary">
       {parts}
     </p>
   );
@@ -685,7 +685,7 @@ function SessionRow({
                   </div>
                 ) : (
                   <span
-                    className={`font-mondwest text-lowercase min-w-0 flex-grow-1 text-truncate fs-6 ${hasTitle ? "font-medium" : "text-muted-foreground italic"}`}
+                    className={`text-lowercase min-w-0 flex-grow-1 text-truncate fs-6 ${hasTitle ? "font-medium" : "text-muted-foreground italic"}`}
                   >
                     {hasTitle
                       ? session.title
@@ -782,7 +782,7 @@ function SessionsPagination({
     >
       {!compact && (
         <span className="fs-6 text-body-secondary">
-          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{"  "}
+          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{"    "}
           {t.common.of} {total}
         </span>
       )}
@@ -1792,7 +1792,7 @@ export default function SessionsPage() {
                 <Spinner className="flex-shrink-0 text-[0.875rem] text-body-secondary" />
               )}
 
-              <span className="fs-6 font-mondwest tracking-[0.12em] text-truncate">
+              <span className="fs-6 tracking-[0.12em] text-truncate">
                 {activeAction === "restart"
                   ? t.status.restartGateway
                   : t.status.updateHermes}
@@ -2026,7 +2026,7 @@ export default function SessionsPage() {
                 title={t.sessions.deleteEmpty}
                 prefix={<Eraser />}
               >
-                <span className="font-mondwest text-lowercase fs-6">
+                <span className="text-lowercase fs-6">
                   {t.sessions.deleteEmpty} ({emptyCount})
                 </span>
               </Button>
@@ -2043,7 +2043,7 @@ export default function SessionsPage() {
                 title="Import exported session JSON or JSONL"
                 prefix={importingSessions ? <Spinner /> : <Upload />}
               >
-                <span className="font-mondwest text-lowercase fs-6">
+                <span className="text-lowercase fs-6">
                   Import sessions
                 </span>
               </Button>
@@ -2071,7 +2071,7 @@ export default function SessionsPage() {
             String(selectedIds.size),
           )}
         >
-          <span className="font-mondwest text-lowercase fs-6 text-primary tabular-nums">
+          <span className="text-lowercase fs-6 text-primary tabular-nums">
             {t.sessions.selectedCount.replace(
               "{count}",
               String(selectedIds.size),
@@ -2085,7 +2085,7 @@ export default function SessionsPage() {
               aria-label={t.sessions.selectAllOnPage}
               title={t.sessions.selectAllOnPage}
             >
-              <span className="font-mondwest text-lowercase fs-6">
+              <span className="text-lowercase fs-6">
                 {t.sessions.selectAllOnPage}
               </span>
             </Button>
@@ -2097,7 +2097,7 @@ export default function SessionsPage() {
             aria-label={t.sessions.clearSelection}
             title={t.sessions.clearSelection}
           >
-            <span className="font-mondwest text-lowercase fs-6">
+            <span className="text-lowercase fs-6">
               {t.sessions.clearSelection}
             </span>
           </Button>
@@ -2117,7 +2117,7 @@ export default function SessionsPage() {
             )}
             prefix={<Trash2 />}
           >
-            <span className="font-mondwest text-lowercase fs-6">
+            <span className="text-lowercase fs-6">
               {t.sessions.deleteSelected.replace(
                 "{count}",
                 String(selectedIds.size),
@@ -2205,7 +2205,7 @@ export default function SessionsPage() {
                   >
                     <div className="d-flex min-w-0 flex-grow-1 flex-column gap-1">
                       <span
-                        className={`font-mondwest text-lowercase min-w-0 text-truncate fs-6 ${s.title ? "font-medium" : "text-muted-foreground italic"}`}
+                        className={`text-lowercase min-w-0 text-truncate fs-6 ${s.title ? "font-medium" : "text-muted-foreground italic"}`}
                       >
                         {s.title ??
                           (s.preview
@@ -2218,16 +2218,16 @@ export default function SessionsPage() {
                           <>
                             <span className="font-monospace">
                               {s.model.split("/").pop()}
-                            </span>{"  "}
-                            ·{"  "}
+                            </span>{"    "}
+                            ·{"    "}
                           </>
                         )}
-                        {s.message_count} {t.common.msgs} ·{"  "}
+                        {s.message_count} {t.common.msgs} ·{"    "}
                         {timeAgo(s.last_active)}
                       </span>
 
                       {s.preview && s.title && (
-                        <p className="font-mondwest text-lowercase min-w-0 max-w-full fs-6 leading-snug text-body-tertiary [overflow-wrap:anywhere]">
+                        <p className="text-lowercase min-w-0 max-w-full fs-6 leading-snug text-body-tertiary [overflow-wrap:anywhere]">
                           {s.preview}
                         </p>
                       )}

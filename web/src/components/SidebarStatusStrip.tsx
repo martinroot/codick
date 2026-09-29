@@ -10,8 +10,8 @@ export function SidebarStatusStrip({ status }: SidebarStatusStripProps) {
 
   if (status === null) {
     return (
-      <div className="px-5 py-2" aria-hidden>
-        <div className="h-2 w-[80%] max-w-full animate-pulse rounded-1 bg-midground/10" />
+      <div className="px-2 py-2" aria-hidden>
+        <div className="placeholder-glow col-8" />
       </div>
     );
   }
@@ -24,22 +24,24 @@ export function SidebarStatusStrip({ status }: SidebarStatusStripProps) {
       to="/sessions"
       title={t.app.statusOverview}
       className={cn(
-        "d-block text-start",
-        "px-5 pb-2 pt-0.5",
+        "d-block text-start text-decoration-none",
+        // Bootstrap underlines every `a` by default, which is what turned
+        // these two status lines into underlined links once the component
+        // re-skinning was removed. It is still a link, so it keeps the
+        // link colour and the hover state.
+        "px-2 pb-2 pt-1",
         "text-body-secondary",
-        "transition-colors hover:text-midground",
-        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground/40",
-        "focus-visible:ring-inset",
+        "hover:text-body-emphasis",
       )}
     >
       <div className="d-flex flex-column gap-1 font-sans fs-6 leading-snug tracking-[0.08em]">
         <p className="text-break">
-          <span className="text-body-tertiary">{gatewayStatusLabel}</span>{"        "}
+          <span className="text-body-tertiary">{gatewayStatusLabel}</span>{"                "}
           <span className={cn("fw-medium", gw.tone)}>{gw.label}</span>
         </p>
 
         <p className="text-break">
-          <span className="text-body-tertiary">{activeSessionsLabel}</span>{"        "}
+          <span className="text-body-tertiary">{activeSessionsLabel}</span>{"                "}
           <span className="tabular-nums text-body-secondary">
             {status.active_sessions}
           </span>

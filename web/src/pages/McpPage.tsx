@@ -369,7 +369,7 @@ export default function McpPage() {
             <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="create-mcp-title"
-                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
+                className="fs-4 fw-semibold fs-6 ls-wide"
               >
                 Add MCP server
               </h2>
@@ -535,7 +535,7 @@ export default function McpPage() {
             <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="install-mcp-title"
-                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
+                className="fs-4 fw-semibold fs-6 ls-wide"
               >
                 Install {installEntry.name}
               </h2>
@@ -648,7 +648,7 @@ export default function McpPage() {
                     </Badge>
                     {server.auth && (
                       <Badge tone="outline">
-                        auth:{"  "}
+                        auth:{"    "}
                         {server.auth === "header" ? "bearer" : server.auth}
                       </Badge>
                     )}
@@ -663,7 +663,7 @@ export default function McpPage() {
                       <span className="font-monospace text-truncate">
                         {[server.command, ...(server.args ?? [])]
                           .filter(Boolean)
-                          .join("  ") || "—"}
+                          .join("    ") || "—"}
                       </span>
                     )}
                     {envCount > 0 && (
@@ -821,15 +821,15 @@ export default function McpPage() {
                   {/* Connection detail: what the agent actually talks to. */}
                   {entry.transport === "http" && entry.url && (
                     <p className="mt-1 fs-6 text-body-secondary">
-                      <span className="fw-medium">Endpoint:</span>{"        "}
+                      <span className="fw-medium">Endpoint:</span>{"                "}
                       <code className="font-monospace">{entry.url}</code>
                     </p>
                   )}
                   {entry.transport === "stdio" && entry.command && (
                     <p className="mt-1 fs-6 text-body-secondary break-all">
-                      <span className="fw-medium">Runs:</span>{"        "}
+                      <span className="fw-medium">Runs:</span>{"                "}
                       <code className="font-monospace">
-                        {[entry.command, ...entry.args].join("  ")}
+                        {[entry.command, ...entry.args].join("    ")}
                       </code>
                     </p>
                   )}
@@ -837,7 +837,7 @@ export default function McpPage() {
                       before they install (matches the docs trust model). */}
                   {entry.install_url && (
                     <p className="mt-1 fs-6 text-body-secondary break-all">
-                      <span className="fw-medium">Installs from:</span>{"        "}
+                      <span className="fw-medium">Installs from:</span>{"                "}
                       {isHttpUrl(entry.install_url) ? (
                         <a
                           href={entry.install_url}

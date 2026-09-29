@@ -323,7 +323,7 @@ export default function WebhooksPage() {
             <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="create-webhook-title"
-                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
+                className="fs-4 fw-semibold fs-6 ls-wide"
               >
                 New subscription
               </h2>

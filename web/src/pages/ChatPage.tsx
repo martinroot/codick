@@ -1853,8 +1853,8 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           role="complementary"
           aria-label={modelToolsLabel}
           className={cn(
-            "font-mondwest position-fixed top-0 right-0 z-[60] d-flex h-dvh max-h-dvh w-64 min-w-0 flex-column antialiased",
-            "border-l border-current/20 text-midground",
+            "position-fixed top-0 right-0 z-[60] d-flex h-dvh max-h-dvh w-64 min-w-0 flex-column antialiased",
+            "border-l border-current/20 text-body",
             "bg-background-base/95",
             "transition-transform duration-200 ease-out",
             "[background:var(--component-sidebar-background,var(--background-base))]",
@@ -1872,7 +1872,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           >
             <Typography
               mondwest
-              className="fs-4 fw-semibold fw-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground"
+              className="fs-4 fw-semibold fw-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-body"
             >
               {t.app.modelToolsSheetTitle}
               <br />

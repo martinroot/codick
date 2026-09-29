@@ -805,7 +805,7 @@ export default function SystemPage() {
               <X />
             </Button>
             <header className="p-5 pb-3 border-bottom border-secondary">
-              <h2 className="font-mondwest fs-4 fw-semibold fs-6 ls-wide">
+              <h2 className="fs-4 fw-semibold fs-6 ls-wide">
                 New shell hook
               </h2>
             </header>
@@ -1017,7 +1017,7 @@ export default function SystemPage() {
                   !updateInfo.can_apply &&
                   updateInfo.update_available && (
                     <span className="fs-6 text-body-secondary">
-                      Update with{"  "}
+                      Update with{"    "}
                       <span className="font-monospace">{updateInfo.update_command}</span>
                     </span>
                   )}
@@ -1202,7 +1202,7 @@ export default function SystemPage() {
           <CardContent className="d-flex flex-column gap-4 py-4">
             <div className="d-flex flex-wrap align-items-center gap-x-3 gap-y-1 fs-6 text-body-secondary">
               <span>
-                External provider:{"  "}
+                External provider:{"    "}
                 <span className="font-monospace text-body-emphasis">
                   {memory?.active || "built-in only"}
                 </span>
@@ -1216,7 +1216,7 @@ export default function SystemPage() {
                 Change in Plugins →
               </Link>
               <span className="ml-auto">
-                Provider setup:{"  "}
+                Provider setup:{"    "}
                 <Link to="/plugins" className="text-decoration-underline">
                   configure in Plugins
                 </Link>
@@ -1231,8 +1231,8 @@ export default function SystemPage() {
 
             <div className="d-flex flex-wrap align-items-center gap-3 border-top border-secondary pt-3">
               <span className="fs-6 text-body-secondary">
-                Built-in files — MEMORY.md:{"  "}
-                {formatBytes(memory?.builtin_files.memory ?? 0)} · USER.md:{"  "}
+                Built-in files — MEMORY.md:{"    "}
+                {formatBytes(memory?.builtin_files.memory ?? 0)} · USER.md:{"    "}
                 {formatBytes(memory?.builtin_files.user ?? 0)}
               </span>
               <div className="d-flex align-items-center gap-2 ml-auto">
@@ -1512,7 +1512,7 @@ export default function SystemPage() {
                     )}
                     <span className="d-flex align-items-center gap-1 fs-6 text-body-secondary">
                       <Clock className="icon-sm" />
-                      auto-deletes in{"  "}
+                      auto-deletes in{"    "}
                       {Math.round(shareResult.auto_delete_seconds / 3600)}h
                     </span>
                   </div>
@@ -1588,7 +1588,7 @@ export default function SystemPage() {
         <Card>
           <CardContent className="d-flex align-items-center justify-content-between py-4">
             <span className="fs-6 text-body-secondary">
-              {checkpoints?.sessions.length ?? 0} session(s) ·{"  "}
+              {checkpoints?.sessions.length ?? 0} session(s) ·{"    "}
               {formatBytes(checkpoints?.total_bytes ?? 0)}
             </span>
             <Button size="sm" ghost className="text-danger" disabled={!checkpoints?.sessions.length} prefix={<Trash2 className="icon-sm" />} onClick={() => checkpointsPrune.requestDelete("all")}>

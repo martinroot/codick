@@ -965,7 +965,7 @@ export default function CronPage() {
             <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="create-cron-title"
-                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
+                className="fs-4 fw-semibold fs-6 ls-wide"
               >
                 {t.cron.newJob}
               </h2>
@@ -1040,7 +1040,7 @@ export default function CronPage() {
             <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="edit-cron-title"
-                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
+                className="fs-4 fw-semibold fs-6 ls-wide"
               >
                 Edit job
               </h2>
@@ -1220,7 +1220,7 @@ export default function CronPage() {
                   )}
                   {job.last_fire_error?.detail && (
                     <p className="fs-6 text-danger mt-1">
-                      missed scheduled fire ({formatTime(job.last_fire_error.at ?? null)}):{"  "}
+                      missed scheduled fire ({formatTime(job.last_fire_error.at ?? null)}):{"    "}
                       {job.last_fire_error.detail}
                     </p>
                   )}

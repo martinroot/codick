@@ -570,7 +570,7 @@ export default function App() {
           <Menu />
         </Button>
 
-        <Typography className="fw-bold text-[0.95rem] leading-[0.95] tracking-[0.05em] text-midground">
+        <Typography className="fw-bold text-[0.95rem] leading-[0.95] tracking-[0.05em] text-body">
           {t.app.brand}
         </Typography>
       </header>
@@ -640,7 +640,7 @@ export default function App() {
               >
                 <PluginSlot name="header-left" />
 
-                <Typography className="fw-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground text-uppercase">
+                <Typography className="fw-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-body text-uppercase">
                   Hermes
                   <br />
                   Agent
@@ -1154,6 +1154,7 @@ function SystemActionButton({
 
   return (
     <li
+      className="nav-item"
       onMouseEnter={collapsed ? showTooltip : undefined}
       onMouseLeave={collapsed ? hideTooltip : undefined}
     >
@@ -1165,17 +1166,7 @@ function SystemActionButton({
         onFocus={collapsed ? showTooltip : undefined}
         onBlur={collapsed ? hideTooltip : undefined}
         type="button"
-        className={cn(
-          "group/action position-relative d-flex w-100 align-items-center gap-3",
-          "px-5 py-2.5",
-          "font-sans fs-4 fw-semibold fs-6 tracking-[0.1em]",
-          "text-nowrap transition-colors cursor-pointer",
-          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground",
-          busy
-            ? "text-midground"
-            : "text-body-secondary hover:text-midground",
-          "disabled:text-text-disabled disabled:cursor-not-allowed",
-        )}
+        className="nav-link d-flex align-items-center gap-2 w-100"
       >
         {isPending ? (
           <Spinner className="flex-shrink-0 text-[0.875rem]" />
@@ -1197,17 +1188,7 @@ function SystemActionButton({
           {displayLabel}
         </span>
 
-        <span
-          aria-hidden
-          className="position-absolute inset-y-0.5 left-1.5 right-1.5 bg-midground opacity-0 pointer-events-none transition-opacity duration-200 group-hover/action:opacity-5"
-        />
-
-        {busy && (
-          <span
-            aria-hidden
-            className="position-absolute left-0 top-0 bottom-0 w-px bg-midground"
-          />
-        )}
+        {busy && <Spinner className="flex-shrink-0 ms-auto" />}
       </button>
 
       {collapsed && hovered && tooltipAnchor && (
@@ -1248,7 +1229,7 @@ function SidebarIconWithTooltip({
       {collapsed && (
         <span
           aria-hidden
-          className="position-absolute inset-y-0 inset-x-[-0.375rem] bg-midground opacity-0 pointer-events-none transition-opacity duration-200 group-hover/icon:opacity-5 d-none lg:block"
+          className="position-absolute inset-y-0 inset-x-[-0.375rem] bg-body-tertiary opacity-0 pointer-events-none transition-opacity duration-200 group-hover/icon:opacity-5 d-none lg:block"
         />
       )}
 
@@ -1342,7 +1323,7 @@ function SidebarTooltip({ anchor, label, warmRef }: SidebarTooltipProps) {
         "position-fixed z-[100] pointer-events-none",
         "px-2 py-1",
         "bg-body border border-current/20 shadow-lg",
-        "font-sans fs-4 fw-semibold fs-6 tracking-[0.1em] text-midground text-uppercase",
+        "font-sans fs-4 fw-semibold fs-6 tracking-[0.1em] text-body text-uppercase",
       )}
       style={{
         top: rect.top + rect.height / 2,

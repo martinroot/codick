@@ -239,7 +239,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
         {/* Header — toolset identity + enable toggle */}
         <header className="p-5 pb-3 border-bottom border-secondary">
           <div className="d-flex align-items-center gap-3 pr-8">
-            <span className="font-mondwest fs-4 fw-semibold fs-6 ls-wide">
+            <span className="fs-4 fw-semibold fs-6 ls-wide">
               {labelText}
             </span>
             <Badge tone={enabled ? "success" : "outline"} className="fs-6">
@@ -397,7 +397,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                     <div className="mt-3 border-top border-secondary pt-3">
                       <p className="fs-6 text-body-secondary mb-1.5">
                         This backend needs a one-time install
-                        {"  "}
+                        {"    "}
                         <span className="font-monospace">
                           ({provider.post_setup})
                         </span>

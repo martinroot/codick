@@ -404,7 +404,7 @@ export default function ConfigPage() {
                 category={cat}
                 className="icon-md text-body-secondary"
               />
-              <span className="font-mondwest fs-4 fw-semibold fs-6 fw-semibold ls-wide text-body-secondary">
+              <span className="fs-4 fw-semibold fs-6 fw-semibold ls-wide text-body-secondary">
                 {prettyCategoryName(cat)}
               </span>
               <div className="flex-grow-1 border-top border-secondary" />
@@ -412,8 +412,8 @@ export default function ConfigPage() {
           )}
           {showSection && (
             <div className="d-flex align-items-center gap-2 pt-4 pb-2 first:pt-0">
-              <span className="font-mondwest fs-4 fw-semibold fs-6 fw-semibold ls-wide text-body-secondary">
-                {section.replace(/_/g, "  ")}
+              <span className="fs-4 fw-semibold fs-6 fw-semibold ls-wide text-body-secondary">
+                {section.replace(/_/g, "    ")}
               </span>
               <div className="flex-grow-1 border-top border-secondary" />
             </div>
@@ -554,12 +554,12 @@ export default function ConfigPage() {
               <div className="d-flex flex-column border border-secondary bg-muted/20">
                 <div className="d-none sm:flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary">
                   <Filter className="icon-sm text-body-tertiary" />
-                  <span className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
+                  <span className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
                     {t.config.filters}
                   </span>
                 </div>
 
-                <div className="d-none sm:block px-3 pt-2 pb-1 font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary">
+                <div className="d-none sm:block px-3 pt-2 pb-1 fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary">
                   {t.config.sections}
                 </div>
 
@@ -607,7 +607,7 @@ export default function ConfigPage() {
                       {t.config.searchResults}
                     </CardTitle>
                     <Badge tone="secondary" className="fs-6">
-                      {searchMatchedFields.length}{"  "}
+                      {searchMatchedFields.length}{"    "}
                       {t.config.fields.replace(
                         "{s}",
                         searchMatchedFields.length !== 1 ? "s" : "",
@@ -638,7 +638,7 @@ export default function ConfigPage() {
                       {prettyCategoryName(activeCategory)}
                     </CardTitle>
                     <Badge tone="secondary" className="fs-6">
-                      {activeFields.length}{"  "}
+                      {activeFields.length}{"    "}
                       {t.config.fields.replace(
                         "{s}",
                         activeFields.length !== 1 ? "s" : "",

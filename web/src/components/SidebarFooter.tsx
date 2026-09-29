@@ -25,7 +25,7 @@ export function SidebarFooter({ status }: SidebarFooterProps) {
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
-          "font-sans fs-4 fw-semibold fs-6 tracking-[0.12em] text-midground",
+          "font-sans fs-4 fw-semibold fs-6 tracking-[0.12em] text-body",
           "transition-opacity hover:opacity-90",
           "focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground/40",
         )}

@@ -164,7 +164,7 @@ function LanguageSwitcherOptions({
           >
             <span className="text-truncate">{meta.name}</span>
 
-            {selected && <Check className="ml-auto icon-sm flex-shrink-0 text-midground" />}
+            {selected && <Check className="ml-auto icon-sm flex-shrink-0 text-body" />}
           </button>
         );
       })}

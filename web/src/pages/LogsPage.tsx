@@ -93,7 +93,7 @@ export default function LogsPage() {
     setAfterTitle(
       <span className="d-flex align-items-center gap-2">
         <Badge tone="secondary" className="fs-6">
-          {formatFilterLabel(file)} · {formatFilterLabel(level)} ·{"  "}
+          {formatFilterLabel(file)} · {formatFilterLabel(level)} ·{"    "}
           {formatFilterLabel(component)}
         </Badge>
         <Button

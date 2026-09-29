@@ -85,7 +85,7 @@ export function ConfirmDialog({
           <div className="flex-grow-1 min-w-0 d-flex flex-column gap-1">
             <h2
               id="confirm-dialog-title"
-              className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
+              className="fs-4 fw-semibold fs-6 ls-wide"
             >
               {title}
             </h2>
