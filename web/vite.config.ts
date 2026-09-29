@@ -168,4 +168,17 @@ export default defineConfig({
       "/dashboard-plugins": BACKEND,
     },
   },
+  // `vite preview` serves the production build but has no API of its own,
+  // so it needs the same proxy `server` does — otherwise every /api call
+  // 404s against the static server and the dashboard renders empty.
+  preview: {
+    host: true,
+    proxy: {
+      "/api": {
+        target: BACKEND,
+        ws: true,
+      },
+      "/dashboard-plugins": BACKEND,
+    },
+  },
 });
