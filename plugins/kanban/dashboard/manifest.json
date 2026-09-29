@@ -6,7 +6,8 @@
   "version": "1.0.0",
   "tab": {
     "path": "/kanban",
-    "position": "after:skills"
+    "position": "after:skills",
+    "override": "/kanban"
   },
   "entry": "dist/index.js",
   "css": "dist/style.css",

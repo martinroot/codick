@@ -199,7 +199,10 @@ const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
   "/config": ConfigPage,
   "/env": EnvPage,
   "/docs": DocsPage,
-  "/kanban": KanbanMainPage,
+  // The plugin's manifest declares `override: /kanban`, so it owns that
+  // path and the builtin below is never routed there. The React board
+  // lives on a dev path while it is the porting target (issue #2-#17).
+  "/kanban-next": KanbanMainPage,
   "/kanban/fleet": KanbanFleetDashboardPage,
   "/kanban/templates": KanbanTemplateBuilderPage,
   "/servers": ServersListPage,
