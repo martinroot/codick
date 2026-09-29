@@ -718,6 +718,15 @@ export default function App() {
       <MemoryPressureBanner status={sidebarStatus} />
       <MultiplexStandaloneBanner status={sidebarStatus} />
 
+      {/*
+        The strip spans the full shell width, above the rail as well as
+        above the content — so the app's identity sits in the one place a
+        left rail and a page header cannot both claim. It lives here,
+        outside the rail/main row, because that is the only level at
+        which "full width" means anything.
+      */}
+      <TopBar status={sidebarStatus} />
+
       <div className="d-flex flex-column overflow-hidden flex-grow-1 min-h-0 min-w-0">
         <div className="d-flex flex-grow-1 min-h-0 min-w-0">
           {/*
@@ -862,7 +871,6 @@ export default function App() {
             )}
           >
             <PluginSlot name="pre-main" />
-            <TopBar status={sidebarStatus} />
             <PageHeaderProvider pluginTabs={pluginTabMeta}>
               <div
                 className={cn(
@@ -1108,7 +1116,17 @@ function SidebarNavLink({
           // `nav-pills`, so the pill shape, padding and active background
           // all come from Bootstrap — spelling them out here as well just
           // fought the cascade.
-          `nav-link d-flex align-items-center gap-2${isActive ? " active" : ""}`
+          // The item carries its section's tint as a soft background —
+          // Bootstrap's own `*-subtle`, which is that colour at low
+          // alpha. It gives a rail of plain links enough surface to scan,
+          // and it means an item still says which section it belongs to
+          // when that section is collapsed.
+          cn(
+            "nav-link d-flex align-items-center gap-2 fw-semibold",
+            isActive
+              ? "active"
+              : `bg-${accent}-subtle border border-${accent}-subtle`,
+          )
         }
       >
         {({ isActive }) => (

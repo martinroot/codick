@@ -30,7 +30,16 @@ export function TopBar({ status }: TopBarProps) {
           letters; the fill colour behind them is only the fallback for a
           browser that will not clip.
         */}
-        <span className="hermes-wordmark">Hermes</span>
+        {/*
+          Two tones, not a gradient: "WEB" in the muted secondary colour
+          and "HERMES" in the primary, so the product reads as two words
+          rather than as one painted blob. The heavier weight and the
+          wide tracking are what make it a wordmark at this size.
+        */}
+        <span className="hermes-wordmark">
+          <span className="hermes-wordmark-dim">Web</span>
+          <span>Hermes</span>
+        </span>
 
         <div className="ms-auto d-flex align-items-center gap-2">
           <StatusDropdown status={status} />
