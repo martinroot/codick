@@ -66,7 +66,7 @@ export function ConfirmDialog({
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-[200] d-flex align-items-center justify-content-center bg-background/85 p-4"
     >
       <div
         ref={dialogRef}
@@ -75,17 +75,17 @@ export function ConfirmDialog({
           "relative w-full max-w-md border border-border bg-card shadow-2xl",
         )}
       >
-        <div className="flex items-start gap-3 p-4 border-b border-border">
+        <div className="d-flex align-items-start gap-3 p-4 border-bottom border-secondary">
           {destructive && (
-            <div aria-hidden className="mt-0.5 shrink-0 text-destructive">
-              <AlertTriangle className="h-4 w-4" />
+            <div aria-hidden className="mt-1 flex-shrink-0 text-danger">
+              <AlertTriangle className="icon-md" />
             </div>
           )}
 
-          <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div className="flex-grow-1 min-w-0 d-flex flex-column gap-1">
             <h2
               id="confirm-dialog-title"
-              className="font-mondwest text-display text-base tracking-wider"
+              className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
             >
               {title}
             </h2>
@@ -93,7 +93,7 @@ export function ConfirmDialog({
             {description && (
               <p
                 id="confirm-dialog-desc"
-                className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line"
+                className="fs-6 text-body-secondary leading-relaxed whitespace-pre-line"
               >
                 {description}
               </p>
@@ -101,7 +101,7 @@ export function ConfirmDialog({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 p-3">
+        <div className="d-flex align-items-center justify-content-end gap-2 p-3">
           <Button type="button" outlined onClick={onCancel} disabled={loading}>
             {cancelLabel}
           </Button>

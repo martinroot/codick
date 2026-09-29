@@ -105,14 +105,14 @@ function BlueprintCard({
   return (
     <Card className={cn("overflow-hidden", themedBody)}>
       <CardContent className="space-y-3 p-4">
-        <div className="flex items-start justify-between gap-3">
+        <div className="d-flex align-items-start justify-content-between gap-3">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <Wand2 className="h-4 w-4 shrink-0 opacity-70" />
-              <span className="font-medium">{blueprint.title}</span>
+            <div className="d-flex align-items-center gap-2">
+              <Wand2 className="icon-md flex-shrink-0 opacity-70" />
+              <span className="fw-medium">{blueprint.title}</span>
             </div>
-            <p className="mt-1 text-sm opacity-70">{blueprint.description}</p>
-            <div className="mt-2 flex flex-wrap gap-1">
+            <p className="mt-1 fs-6 opacity-70">{blueprint.description}</p>
+            <div className="mt-2 d-flex flex-wrap gap-1">
               {blueprint.tags.map((t) => (
                 <Badge key={t} tone="secondary">
                   {t}
@@ -130,7 +130,7 @@ function BlueprintCard({
         </div>
 
         {open && (
-          <div className="space-y-3 border-t pt-3">
+          <div className="space-y-3 border-top pt-3">
             {blueprint.fields.map((f) => (
               <div key={f.name} className="space-y-1">
                 <Label htmlFor={`${blueprint.key}-${f.name}`}>{f.label}</Label>
@@ -140,16 +140,16 @@ function BlueprintCard({
                   onChange={(v) => setValues((prev) => ({ ...prev, [f.name]: v }))}
                 />
                 {f.help && f.type !== "text" ? (
-                  <p className="text-xs opacity-60">{f.help}</p>
+                  <p className="fs-6 opacity-60">{f.help}</p>
                 ) : null}
               </div>
             ))}
             {error ? (
-              <p className="text-sm text-red-500" role="alert">
+              <p className="fs-6 text-red-500" role="alert">
                 {error}
               </p>
             ) : null}
-            <div className="flex items-center gap-2">
+            <div className="d-flex align-items-center gap-2">
               <Button
                 onClick={() => void submit()}
                 disabled={submitting}
@@ -195,12 +195,12 @@ export function AutomationBlueprints({ profile, onCreated }: AutomationBlueprint
   }, [profile]);
 
   if (loadError) {
-    return <p className="text-sm text-red-500">Couldn't load blueprints: {loadError}</p>;
+    return <p className="fs-6 text-red-500">Couldn't load blueprints: {loadError}</p>;
   }
   if (blueprints === null) {
     return (
-      <div className="flex items-center gap-2 opacity-70">
-        <Spinner className="h-4 w-4" /> Loading blueprints…
+      <div className="d-flex align-items-center gap-2 opacity-70">
+        <Spinner className="icon-md" /> Loading blueprints…
       </div>
     );
   }
@@ -211,7 +211,7 @@ export function AutomationBlueprints({ profile, onCreated }: AutomationBlueprint
   return (
     <>
       <Toast toast={toast} />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="d-grid grid-cols-1 gap-3 md:grid-cols-2">
         {blueprints.map((r) => (
           <BlueprintCard
             key={r.key}

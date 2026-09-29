@@ -20,15 +20,15 @@ export function PlatformsCard({ platforms }: PlatformsCardProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <Radio className="h-5 w-5 text-muted-foreground" />
-          <CardTitle className="text-base">
+        <div className="d-flex align-items-center gap-2">
+          <Radio className="icon-lg text-body-secondary" />
+          <CardTitle className="fs-6">
             {t.status.connectedPlatforms}
           </CardTitle>
         </div>
       </CardHeader>
 
-      <CardContent className="grid gap-3">
+      <CardContent className="d-grid gap-3">
         {platforms.map(([name, info]) => {
           const display = platformStateBadge[info.state] ?? {
             tone: "outline" as const,
@@ -46,9 +46,9 @@ export function PlatformsCard({ platforms }: PlatformsCardProps) {
           return (
             <div
               key={name}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border border-border p-3 w-full"
+              className="d-flex flex-column sm:flex-row sm:items-center sm:justify-between gap-2 border border-secondary p-3 w-100"
             >
-              <div className="flex items-center gap-3 min-w-0 w-full">
+              <div className="d-flex align-items-center gap-3 min-w-0 w-100">
                 <IconComponent
                   className={`h-4 w-4 shrink-0 ${
                     info.state === "connected"
@@ -61,8 +61,8 @@ export function PlatformsCard({ platforms }: PlatformsCardProps) {
                   }`}
                 />
 
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="font-mondwest normal-case text-sm font-medium capitalize truncate">
+                <div className="d-flex flex-column gap-0.5 min-w-0">
+                  <span className="font-mondwest text-lowercase fs-6 fw-medium text-capitalize text-truncate">
                     {name}
                   </span>
 
@@ -79,7 +79,7 @@ export function PlatformsCard({ platforms }: PlatformsCardProps) {
                   )}
 
                   {info.updated_at && (
-                    <span className="font-mondwest normal-case text-xs text-muted-foreground">
+                    <span className="font-mondwest text-lowercase fs-6 text-body-secondary">
                       {t.status.lastUpdate}: {isoTimeAgo(info.updated_at)}
                     </span>
                   )}
@@ -88,10 +88,10 @@ export function PlatformsCard({ platforms }: PlatformsCardProps) {
 
               <Badge
                 tone={display.tone}
-                className="shrink-0 self-start sm:self-center"
+                className="flex-shrink-0 align-self-start sm:self-center"
               >
                 {display.tone === "success" && (
-                  <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+                  <span className="mr-1 d-inline-block h-1.5 w-1.5 animate-pulse rounded-circle bg-current" />
                 )}
                 {display.label}
               </Badge>

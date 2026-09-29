@@ -10,8 +10,8 @@ export function SidebarStatusStrip({ status }: SidebarStatusStripProps) {
 
   if (status === null) {
     return (
-      <div className="px-5 py-1.5" aria-hidden>
-        <div className="h-2 w-[80%] max-w-full animate-pulse rounded-sm bg-midground/10" />
+      <div className="px-5 py-2" aria-hidden>
+        <div className="h-2 w-[80%] max-w-full animate-pulse rounded-1 bg-midground/10" />
       </div>
     );
   }
@@ -32,15 +32,15 @@ export function SidebarStatusStrip({ status }: SidebarStatusStripProps) {
         "focus-visible:ring-inset",
       )}
     >
-      <div className="flex flex-col gap-1 font-sans text-xs leading-snug tracking-[0.08em]">
-        <p className="break-words">
-          <span className="text-text-tertiary">{gatewayStatusLabel}</span>{" "}
-          <span className={cn("font-medium", gw.tone)}>{gw.label}</span>
+      <div className="d-flex flex-column gap-1 font-sans fs-6 leading-snug tracking-[0.08em]">
+        <p className="text-break">
+          <span className="text-body-tertiary">{gatewayStatusLabel}</span>{"    "}
+          <span className={cn("fw-medium", gw.tone)}>{gw.label}</span>
         </p>
 
-        <p className="break-words">
-          <span className="text-text-tertiary">{activeSessionsLabel}</span>{" "}
-          <span className="tabular-nums text-text-secondary">
+        <p className="text-break">
+          <span className="text-body-tertiary">{activeSessionsLabel}</span>{"    "}
+          <span className="tabular-nums text-body-secondary">
             {status.active_sessions}
           </span>
         </p>

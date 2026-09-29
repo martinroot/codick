@@ -281,8 +281,8 @@ export default function ProfileBuilderPage() {
   const canAdvance = step !== "identity" || nameValid;
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-4">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto w-100 max-w-3xl space-y-6 p-4">
+      <div className="d-flex align-items-center justify-content-between">
         <H2>New profile</H2>
         <Button ghost onClick={() => navigate("/profiles")}>
           Cancel
@@ -290,7 +290,7 @@ export default function ProfileBuilderPage() {
       </div>
 
       {/* Stepper */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="d-flex align-items-center gap-2 fs-6">
         {STEPS.map((s, i) => (
           <button
             key={s.id}
@@ -327,7 +327,7 @@ export default function ProfileBuilderPage() {
                   }
                 />
                 {name && !nameValid && (
-                  <p className="text-xs text-destructive">
+                  <p className="fs-6 text-danger">
                     Lowercase letters, digits, hyphens and underscores; must
                     start with a letter or digit.
                   </p>
@@ -349,7 +349,7 @@ export default function ProfileBuilderPage() {
 
           {step === "model" && (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
+              <p className="fs-6 text-body-secondary">
                 Pick the model+provider for this profile. Skip to use the
                 default.
               </p>
@@ -361,7 +361,7 @@ export default function ProfileBuilderPage() {
                 }
               />
               {modelChoices === null ? (
-                <p className="text-sm text-muted-foreground">Loading models…</p>
+                <p className="fs-6 text-body-secondary">Loading models…</p>
               ) : (
                 <div className="max-h-72 space-y-1 overflow-y-auto">
                   <button
@@ -397,7 +397,7 @@ export default function ProfileBuilderPage() {
 
           {step === "skills" && (
             <div className="space-y-4">
-              <label className="flex items-center gap-2 text-sm">
+              <label className="d-flex align-items-center gap-2 fs-6">
                 <Checkbox
                   checked={keepAll}
                   onCheckedChange={(v) => setKeepAll(Boolean(v))}
@@ -406,7 +406,7 @@ export default function ProfileBuilderPage() {
               </label>
               {!keepAll && (
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="fs-6 text-body-secondary">
                     Choose which built-in / optional skills to keep active.
                     Unchecked skills are disabled in the new profile.
                   </p>
@@ -418,7 +418,7 @@ export default function ProfileBuilderPage() {
                     }
                   />
                   {skills === null ? (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="fs-6 text-body-secondary">
                       Loading skills…
                     </p>
                   ) : (
@@ -426,21 +426,21 @@ export default function ProfileBuilderPage() {
                       {filteredSkills.map((s) => (
                         <label
                           key={s.name}
-                          className="flex items-start gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
+                          className="d-flex align-items-start gap-2 rounded px-2 py-2 fs-6 hover:bg-muted"
                         >
                           <Checkbox
                             checked={keptSkills.has(s.name)}
                             onCheckedChange={() => toggleKeep(s.name)}
                           />
-                          <span className="flex-1">
-                            <span className="font-medium">{s.name}</span>
+                          <span className="flex-grow-1">
+                            <span className="fw-medium">{s.name}</span>
                             {s.category && (
                               <Badge tone="secondary" className="ml-2">
                                 {s.category}
                               </Badge>
                             )}
                             {s.description && (
-                              <span className="block text-xs text-muted-foreground">
+                              <span className="d-block fs-6 text-body-secondary">
                                 {s.description}
                               </span>
                             )}
@@ -453,9 +453,9 @@ export default function ProfileBuilderPage() {
               )}
 
               {/* Skills hub */}
-              <div className="space-y-2 border-t pt-4">
+              <div className="space-y-2 border-top pt-4">
                 <Label>Add from the skills hub</Label>
-                <div className="flex gap-2">
+                <div className="d-flex gap-2">
                   <Input
                     placeholder="Search the hub (e.g. linear, hyperliquid)…"
                     value={hubQuery}
@@ -479,15 +479,15 @@ export default function ProfileBuilderPage() {
                     {hubResults.map((r) => (
                       <div
                         key={r.identifier}
-                        className="flex items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-muted"
+                        className="d-flex align-items-center justify-content-between rounded px-2 py-2 fs-6 hover:bg-muted"
                       >
-                        <span className="flex-1">
-                          <span className="font-medium">{r.name}</span>
+                        <span className="flex-grow-1">
+                          <span className="fw-medium">{r.name}</span>
                           <Badge tone="secondary" className="ml-2">
                             {r.source}
                           </Badge>
                           {r.description && (
-                            <span className="block text-xs text-muted-foreground">
+                            <span className="d-block fs-6 text-body-secondary">
                               {r.description}
                             </span>
                           )}
@@ -500,12 +500,12 @@ export default function ProfileBuilderPage() {
                   </div>
                 )}
                 {hubSkills.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
+                  <div className="d-flex flex-wrap gap-2 pt-1">
                     {hubSkills.map((r) => (
                       <Badge key={r.identifier} className="gap-1">
                         {r.name}
                         <button
-                          className="ml-1 text-xs"
+                          className="ml-1 fs-6"
                           onClick={() => removeHubSkill(r.identifier)}
                           aria-label={`Remove ${r.name}`}
                         >
@@ -521,29 +521,29 @@ export default function ProfileBuilderPage() {
 
           {step === "mcp" && (
             <div className="space-y-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="d-flex flex-wrap align-items-start justify-content-between gap-3">
                 <div className="space-y-1">
-                  <h3 className="font-expanded text-base font-bold tracking-[0.04em]">
+                  <h3 className="font-expanded fs-6 fw-bold tracking-[0.04em]">
                     MCP servers
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="fs-6 text-body-secondary">
                     Add MCP servers to give this profile access to external
                     tools and data.
                   </p>
                 </div>
                 <span
-                  className="text-xs text-muted-foreground"
+                  className="fs-6 text-body-secondary"
                   aria-live="polite"
                 >
                   {mcpServers.length} configured
                 </span>
               </div>
 
-              <div className="space-y-4 border border-border bg-background/20 p-4 md:p-5">
-                <h4 className="font-medium">Add server</h4>
+              <div className="space-y-4 border border-secondary bg-background/20 p-4 md:p-5">
+                <h4 className="fw-medium">Add server</h4>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="grid gap-1.5">
+                <div className="d-grid gap-4 md:grid-cols-2">
+                  <div className="d-grid gap-2">
                     <Label htmlFor="pb-mcp-name">Server name</Label>
                     <Input
                       id="pb-mcp-name"
@@ -554,10 +554,10 @@ export default function ProfileBuilderPage() {
                       }
                     />
                   </div>
-                  <div className="grid gap-1.5">
+                  <div className="d-grid gap-2">
                     <Label>Transport</Label>
                     <div
-                      className="grid grid-cols-2 border border-border bg-background/30 p-0.5"
+                      className="d-grid grid-cols-2 border border-secondary bg-background/30 p-0.5"
                       role="group"
                       aria-label="MCP transport"
                     >
@@ -588,7 +588,7 @@ export default function ProfileBuilderPage() {
 
                 {mcpDraft.transport === "http" ? (
                   <>
-                    <div className="grid gap-1.5">
+                    <div className="d-grid gap-2">
                       <Label htmlFor="pb-mcp-url">URL</Label>
                       <Input
                         id="pb-mcp-url"
@@ -599,10 +599,10 @@ export default function ProfileBuilderPage() {
                         }
                       />
                     </div>
-                    <div className="grid gap-1.5">
+                    <div className="d-grid gap-2">
                       <Label>Authentication</Label>
                       <div
-                        className="grid grid-cols-3 border border-border bg-background/30 p-0.5 md:max-w-md"
+                        className="d-grid grid-cols-3 border border-secondary bg-background/30 p-0.5 md:max-w-md"
                         role="group"
                         aria-label="HTTP authentication"
                       >
@@ -631,7 +631,7 @@ export default function ProfileBuilderPage() {
                       </div>
                     </div>
                     {mcpDraft.httpAuth === "header" && (
-                      <div className="grid gap-1.5">
+                      <div className="d-grid gap-2">
                         <Label htmlFor="pb-mcp-bearer-token">
                           Bearer token
                         </Label>
@@ -648,14 +648,14 @@ export default function ProfileBuilderPage() {
                             })
                           }
                         />
-                        <p className="text-xs text-muted-foreground">
+                        <p className="fs-6 text-body-secondary">
                           Stored in the new profile&apos;s .env; config.yaml
                           keeps only an environment-variable reference.
                         </p>
                       </div>
                     )}
                     {mcpDraft.httpAuth === "oauth" && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="fs-6 text-body-secondary">
                         After creating the profile, open its MCP page and use
                         Authenticate to complete OAuth.
                       </p>
@@ -663,8 +663,8 @@ export default function ProfileBuilderPage() {
                   </>
                 ) : (
                   <>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="grid gap-1.5">
+                    <div className="d-grid gap-4 md:grid-cols-2">
+                      <div className="d-grid gap-2">
                         <Label htmlFor="pb-mcp-command">Command</Label>
                         <Input
                           id="pb-mcp-command"
@@ -678,7 +678,7 @@ export default function ProfileBuilderPage() {
                           }
                         />
                       </div>
-                      <div className="grid gap-1.5">
+                      <div className="d-grid gap-2">
                         <Label htmlFor="pb-mcp-args">Arguments</Label>
                         <Input
                           id="pb-mcp-args"
@@ -690,13 +690,13 @@ export default function ProfileBuilderPage() {
                         />
                       </div>
                     </div>
-                    <div className="grid gap-1.5">
+                    <div className="d-grid gap-2">
                       <Label htmlFor="pb-mcp-env">
                         Environment (KEY=VALUE per line)
                       </Label>
                       <textarea
                         id="pb-mcp-env"
-                        className="flex min-h-[80px] w-full border border-border bg-background/40 px-3 py-2 text-sm font-courier shadow-sm placeholder:text-muted-foreground focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30"
+                        className="d-flex min-h-[80px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:border-foreground/25 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30"
                         placeholder={"API_KEY=secret\nDEBUG=1"}
                         value={mcpDraft.env}
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -707,7 +707,7 @@ export default function ProfileBuilderPage() {
                   </>
                 )}
 
-                <div className="flex justify-end">
+                <div className="d-flex justify-content-end">
                   <Button onClick={addMcpDraft}>Add server</Button>
                 </div>
               </div>
@@ -717,11 +717,11 @@ export default function ProfileBuilderPage() {
                   {mcpServers.map((s) => (
                     <div
                       key={s.name}
-                      className="flex items-center justify-between gap-4 border border-border bg-muted/40 p-4 text-sm"
+                      className="d-flex align-items-center justify-content-between gap-4 border border-secondary bg-muted/40 p-4 fs-6"
                     >
                       <span className="min-w-0">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium">{s.name}</span>
+                        <span className="d-flex flex-wrap align-items-center gap-2">
+                          <span className="fw-medium">{s.name}</span>
                           <Badge tone="outline">
                             {s.url ? "HTTP" : "stdio"}
                           </Badge>
@@ -731,7 +731,7 @@ export default function ProfileBuilderPage() {
                             </Badge>
                           )}
                         </span>
-                        <span className="mt-1 block break-all text-xs text-muted-foreground">
+                        <span className="mt-1 d-block break-all fs-6 text-body-secondary">
                           {s.url || [s.command, ...(s.args || [])].join(" ")}
                         </span>
                       </span>
@@ -739,7 +739,7 @@ export default function ProfileBuilderPage() {
                         size="sm"
                         ghost
                         destructive
-                        className="shrink-0"
+                        className="flex-shrink-0"
                         onClick={() => removeMcp(s.name)}
                       >
                         Remove
@@ -751,7 +751,7 @@ export default function ProfileBuilderPage() {
             </div>
           )}
           {step === "review" && (
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3 fs-6">
               <ReviewRow label="Name" value={name.trim() || "—"} />
               <ReviewRow
                 label="Description"
@@ -771,7 +771,7 @@ export default function ProfileBuilderPage() {
                 }
               />
               {!keepAll && hubSkills.length > 0 && (
-                <p className="pl-24 text-xs text-muted-foreground">
+                <p className="pl-24 fs-6 text-body-secondary">
                   Hub: {hubSkills.map((s) => s.name).join(", ")}
                 </p>
               )}
@@ -795,7 +795,7 @@ export default function ProfileBuilderPage() {
       </Card>
 
       {/* Nav buttons */}
-      <div className="flex items-center justify-between">
+      <div className="d-flex align-items-center justify-content-between">
         <Button
           ghost
           disabled={stepIndex === 0}
@@ -826,9 +826,9 @@ export default function ProfileBuilderPage() {
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex gap-3">
-      <span className="w-24 shrink-0 text-muted-foreground">{label}</span>
-      <span className="flex-1 break-words">{value}</span>
+    <div className="d-flex gap-3">
+      <span className="w-24 flex-shrink-0 text-body-secondary">{label}</span>
+      <span className="flex-grow-1 text-break">{value}</span>
     </div>
   );
 }

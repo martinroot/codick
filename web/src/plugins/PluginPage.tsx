@@ -51,7 +51,7 @@ export function PluginPage({ name }: { name: string }) {
         "font-mondwest text-sm tracking-[0.1em] text-text-tertiary",
       )}
     >
-      <Spinner className="shrink-0" />
+      <Spinner className="flex-shrink-0" />
       <span>{t.common.loading}</span>
     </div>
   );

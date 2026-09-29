@@ -122,11 +122,11 @@ function TokenBar({
   return (
     <div className="space-y-1.5">
       {/* Stacked bar — segments fill proportionally to their share of total */}
-      <div className="relative flex min-h-[1.5rem] w-full items-stretch overflow-hidden">
+      <div className="position-relative d-flex min-h-[1.5rem] w-100 align-items-stretch overflow-hidden">
         {segments.map((s, i) => (
           <div
             key={i}
-            className="relative flex items-center transition-all duration-300"
+            className="position-relative d-flex align-items-center transition-all duration-300"
             style={{
               backgroundColor: `color-mix(in srgb, ${s.color} 70%, transparent)`,
               width: `${(s.value / total) * 100}%`,
@@ -134,7 +134,7 @@ function TokenBar({
           >
             {/* Stepped fill pattern overlay */}
             <div
-              className="absolute inset-0 opacity-30"
+              className="position-absolute top-0 start-0 w-100 h-100 opacity-30"
               style={{
                 backgroundImage:
                   "repeating-linear-gradient(to right, transparent 0 0.4rem, currentColor 0.4rem calc(0.4rem + 1px))",
@@ -145,11 +145,11 @@ function TokenBar({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-text-secondary">
+      <div className="d-flex flex-wrap gap-x-3 gap-y-0.5 fs-6 text-body-secondary">
         {segments.map((s, i) => (
-          <span key={i} className="flex items-center gap-1">
+          <span key={i} className="d-flex align-items-center gap-1">
             <span
-              className="inline-block h-1.5 w-1.5 rounded-full"
+              className="d-inline-block h-1.5 w-1.5 rounded-circle"
               style={{ backgroundColor: s.color }}
             />
             {s.label} {formatTokens(s.value)}
@@ -173,24 +173,24 @@ function CapabilityBadges({
   if (!hasAny) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="d-flex flex-wrap align-items-center gap-2">
       {capabilities.supports_tools && (
-        <span className="inline-flex items-center gap-1 bg-success/10 px-1.5 py-0.5 text-xs font-medium text-success">
+        <span className="d-inline-flex align-items-center gap-1 bg-success/10 px-2 py-0.5 fs-6 fw-medium text-success">
           <Wrench className="h-2.5 w-2.5" /> Tools
         </span>
       )}
       {capabilities.supports_vision && (
-        <span className="inline-flex items-center gap-1 bg-blue-500/10 px-1.5 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+        <span className="d-inline-flex align-items-center gap-1 bg-blue-500/10 px-2 py-0.5 fs-6 fw-medium text-blue-600 dark:text-blue-400">
           <Eye className="h-2.5 w-2.5" /> Vision
         </span>
       )}
       {capabilities.supports_reasoning && (
-        <span className="inline-flex items-center gap-1 bg-purple-500/10 px-1.5 py-0.5 text-xs font-medium text-purple-600 dark:text-purple-400">
+        <span className="d-inline-flex align-items-center gap-1 bg-purple-500/10 px-2 py-0.5 fs-6 fw-medium text-purple-600 dark:text-purple-400">
           <Brain className="h-2.5 w-2.5" /> Reasoning
         </span>
       )}
       {capabilities.model_family && (
-        <span className="inline-flex items-center bg-muted px-1.5 py-0.5 text-xs font-medium text-text-secondary">
+        <span className="d-inline-flex align-items-center bg-muted px-2 py-0.5 fs-6 fw-medium text-body-secondary">
           {capabilities.model_family}
         </span>
       )}
@@ -276,37 +276,37 @@ function UseAsMenu({
   }, [open]);
 
   return (
-    <div className={cn("relative", open && "z-20")} data-use-as-menu>
+    <div className={cn("position-relative", open && "z-20")} data-use-as-menu>
       <Button
         size="sm"
         outlined
         onClick={() => setOpen((v) => !v)}
         disabled={busy}
-        className="h-6 px-2 text-xs uppercase"
+        className="h-6 px-2 fs-6 text-uppercase"
         prefix={busy ? <Spinner /> : null}
       >
-        Use as <ChevronDown className="h-3 w-3" />
+        Use as <ChevronDown className="icon-sm" />
       </Button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 min-w-[220px] border border-border bg-card shadow-lg">
+        <div className="position-absolute right-0 top-full mt-1 z-50 min-w-[220px] border border-secondary bg-card shadow-lg">
           <button
             type="button"
             onClick={() => assign("main", "")}
             disabled={busy}
-            className="flex w-full items-center justify-between px-3 py-2 text-xs uppercase hover:bg-muted/50 disabled:opacity-40"
+            className="d-flex w-100 align-items-center justify-content-between px-3 py-2 fs-6 text-uppercase hover:bg-muted/50 disabled:opacity-40"
           >
-            <span className="flex items-center gap-2">
-              <Star className="h-3 w-3" />
+            <span className="d-flex align-items-center gap-2">
+              <Star className="icon-sm" />
               Main model
             </span>
             {isMain && (
-              <span className="text-display text-xs tracking-wider text-primary">
+              <span className="fs-4 fw-semibold fs-6 ls-wide text-primary">
                 current
               </span>
             )}
           </button>
 
-          <div className="border-t border-border/50 px-3 py-1.5 text-display text-xs tracking-wider text-text-tertiary">
+          <div className="border-top border-border/50 px-3 py-2 fs-4 fw-semibold fs-6 ls-wide text-body-tertiary">
             Auxiliary task
           </div>
 
@@ -314,7 +314,7 @@ function UseAsMenu({
             type="button"
             onClick={() => assign("auxiliary", "")}
             disabled={busy}
-            className="flex w-full items-center justify-between px-3 py-1.5 text-xs uppercase hover:bg-muted/50 disabled:opacity-40"
+            className="d-flex w-100 align-items-center justify-content-between px-3 py-2 fs-6 text-uppercase hover:bg-muted/50 disabled:opacity-40"
           >
             <span>All auxiliary tasks</span>
           </button>
@@ -325,11 +325,11 @@ function UseAsMenu({
               type="button"
               onClick={() => assign("auxiliary", t.key)}
               disabled={busy}
-              className="flex w-full items-center justify-between px-3 py-1.5 text-xs uppercase hover:bg-muted/50 disabled:opacity-40"
+              className="d-flex w-100 align-items-center justify-content-between px-3 py-2 fs-6 text-uppercase hover:bg-muted/50 disabled:opacity-40"
             >
               <span>{t.label}</span>
               {mainAuxTask === t.key && (
-                <span className="text-display text-xs tracking-wider text-primary">
+                <span className="fs-4 fw-semibold fs-6 ls-wide text-primary">
                   current
                 </span>
               )}
@@ -337,7 +337,7 @@ function UseAsMenu({
           ))}
 
           {error && (
-            <div className="px-3 py-2 text-xs text-destructive border-t border-border/50">
+            <div className="px-3 py-2 fs-6 text-danger border-top border-border/50">
               {error}
             </div>
           )}
@@ -403,61 +403,61 @@ function ModelCard({
       className={cn("min-w-0 max-w-full", isMain && "ring-1 ring-primary/40")}
     >
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-text-tertiary text-xs font-mono">
+        <div className="d-flex align-items-start justify-content-between gap-2">
+          <div className="min-w-0 flex-grow-1">
+            <div className="d-flex align-items-center gap-2">
+              <span className="text-body-tertiary fs-6 font-monospace">
                 #{rank}
               </span>
-              <CardTitle className="text-sm font-mono-ui truncate">
+              <CardTitle className="fs-6 font-monospace text-truncate">
                 {shortModelName(entry.model)}
               </CardTitle>
               {isMain && (
-                <span className="inline-flex items-center gap-0.5 bg-primary/15 px-1.5 py-0.5 text-display text-xs font-medium tracking-wider text-primary">
+                <span className="d-inline-flex align-items-center gap-0.5 bg-primary/15 px-2 py-0.5 fs-4 fw-semibold fs-6 fw-medium ls-wide text-primary">
                   <Star className="h-2.5 w-2.5" /> main
                 </span>
               )}
               {mainAuxTask && (
-                <span className="inline-flex items-center bg-purple-500/10 px-1.5 py-0.5 text-display text-xs font-medium tracking-wider text-purple-600 dark:text-purple-400">
+                <span className="d-inline-flex align-items-center bg-purple-500/10 px-2 py-0.5 fs-4 fw-semibold fs-6 fw-medium ls-wide text-purple-600 dark:text-purple-400">
                   aux · {mainAuxTask}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="d-flex align-items-center gap-2 mt-1">
               {provider && (
-                <Badge tone="secondary" className="text-xs">
+                <Badge tone="secondary" className="fs-6">
                   {provider}
                 </Badge>
               )}
               {caps.context_window && caps.context_window > 0 && (
-                <span className="text-xs text-text-secondary">
+                <span className="fs-6 text-body-secondary">
                   {compactNumber(caps.context_window)} ctx
                 </span>
               )}
               {caps.max_output_tokens && caps.max_output_tokens > 0 && (
-                <span className="text-xs text-text-secondary">
+                <span className="fs-6 text-body-secondary">
                   {compactNumber(caps.max_output_tokens)} out
                 </span>
               )}
             </div>
           </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
+          <div className="d-flex flex-column align-items-end gap-1 flex-shrink-0">
             {showTokens ? (
-              <div className="text-right">
-                <div className="text-xs font-mono font-semibold">
+              <div className="text-end">
+                <div className="fs-6 font-monospace fw-semibold">
                   {formatTokens(totalTokens)}
                 </div>
-                <div className="text-xs text-text-tertiary">
+                <div className="fs-6 text-body-tertiary">
                   {t.models.tokens}
                 </div>
               </div>
             ) : (
               entry.sessions > 0 && (
-                <div className="text-right">
-                  <div className="text-xs font-mono font-semibold">
+                <div className="text-end">
+                  <div className="fs-6 font-monospace fw-semibold">
                     {entry.sessions}
                   </div>
-                  <div className="text-xs text-text-tertiary">
+                  <div className="fs-6 text-body-tertiary">
                     {t.models.sessions}
                   </div>
                 </div>
@@ -483,26 +483,26 @@ function ModelCard({
               reasoning={entry.reasoning_tokens}
             />
 
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="d-grid grid-cols-3 gap-2 fs-6">
               <div className="text-center">
-                <div className="font-mono font-semibold">{entry.sessions}</div>
-                <div className="text-xs text-text-tertiary">
+                <div className="font-monospace fw-semibold">{entry.sessions}</div>
+                <div className="fs-6 text-body-tertiary">
                   {t.models.sessions}
                 </div>
               </div>
               <div className="text-center">
-                <div className="font-mono font-semibold">
+                <div className="font-monospace fw-semibold">
                   {formatTokens(entry.avg_tokens_per_session)}
                 </div>
-                <div className="text-xs text-text-tertiary">
+                <div className="fs-6 text-body-tertiary">
                   {t.models.avgPerSession}
                 </div>
               </div>
               <div className="text-center">
-                <div className="font-mono font-semibold">
+                <div className="font-monospace fw-semibold">
                   {entry.api_calls > 0 ? formatTokens(entry.api_calls) : "—"}
                 </div>
-                <div className="text-xs text-text-tertiary">
+                <div className="fs-6 text-body-tertiary">
                   {t.models.apiCalls}
                 </div>
               </div>
@@ -510,16 +510,16 @@ function ModelCard({
           </>
         )}
 
-        <div className="flex items-center justify-between text-xs text-text-secondary border-t border-border/30 pt-2">
-          <div className="flex items-center gap-3">
+        <div className="d-flex align-items-center justify-content-between fs-6 text-body-secondary border-top border-border/30 pt-2">
+          <div className="d-flex align-items-center gap-3">
             {showTokens && entry.estimated_cost > 0 && (
-              <span className="flex items-center gap-0.5">
+              <span className="d-flex align-items-center gap-0.5">
                 <DollarSign className="h-2.5 w-2.5" />
                 {formatCost(entry.estimated_cost)}
               </span>
             )}
             {showTokens && entry.tool_calls > 0 && (
-              <span className="flex items-center gap-0.5">
+              <span className="d-flex align-items-center gap-0.5">
                 <Zap className="h-2.5 w-2.5" />
                 {entry.tool_calls} {t.models.toolCalls}
               </span>
@@ -583,28 +583,28 @@ function AuxiliaryTasksModal({
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
       aria-labelledby="aux-modal-title"
     >
-      <div className={cn(themedBody, "relative w-full max-w-2xl max-h-[80vh] border border-border bg-card shadow-2xl flex flex-col")}>
+      <div className={cn(themedBody, "position-relative w-100 max-w-2xl max-h-[80vh] border border-secondary bg-card shadow-2xl d-flex flex-column")}>
         <Button
           ghost
           size="icon"
           onClick={onClose}
-          className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+          className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
           aria-label="Close"
         >
           <X />
         </Button>
 
-        <header className="p-5 pb-3 border-b border-border">
-          <div className="flex items-center justify-between gap-3 pr-8">
+        <header className="p-5 pb-3 border-bottom border-secondary">
+          <div className="d-flex align-items-center justify-content-between gap-3 pr-8">
             <h2
               id="aux-modal-title"
-              className="font-mondwest text-display text-base tracking-wider"
+              className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
             >
               Auxiliary Tasks
             </h2>
@@ -613,21 +613,21 @@ function AuxiliaryTasksModal({
               outlined
               onClick={() => setConfirmReset(true)}
               disabled={resetBusy}
-              className="h-6 text-xs uppercase"
+              className="h-6 fs-6 text-uppercase"
               prefix={resetBusy ? <Spinner /> : null}
             >
               Reset all to auto
             </Button>
           </div>
-          <p className="text-xs text-text-secondary mt-2">
+          <p className="fs-6 text-body-secondary mt-2">
             Auxiliary tasks handle side-jobs like vision, session search, and
-            compression. <span className="font-mono">auto</span> means
+            compression. <span className="font-monospace">auto</span> means
             &quot;use the main model&quot;. Override per-task when you want a
             cheap/fast model for a specific job.
           </p>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-1">
+        <div className="flex-grow-1 overflow-y-auto p-5 space-y-1">
           {AUX_TASKS.map((t) => {
             const cur = aux?.tasks.find((a) => a.task === t.key);
             const isAuto =
@@ -635,16 +635,16 @@ function AuxiliaryTasksModal({
             return (
               <div
                 key={t.key}
-                className="flex items-center justify-between gap-3 px-3 py-2 border border-border/30 bg-card/50 hover:bg-muted/20 transition-colors"
+                className="d-flex align-items-center justify-content-between gap-3 px-3 py-2 border border-border/30 bg-card/50 hover:bg-muted/20 transition-colors"
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-xs font-medium">{t.label}</span>
-                    <span className="text-xs text-text-tertiary">
+                <div className="min-w-0 flex-grow-1">
+                  <div className="d-flex align-items-baseline gap-2">
+                    <span className="fs-6 fw-medium">{t.label}</span>
+                    <span className="fs-6 text-body-tertiary">
                       {t.hint}
                     </span>
                   </div>
-                  <div className="text-xs font-mono text-text-secondary truncate">
+                  <div className="fs-6 font-monospace text-body-secondary text-truncate">
                     {isAuto
                       ? "auto (use main model)"
                       : `${cur?.provider} · ${cur?.model || "(provider default)"}`}
@@ -654,7 +654,7 @@ function AuxiliaryTasksModal({
                   size="sm"
                   outlined
                   onClick={() => setPicker({ kind: "aux", task: t.key })}
-                  className="h-6 text-xs uppercase"
+                  className="h-6 fs-6 text-uppercase"
                 >
                   Change
                 </Button>
@@ -820,22 +820,22 @@ function MoaModelsModal({
           "max-h-[85vh] max-w-2xl overflow-auto flex flex-col",
         )}
       >
-        <header className="p-5 pb-3 border-b border-border">
+        <header className="p-5 pb-3 border-bottom border-secondary">
           <h2
             id="moa-modal-title"
-            className="font-mondwest text-display text-base tracking-wider"
+            className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
           >
             Configure Mixture of Agents presets
           </h2>
         </header>
         <div className="space-y-4 p-5">
-          <p className="text-xs text-text-secondary">
+          <p className="fs-6 text-body-secondary">
             Presets appear as models under the Mixture of Agents provider. References produce perspectives; the aggregator is the acting model that answers and calls tools.
           </p>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="d-flex flex-wrap align-items-center gap-2">
             <select
-              className="border border-border bg-background px-2 py-1 text-xs"
+              className="border border-secondary bg-background px-2 py-1 fs-6"
               value={selected}
               onChange={(event) => setSelected(event.target.value)}
             >
@@ -844,7 +844,7 @@ function MoaModelsModal({
             <Button size="sm" outlined onClick={() => setDraft((prev) => ({ ...prev, default_preset: selected }))}>Set default</Button>
             <Button size="sm" ghost disabled={presetNames.length <= 1} onClick={deletePreset}>Delete</Button>
             <input
-              className="border border-border bg-background px-2 py-1 text-xs"
+              className="border border-secondary bg-background px-2 py-1 fs-6"
               placeholder="new preset name"
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
@@ -852,12 +852,12 @@ function MoaModelsModal({
             <Button size="sm" outlined disabled={!newName.trim() || !!draft.presets[newName.trim()]} onClick={addPreset}>Add preset</Button>
           </div>
 
-          <div className="text-xs text-text-secondary">
-            Default: <span className="font-mono">{draft.default_preset}</span>
+          <div className="fs-6 text-body-secondary">
+            Default: <span className="font-monospace">{draft.default_preset}</span>
           </div>
 
           <div className="space-y-2">
-            <div className="text-display text-xs font-medium tracking-wider">Reference models</div>
+            <div className="fs-4 fw-semibold fs-6 fw-medium ls-wide">Reference models</div>
             {preset.reference_models.map((slot, index) => (
               <div
                 key={`${selected}-${slot.provider}-${slot.model}-${index}`}
@@ -877,7 +877,7 @@ function MoaModelsModal({
                     }))
                   }
                 />
-                <div className="min-w-0 flex-1 truncate font-mono text-xs text-text-secondary">{slotLabel(slot)}</div>
+                <div className="min-w-0 flex-grow-1 text-truncate font-monospace fs-6 text-body-secondary">{slotLabel(slot)}</div>
                 <Button size="sm" outlined onClick={() => setPicker({ kind: "reference", index })}>Change</Button>
                 <Button size="sm" ghost disabled={preset.reference_models.length <= 1} onClick={() => updateSelectedPreset((prev) => ({ ...prev, reference_models: prev.reference_models.filter((_, i) => i !== index) }))}>Remove</Button>
               </div>
@@ -886,15 +886,15 @@ function MoaModelsModal({
           </div>
 
           <div className="space-y-2">
-            <div className="text-display text-xs font-medium tracking-wider">Aggregator</div>
-            <div className="flex items-center gap-2 border border-border/50 bg-muted/20 px-3 py-2">
-              <div className="min-w-0 flex-1 truncate font-mono text-xs text-text-secondary">{slotLabel(preset.aggregator)}</div>
+            <div className="fs-4 fw-semibold fs-6 fw-medium ls-wide">Aggregator</div>
+            <div className="d-flex align-items-center gap-2 border border-border/50 bg-muted/20 px-3 py-2">
+              <div className="min-w-0 flex-grow-1 text-truncate font-monospace fs-6 text-body-secondary">{slotLabel(preset.aggregator)}</div>
               <Button size="sm" outlined onClick={() => setPicker({ kind: "aggregator" })}>Change</Button>
             </div>
           </div>
 
-          {error && <div className="text-xs text-destructive">{error}</div>}
-          <div className="flex justify-end gap-2 pt-2">
+          {error && <div className="fs-6 text-danger">{error}</div>}
+          <div className="d-flex justify-content-end gap-2 pt-2">
             <Button ghost onClick={onClose} disabled={busy}>Cancel</Button>
             <Button onClick={() => void save()} disabled={busy}>{busy ? "Saving…" : "Save"}</Button>
           </div>
@@ -984,10 +984,10 @@ function ModelSettingsPanel({
   return (
     <Card className="min-w-0 max-w-full overflow-hidden">
       <CardHeader className="min-w-0 pb-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <Settings2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <CardTitle className="text-sm">Model Settings</CardTitle>
-          <span className="max-w-full min-w-0 text-xs text-text-secondary [overflow-wrap:anywhere]">
+        <div className="d-flex min-w-0 flex-wrap align-items-center gap-x-2 gap-y-1">
+          <Settings2 className="icon-md flex-shrink-0 text-body-secondary" />
+          <CardTitle className="fs-6">Model Settings</CardTitle>
+          <span className="max-w-full min-w-0 fs-6 text-body-secondary [overflow-wrap:anywhere]">
             applies to new sessions
           </span>
         </div>
@@ -995,15 +995,15 @@ function ModelSettingsPanel({
 
       <CardContent className="min-w-0 space-y-3 pt-3">
         {/* Main row */}
-        <div className="flex min-w-0 flex-col gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <Star className="h-3 w-3 text-primary" />
-              <span className="text-display text-xs font-medium tracking-wider">
+        <div className="d-flex min-w-0 flex-column gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="min-w-0 flex-grow-1">
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <Star className="icon-sm text-primary" />
+              <span className="fs-4 fw-semibold fs-6 fw-medium ls-wide">
                 Main model
               </span>
             </div>
-            <div className="text-xs font-mono text-text-secondary truncate">
+            <div className="fs-6 font-monospace text-body-secondary text-truncate">
               {mainProv || "(unset)"}
               {mainProv && mainModel && " · "}
               {mainModel || "(unset)"}
@@ -1012,22 +1012,22 @@ function ModelSettingsPanel({
           <Button
             size="sm"
             onClick={() => setPicker({ kind: "main" })}
-            className="shrink-0 self-start text-xs uppercase sm:self-center"
+            className="flex-shrink-0 align-self-start fs-6 text-uppercase sm:self-center"
           >
             Change
           </Button>
         </div>
 
         {/* Auxiliary tasks summary + open modal */}
-        <div className="flex min-w-0 flex-col gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <Cpu className="h-3 w-3 text-text-tertiary" />
-              <span className="text-display text-xs font-medium tracking-wider">
+        <div className="d-flex min-w-0 flex-column gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="min-w-0 flex-grow-1">
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <Cpu className="icon-sm text-body-tertiary" />
+              <span className="fs-4 fw-semibold fs-6 fw-medium ls-wide">
                 Auxiliary tasks
               </span>
             </div>
-            <div className="text-xs font-mono text-text-secondary truncate">
+            <div className="fs-6 font-monospace text-body-secondary text-truncate">
               {auxOverrideCount > 0
                 ? `${auxOverrideCount} override${auxOverrideCount > 1 ? "s" : ""} · ${AUX_TASKS.length - auxOverrideCount} auto`
                 : `${AUX_TASKS.length} tasks · all auto`}
@@ -1037,21 +1037,21 @@ function ModelSettingsPanel({
             size="sm"
             outlined
             onClick={() => setAuxModalOpen(true)}
-            className="shrink-0 self-start text-xs uppercase sm:self-center"
+            className="flex-shrink-0 align-self-start fs-6 text-uppercase sm:self-center"
           >
             Configure
           </Button>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <Brain className="h-3 w-3 text-text-tertiary" />
-              <span className="text-display text-xs font-medium tracking-wider">
+        <div className="d-flex min-w-0 flex-column gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="min-w-0 flex-grow-1">
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <Brain className="icon-sm text-body-tertiary" />
+              <span className="fs-4 fw-semibold fs-6 fw-medium ls-wide">
                 Mixture of Agents
               </span>
             </div>
-            <div className="text-xs font-mono text-text-secondary truncate">
+            <div className="fs-6 font-monospace text-body-secondary text-truncate">
               {moa
                 ? `${moa.reference_models.length} reference${moa.reference_models.length === 1 ? "" : "s"} · ${moa.aggregator.provider}/${shortModelName(moa.aggregator.model)}`
                 : "not loaded"}
@@ -1062,7 +1062,7 @@ function ModelSettingsPanel({
             outlined
             onClick={() => setMoaModalOpen(true)}
             disabled={!moa}
-            className="shrink-0 self-start text-xs uppercase sm:self-center"
+            className="flex-shrink-0 align-self-start fs-6 text-uppercase sm:self-center"
           >
             Configure
           </Button>
@@ -1185,7 +1185,7 @@ export default function ModelsPage() {
     // the far-right `end` slot. The active period is conveyed by the
     // filled (non-outlined) button — no redundant period badge.
     setAfterTitle(
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="d-flex flex-wrap align-items-center gap-2">
         {PERIODS.map((p) => (
           <Button
             key={p.label}
@@ -1193,7 +1193,7 @@ export default function ModelsPage() {
             size="sm"
             outlined={days !== p.days}
             onClick={() => setDays(p.days)}
-            className="uppercase"
+            className="text-uppercase"
           >
             {p.label}
           </Button>
@@ -1202,7 +1202,7 @@ export default function ModelsPage() {
           type="button"
           ghost
           size="icon"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-body-secondary hover:text-foreground"
           onClick={load}
           disabled={loading}
           aria-label={t.common.refresh}
@@ -1241,10 +1241,10 @@ export default function ModelsPage() {
   }, [refreshAux]);
 
   return (
-    <div className="flex min-w-0 max-w-full flex-col gap-6">
+    <div className="d-flex min-w-0 max-w-full flex-column gap-6">
       <PluginSlot name="models:top" />
 
-      <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+      <div className="d-grid min-w-0 gap-6 lg:grid-cols-2">
         <ModelSettingsPanel
           aux={aux}
           refreshKey={saveKey}
@@ -1301,13 +1301,13 @@ export default function ModelsPage() {
               />
               </div>
               {!showTokens && (
-                <p className="mt-4 text-xs text-text-tertiary leading-relaxed">
+                <p className="mt-4 fs-6 text-body-tertiary leading-relaxed">
                   Token & cost analytics are hidden because the local counts
                   exclude auxiliary calls (compression, vision, web extract,
                   …) and provider retries, so they diverge from your provider
                   bill. Enable{" "}
-                  <span className="font-mono">dashboard.show_token_analytics</span>{" "}
-                  in <a href="/config" className="underline">Config</a> to
+                  <span className="font-monospace">dashboard.show_token_analytics</span>{"    "}
+                  in <a href="/config" className="text-decoration-underline">Config</a> to
                   show the local debug estimate anyway.
                 </p>
               )}
@@ -1317,15 +1317,15 @@ export default function ModelsPage() {
       </div>
 
       {loading && !data && (
-        <div className="flex items-center justify-center py-24">
-          <Spinner className="text-2xl text-primary" />
+        <div className="d-flex align-items-center justify-content-center py-24">
+          <Spinner className="fs-3 text-primary" />
         </div>
       )}
 
       {error && (
         <Card>
           <CardContent className="py-6">
-            <p className="text-sm text-destructive text-center">{error}</p>
+            <p className="fs-6 text-danger text-center">{error}</p>
           </CardContent>
         </Card>
       )}
@@ -1333,7 +1333,7 @@ export default function ModelsPage() {
       {data && (
         <>
           {data.models.length > 0 ? (
-            <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="d-grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {data.models.map((m, i) => (
                 <ModelCard
                   key={`${m.model}:${m.provider}`}
@@ -1349,10 +1349,10 @@ export default function ModelsPage() {
           ) : (
             <Card>
               <CardContent className="py-12">
-                <div className="flex flex-col items-center text-muted-foreground">
+                <div className="d-flex flex-column align-items-center text-body-secondary">
                   <Cpu className="h-8 w-8 mb-3 opacity-40" />
-                  <p className="text-sm font-medium">{t.models.noModelsData}</p>
-                  <p className="text-xs mt-1 text-text-tertiary">
+                  <p className="fs-6 fw-medium">{t.models.noModelsData}</p>
+                  <p className="fs-6 mt-1 text-body-tertiary">
                     {t.models.startSession}
                   </p>
                 </div>

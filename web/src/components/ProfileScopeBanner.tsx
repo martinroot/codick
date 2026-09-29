@@ -14,8 +14,8 @@ export function ProfileScopeBanner() {
   if (!profile || profile === currentProfile) return null;
 
   return (
-    <div className="flex items-center gap-2 border-b border-amber-500/40 bg-amber-500/10 px-4 py-1.5 text-xs text-amber-300">
-      <Users className="h-3.5 w-3.5 shrink-0" />
+    <div className="d-flex align-items-center gap-2 border-bottom border-amber-500/40 bg-amber-500/10 px-4 py-2 fs-6 text-amber-300">
+      <Users className="icon-sm flex-shrink-0" />
       <span>
         {(
           t.app.managingProfileBanner ??

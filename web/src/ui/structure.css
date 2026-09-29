@@ -29,6 +29,12 @@
     min-width: 0;
   }
 
+  /* Same floor on the main axis: a scrolling column nested in a row or
+     column flex box refuses to shrink below its content otherwise. */
+  .min-h-0 {
+    min-height: 0;
+  }
+
   /* Figures that change in place should not reflow as digits change. */
   .tabular-nums {
     font-variant-numeric: tabular-nums;

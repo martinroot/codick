@@ -529,8 +529,8 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           "text-text-secondary hover:text-midground hover:bg-midground/5",
         )}
       >
-        <span className="inline-flex items-center gap-1.5">
-          <PanelRight className="h-3 w-3 shrink-0" />
+        <span className="d-inline-flex align-items-center gap-2">
+          <PanelRight className="icon-sm flex-shrink-0" />
           {modelToolsLabel}
         </span>
       </Button>,
@@ -1872,7 +1872,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           >
             <Typography
               mondwest
-              className="text-display font-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground"
+              className="fs-4 fw-semibold fw-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground"
             >
               {t.app.modelToolsSheetTitle}
               <br />
@@ -1884,7 +1884,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
               size="icon"
               onClick={closeMobilePanel}
               aria-label={t.app.closeModelTools}
-              className="text-text-secondary hover:text-midground"
+              className="text-body-secondary hover:text-midground"
             >
               <X />
             </Button>
@@ -1896,7 +1896,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
               "border-t border-current/10",
             )}
           >
-            <div className="border-b border-current/10 px-1 py-2">
+            <div className="border-bottom border-current/10 px-1 py-2">
               <ChatSidebar
                 channel={channel}
                 profile={scopedProfile}
@@ -1919,16 +1919,16 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
     );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
+    <div className="d-flex min-h-0 flex-grow-1 flex-column gap-2">
       <PluginSlot name="chat:top" />
       {mobileModelToolsPortal}
 
       {visibleBanner && (
         <div
           role="alert"
-          className="flex flex-wrap items-center gap-2 border border-warning/50 bg-warning/10 text-warning px-3 py-2 text-xs tracking-wide"
+          className="d-flex flex-wrap align-items-center gap-2 border border-warning/50 bg-warning/10 text-warning px-3 py-2 fs-6 tracking-wide"
         >
-          <span className="min-w-0 flex-1">{visibleBanner}</span>
+          <span className="min-w-0 flex-grow-1">{visibleBanner}</span>
           {banner && bannerAction === "reload" && (
             <Button size="sm" outlined onClick={() => window.location.reload()}>
               Reload page
@@ -1937,7 +1937,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 lg:flex-row lg:gap-3">
+      <div className="d-flex min-h-0 flex-grow-1 flex-column gap-2 lg:flex-row lg:gap-3">
         <div
           ref={termWrapRef}
           className={cn(
@@ -1951,12 +1951,12 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         >
           <div
             ref={hostRef}
-            className="hermes-chat-xterm-host min-h-0 min-w-0 flex-1"
+            className="hermes-chat-xterm-host min-h-0 min-w-0 flex-grow-1"
           />
 
           {showReconnectOverlay && (
-            <div className="absolute inset-x-3 top-3 z-20 flex justify-center sm:inset-x-auto sm:right-3 sm:justify-end">
-              <div className="flex max-w-[min(28rem,calc(100vw-3rem))] flex-col items-start gap-2 border border-warning/60 bg-black/80 px-3 py-2 text-xs text-warning shadow-lg">
+            <div className="position-absolute inset-x-3 top-3 z-20 d-flex justify-content-center sm:inset-x-auto sm:right-3 sm:justify-end">
+              <div className="d-flex max-w-[min(28rem,calc(100vw-3rem))] flex-column align-items-start gap-2 border border-warning/60 bg-black/80 px-3 py-2 fs-6 text-warning shadow-lg">
                 <div className="tracking-wide">
                   {ptyState === "reconnecting"
                     ? "Chat is reconnecting."
@@ -1964,12 +1964,12 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
                       ? PTY_GAVE_UP_BANNER.text
                       : "Chat disconnected."}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="d-flex flex-wrap gap-2">
                   <Button
                     size="sm"
                     outlined
                     onClick={reconnectPty}
-                    prefix={<RotateCcw className="h-4 w-4" />}
+                    prefix={<RotateCcw className="icon-md" />}
                     aria-label="Reconnect chat"
                   >
                     Reconnect now
@@ -1991,12 +1991,12 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
 
           {showResumeLoadingOverlay && (
             <div
-              className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+              className="pointer-events-none position-absolute top-0 start-0 w-100 h-100 z-20 d-flex align-items-center justify-content-center"
               role="status"
               aria-live="polite"
               aria-label={PTY_RESUME_LOADING_MESSAGE}
             >
-              <div className="max-w-[min(28rem,calc(100vw-3rem))] border border-current/30 bg-black/80 px-4 py-3 text-center text-xs tracking-wide text-white/85 shadow-lg">
+              <div className="max-w-[min(28rem,calc(100vw-3rem))] border border-current/30 bg-black/80 px-4 py-3 text-center fs-6 tracking-wide text-white/85 shadow-lg">
                 {PTY_RESUME_LOADING_MESSAGE}
               </div>
             </div>
@@ -2006,16 +2006,16 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
               Offer an in-place restart so the user never has to refresh the
               whole page to get a working chat back. */}
           {ptyState === "ended" && (
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-black/60">
-              <div className="max-w-[min(32rem,calc(100vw-3rem))] text-center text-sm tracking-wide text-white/80">
+            <div className="position-absolute top-0 start-0 w-100 h-100 z-30 d-flex flex-column align-items-center justify-content-center gap-3 bg-black/60">
+              <div className="max-w-[min(32rem,calc(100vw-3rem))] text-center fs-6 tracking-wide text-white/80">
                 {endedReason === "start-failed"
                   ? PTY_START_FAILED_MESSAGE
                   : PTY_SESSION_ENDED_MESSAGE}
               </div>
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="d-flex flex-wrap justify-content-center gap-2">
                 <Button
                   onClick={startFreshPty}
-                  prefix={<RotateCcw className="h-4 w-4" />}
+                  prefix={<RotateCcw className="icon-md" />}
                   aria-label="Start a new chat session"
                 >
                   Start new session
@@ -2050,9 +2050,9 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             )}
             style={{ color: terminalFg }}
           >
-            <span className="inline-flex items-center gap-1.5">
-              <Copy className="h-3 w-3 shrink-0" />
-              <span className="hidden min-[400px]:inline tracking-wide">
+            <span className="d-inline-flex align-items-center gap-2">
+              <Copy className="icon-sm flex-shrink-0" />
+              <span className="d-none min-[400px]:inline tracking-wide">
                 {copyState === "copied" ? "copied" : "copy last response"}
               </span>
             </span>
@@ -2075,9 +2075,9 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
               )}
               style={{ color: terminalFg }}
             >
-              <span className="inline-flex items-center gap-1">
-                <PanelRight className="h-3 w-3 shrink-0" />
-                <span className="hidden min-[400px]:inline tracking-wide">
+              <span className="d-inline-flex align-items-center gap-1">
+                <PanelRight className="icon-sm flex-shrink-0" />
+                <span className="d-none min-[400px]:inline tracking-wide">
                   panel
                 </span>
               </span>
@@ -2090,22 +2090,22 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             id="chat-side-panel"
             role="complementary"
             aria-label={modelToolsLabel}
-            className="flex min-h-0 shrink-0 flex-col gap-3 overflow-hidden lg:h-full lg:w-60"
+            className="d-flex min-h-0 flex-shrink-0 flex-column gap-3 overflow-hidden lg:h-full lg:w-60"
           >
-            <div className="flex h-8 shrink-0 items-center justify-end pr-1">
+            <div className="d-flex h-8 flex-shrink-0 align-items-center justify-content-end pr-1">
               <Button
                 ghost
                 size="icon"
                 onClick={toggleChatPanel}
                 aria-label="Collapse chat side panel"
                 title="Collapse side panel"
-                className="text-text-secondary hover:text-midground"
+                className="text-body-secondary hover:text-midground"
               >
                 <X />
               </Button>
             </div>
             {/* Model picker — keeps the rail thin. */}
-            <div className="shrink-0">
+            <div className="flex-shrink-0">
               <ChatSidebar
                 channel={channel}
                 profile={scopedProfile}
@@ -2115,7 +2115,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             </div>
 
             {/* Session switcher fills the remaining height below the model box. */}
-            <div className="min-h-0 flex-1 overflow-hidden">
+            <div className="min-h-0 flex-grow-1 overflow-hidden">
               <ChatSessionList
                 activeSessionId={resumeParam}
                 profile={scopedProfile}

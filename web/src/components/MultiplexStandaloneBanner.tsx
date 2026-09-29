@@ -49,17 +49,17 @@ export function MultiplexStandaloneBanner({
     <div
       role="alert"
       data-testid="multiplex-standalone-banner"
-      className="flex items-center gap-2 border-b border-amber-500/40 bg-amber-500/10 px-4 py-1.5 text-xs text-amber-300"
+      className="d-flex align-items-center gap-2 border-bottom border-amber-500/40 bg-amber-500/10 px-4 py-2 fs-6 text-amber-300"
     >
-      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-      <span className="min-w-0 flex-1">{message}</span>
+      <AlertTriangle className="icon-sm flex-shrink-0" />
+      <span className="min-w-0 flex-grow-1">{message}</span>
       <button
         type="button"
         aria-label={t.app.dismiss ?? "Dismiss"}
         onClick={dismiss}
-        className="shrink-0 opacity-70 hover:opacity-100"
+        className="flex-shrink-0 opacity-70 hover:opacity-100"
       >
-        <X className="h-3.5 w-3.5" />
+        <X className="icon-sm" />
       </button>
     </div>
   );

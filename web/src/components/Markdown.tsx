@@ -22,7 +22,7 @@ export function Markdown({
   const caret = streaming ? <StreamingCaret /> : null;
 
   return (
-    <div className="text-sm text-foreground leading-relaxed space-y-2">
+    <div className="fs-6 text-body-emphasis leading-relaxed space-y-2">
       {blocks.map((block, i) => (
         <Block
           key={i}
@@ -40,7 +40,7 @@ function StreamingCaret() {
   return (
     <span
       aria-hidden
-      className="inline-block w-[0.5em] h-[1em] ml-0.5 align-[-0.15em] bg-foreground/50 animate-pulse"
+      className="d-inline-block w-[0.5em] h-[1em] ml-0.5 align-[-0.15em] bg-foreground/50 animate-pulse"
     />
   );
 }
@@ -168,7 +168,7 @@ function Block({
   switch (block.type) {
     case "code":
       return (
-        <pre className="bg-secondary/60 border border-border px-3 py-2.5 text-xs font-mono leading-relaxed overflow-x-auto">
+        <pre className="bg-secondary/60 border border-secondary px-3 py-2.5 fs-6 font-monospace leading-relaxed overflow-x-auto">
           <code>
             {block.content}
             {caret}
@@ -195,7 +195,7 @@ function Block({
     case "hr":
       return (
         <>
-          <hr className="border-border" />
+          <hr className="border-secondary" />
           {caret}
         </>
       );
@@ -205,7 +205,7 @@ function Block({
       const last = block.items.length - 1;
       return (
         <Tag
-          className={`space-y-0.5 ${block.ordered ? "list-decimal" : "list-disc"} pl-5 text-sm`}
+          className={`space-y-0.5 ${block.ordered ? "list-decimal" : "list-disc"} pl-5 fs-6`}
         >
           {block.items.map((item, i) => (
             <li key={i}>
@@ -307,14 +307,14 @@ function InlineContent({
             return (
               <code
                 key={i}
-                className="bg-secondary/60 px-1.5 py-0.5 text-xs font-mono text-primary/90"
+                className="bg-secondary/60 px-2 py-0.5 fs-6 font-monospace text-primary/90"
               >
                 {node.content}
               </code>
             );
           case "bold":
             return (
-              <strong key={i} className="font-semibold">
+              <strong key={i} className="fw-semibold">
                 <HighlightedText text={node.content} terms={highlightTerms} />
               </strong>
             );
@@ -344,7 +344,7 @@ function InlineContent({
                 href={href}
                 target="_blank"
                 rel="noreferrer"
-                className="text-primary underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60 transition-colors"
+                className="text-primary text-decoration-underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60 transition-colors"
               >
                 {node.text}
               </a>

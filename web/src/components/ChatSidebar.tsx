@@ -456,9 +456,9 @@ export function ChatSidebar({
         className
       )}
     >
-      <Card className="flex items-center justify-between gap-2 px-3 py-2">
-        <div className="min-w-0 flex-1">
-          <div className="text-display text-xs tracking-wider text-text-tertiary">model</div>
+      <Card className="d-flex align-items-center justify-content-between gap-2 px-3 py-2">
+        <div className="min-w-0 flex-grow-1">
+          <div className="fs-4 fw-semibold fs-6 ls-wide text-body-tertiary">model</div>
 
           <Button
             ghost
@@ -471,15 +471,15 @@ export function ChatSidebar({
             )}
             title={modelName === '—' ? 'switch model' : modelName}
           >
-            <span className="flex min-w-0 max-w-full items-center gap-1">
-              <span className="truncate">{modelLabel}</span>
+            <span className="d-flex min-w-0 max-w-full align-items-center gap-1">
+              <span className="text-truncate">{modelLabel}</span>
 
-              <ChevronDown className="size-3.5 shrink-0 text-text-secondary" />
+              <ChevronDown className="size-3.5 flex-shrink-0 text-body-secondary" />
             </span>
           </Button>
         </div>
 
-        <Badge tone={STATE_TONE[state]} className="shrink-0">
+        <Badge tone={STATE_TONE[state]} className="flex-shrink-0">
           {STATE_LABEL[state]}
         </Badge>
       </Card>
@@ -500,19 +500,19 @@ export function ChatSidebar({
       )}
 
       {modelNotice && (
-        <Card className="flex items-start gap-2 border-warning/40 bg-warning/5 px-3 py-2 text-xs">
-          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+        <Card className="d-flex align-items-start gap-2 border-warning/40 bg-warning/5 px-3 py-2 fs-6">
+          <AlertCircle className="mt-1 icon-sm flex-shrink-0 text-warning" />
 
-          <div className="wrap-break-word min-w-0 flex-1 text-text-secondary">{modelNotice}</div>
+          <div className="wrap-break-word min-w-0 flex-grow-1 text-body-secondary">{modelNotice}</div>
         </Card>
       )}
 
       {banner && (
-        <Card className="flex items-start gap-2 border-destructive/40 bg-destructive/5 px-3 py-2 text-xs">
-          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+        <Card className="d-flex align-items-start gap-2 border-destructive/40 bg-destructive/5 px-3 py-2 fs-6">
+          <AlertCircle className="mt-1 icon-sm flex-shrink-0 text-danger" />
 
-          <div className="min-w-0 flex-1">
-            <div className="wrap-break-word text-destructive">{banner}</div>
+          <div className="min-w-0 flex-grow-1">
+            <div className="wrap-break-word text-danger">{banner}</div>
 
             {error && showReload && (
               <Button
@@ -531,7 +531,7 @@ export function ChatSidebar({
               </Button>
             )}
             {!error && credential && (
-              <div className="mt-1 flex flex-wrap gap-2">
+              <div className="mt-1 d-flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   outlined

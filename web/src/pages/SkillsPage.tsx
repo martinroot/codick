@@ -324,17 +324,17 @@ export default function SkillsPage() {
       return;
     }
     setAfterTitle(
-      <span className="flex items-center gap-2 whitespace-nowrap text-xs text-muted-foreground">
+      <span className="d-flex align-items-center gap-2 text-nowrap fs-6 text-body-secondary">
         {t.skills.enabledOf
           .replace("{enabled}", String(enabledCount))
           .replace("{total}", String(skills.length))}
       </span>,
     );
     setEnd(
-      <div className="relative w-full min-w-0 sm:max-w-xs">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+      <div className="position-relative w-100 min-w-0 sm:max-w-xs">
+        <Search className="position-absolute left-2.5 top-1/2 -translate-y-1/2 icon-sm text-body-secondary" />
         <Input
-          className="h-8 rounded-none pl-8 pr-7 text-xs"
+          className="h-8 rounded-0 pl-8 pr-7 fs-6"
           placeholder={t.common.search}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -343,7 +343,7 @@ export default function SkillsPage() {
           <Button
             ghost
             size="xs"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="position-absolute right-1.5 top-1/2 -translate-y-1/2 text-body-secondary hover:text-foreground"
             onClick={() => setSearch("")}
             aria-label={t.common.clear}
           >
@@ -379,14 +379,14 @@ export default function SkillsPage() {
   /* ---- Loading ---- */
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="text-2xl text-primary" />
+      <div className="d-flex align-items-center justify-content-center py-24">
+        <Spinner className="fs-3 text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="d-flex flex-column gap-4">
       <PluginSlot name="skills:top" />
       <Toast toast={toast} />
 
@@ -401,18 +401,18 @@ export default function SkillsPage() {
         />
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+      <div className="d-flex flex-column sm:flex-row sm:items-start gap-4">
         <aside aria-label={t.skills.title} className="sm:w-56 sm:shrink-0">
           <div className="sm:sticky sm:top-0">
-            <div className="flex flex-col rounded-none border border-border bg-muted/20">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-2 border-b border-border">
-                <Filter className="h-3 w-3 text-text-tertiary" />
-                <span className="font-mondwest text-display text-xs tracking-[0.12em] text-text-secondary">
+            <div className="d-flex flex-column rounded-0 border border-secondary bg-muted/20">
+              <div className="d-none sm:flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary">
+                <Filter className="icon-sm text-body-tertiary" />
+                <span className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
                   {t.skills.filters}
                 </span>
               </div>
 
-              <div className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-x-visible scrollbar-none p-2">
+              <div className="d-flex sm:flex-col gap-1 overflow-x-auto sm:overflow-x-visible scrollbar-none p-2">
                 <PanelItem
                   icon={Package}
                   label={`${t.skills.all} (${skills.length})`}
@@ -446,11 +446,11 @@ export default function SkillsPage() {
               {view === "skills" &&
                 !isSearching &&
                 allCategories.length > 0 && (
-                  <div className="hidden sm:flex flex-col border-t border-border">
-                    <div className="px-3 pt-2 pb-1 font-mondwest text-display text-xs tracking-[0.12em] text-text-tertiary">
+                  <div className="d-none sm:flex flex-column border-top border-secondary">
+                    <div className="px-3 pt-2 pb-1 font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary">
                       {t.skills.categories}
                     </div>
-                    <div className="flex flex-col p-2 pt-1 gap-px max-h-[calc(100vh-340px)] overflow-y-auto">
+                    <div className="d-flex flex-column p-2 pt-1 gap-px max-h-[calc(100vh-340px)] overflow-y-auto">
                       {allCategories.map(({ key, name, count }) => {
                         const isActive = activeCategory === key;
 
@@ -461,9 +461,9 @@ export default function SkillsPage() {
                             onClick={() =>
                               setActiveCategory(isActive ? null : key)
                             }
-                            className="rounded-none px-2 py-1 text-xs"
+                            className="rounded-0 px-2 py-1 fs-6"
                           >
-                            <span className="flex-1 truncate">{name}</span>
+                            <span className="flex-grow-1 text-truncate">{name}</span>
                             <span
                               className={`text-xs tabular-nums ${
                                 isActive
@@ -483,16 +483,16 @@ export default function SkillsPage() {
           </div>
         </aside>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-grow-1 min-w-0">
           {isSearching ? (
-            <Card className="rounded-none">
+            <Card className="rounded-0">
               <CardHeader className="py-3 px-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Search className="h-4 w-4" />
+                <div className="d-flex align-items-center justify-content-between">
+                  <CardTitle className="fs-6 d-flex align-items-center gap-2">
+                    <Search className="icon-md" />
                     {t.skills.title}
                   </CardTitle>
-                  <Badge tone="secondary" className="text-xs">
+                  <Badge tone="secondary" className="fs-6">
                     {t.skills.resultCount
                       .replace("{count}", String(searchMatchedSkills.length))
                       .replace(
@@ -504,11 +504,11 @@ export default function SkillsPage() {
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 {searchMatchedSkills.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
+                  <p className="fs-6 text-body-secondary text-center py-8">
                     {t.skills.noSkillsMatch}
                   </p>
                 ) : (
-                  <div className="grid gap-1">
+                  <div className="d-grid gap-1">
                     {searchMatchedSkills.map((skill) => (
                       <SkillRow
                         key={skill.name}
@@ -525,11 +525,11 @@ export default function SkillsPage() {
             </Card>
           ) : view === "skills" ? (
             /* Skills list */
-            <Card className="rounded-none">
+            <Card className="rounded-0">
               <CardHeader className="py-3 px-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Package className="h-4 w-4" />
+                <div className="d-flex align-items-center justify-content-between">
+                  <CardTitle className="fs-6 d-flex align-items-center gap-2">
+                    <Package className="icon-md" />
                     {activeCategory
                       ? prettyCategory(
                           activeCategory === "__none__" ? null : activeCategory,
@@ -537,8 +537,8 @@ export default function SkillsPage() {
                         )
                       : t.skills.all}
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge tone="secondary" className="text-xs">
+                  <div className="d-flex align-items-center gap-2">
+                    <Badge tone="secondary" className="fs-6">
                       {t.skills.skillCount
                         .replace("{count}", String(activeSkills.length))
                         .replace("{s}", activeSkills.length !== 1 ? "s" : "")}
@@ -564,14 +564,14 @@ export default function SkillsPage() {
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 {loadError ? null : activeSkills.length === 0 ? (
-                  <div className="flex flex-col items-center gap-3 py-8 text-center">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="d-flex flex-column align-items-center gap-3 py-8 text-center">
+                    <p className="fs-6 text-body-secondary">
                       {skills.length === 0
                         ? t.skills.noSkills
                         : t.skills.noSkillsMatch}
                     </p>
                     {skills.length === 0 && (
-                      <div className="flex flex-wrap justify-center gap-2">
+                      <div className="d-flex flex-wrap justify-content-center gap-2">
                         <Button size="sm" onClick={() => setView("hub")}>
                           {t.skills.browseHub ?? en.skills.browseHub}
                         </Button>
@@ -582,7 +582,7 @@ export default function SkillsPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="grid gap-1">
+                  <div className="d-grid gap-1">
                     {activeSkills.map((skill) => (
                       <SkillRow
                         key={skill.name}
@@ -601,51 +601,51 @@ export default function SkillsPage() {
             /* Toolsets grid */
             <>
               {filteredToolsets.length === 0 ? (
-                <Card className="rounded-none">
-                  <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                <Card className="rounded-0">
+                  <CardContent className="py-8 text-center fs-6 text-body-secondary">
                     {t.skills.noToolsetsMatch}
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="d-grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredToolsets.map((ts) => {
                     const TsIcon = toolsetIcon(ts.name);
                     const labelText = ts.label.trim() || ts.name;
 
                     return (
-                      <Card key={ts.name} className="relative rounded-none">
+                      <Card key={ts.name} className="position-relative rounded-0">
                         <CardContent className="py-4">
-                          <div className="flex items-start gap-3">
-                            <TsIcon className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-sm">
+                          <div className="d-flex align-items-start gap-3">
+                            <TsIcon className="icon-lg text-body-secondary flex-shrink-0 mt-1" />
+                            <div className="flex-grow-1 min-w-0">
+                              <div className="d-flex align-items-center gap-2 mb-1">
+                                <span className="fw-medium fs-6">
                                   {labelText}
                                 </span>
                                 <Badge
                                   tone={ts.enabled ? "success" : "outline"}
-                                  className="text-xs"
+                                  className="fs-6"
                                 >
                                   {ts.enabled
                                     ? t.common.active
                                     : t.common.inactive}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-text-secondary mb-2">
+                              <p className="fs-6 text-body-secondary mb-2">
                                 {ts.description}
                               </p>
                               {ts.enabled && !ts.configured && (
-                                <p className="text-xs text-amber-300 mb-2">
+                                <p className="fs-6 text-amber-300 mb-2">
                                   {t.skills.setupNeeded}
                                 </p>
                               )}
                               {ts.tools.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
+                                <div className="d-flex flex-wrap gap-1">
                                   {ts.tools.map((tool) => (
                                     <Badge
                                       key={tool}
                                       tone="secondary"
-                                      className="text-xs font-mono"
+                                      className="fs-6 font-monospace"
                                     >
                                       {tool}
                                     </Badge>
@@ -653,7 +653,7 @@ export default function SkillsPage() {
                                 </div>
                               )}
                               {ts.tools.length === 0 && (
-                                <span className="text-xs text-text-tertiary">
+                                <span className="fs-6 text-body-tertiary">
                                   {ts.enabled
                                     ? t.skills.toolsetLabel.replace(
                                         "{name}",
@@ -711,9 +711,9 @@ export default function SkillsPage() {
               below; the agent gathers the sources and writes the skill in chat.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-2">
-            <div className="grid gap-1.5">
-              <label className="text-xs font-medium text-muted-foreground">
+          <div className="d-grid gap-3 py-2">
+            <div className="d-grid gap-2">
+              <label className="fs-6 fw-medium text-body-secondary">
                 Local file or directory
               </label>
               <Input
@@ -722,8 +722,8 @@ export default function SkillsPage() {
                 onChange={(e) => setLearnDir(e.target.value)}
               />
             </div>
-            <div className="grid gap-1.5">
-              <label className="text-xs font-medium text-muted-foreground">
+            <div className="d-grid gap-2">
+              <label className="fs-6 fw-medium text-body-secondary">
                 URL
               </label>
               <Input
@@ -732,20 +732,20 @@ export default function SkillsPage() {
                 onChange={(e) => setLearnUrl(e.target.value)}
               />
             </div>
-            <div className="grid gap-1.5">
-              <label className="text-xs font-medium text-muted-foreground">
+            <div className="d-grid gap-2">
+              <label className="fs-6 fw-medium text-body-secondary">
                 Anything else — describe the workflow, paste notes, or say
                 "what we just did"
               </label>
               <textarea
-                className="min-h-[90px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="min-h-[90px] w-100 rounded-2 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 placeholder="e.g. how I file an expense report: open the portal, …"
                 value={learnText}
                 onChange={(e) => setLearnText(e.target.value)}
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="d-flex justify-content-end gap-2 pt-1">
             <Button ghost onClick={() => setLearnOpen(false)}>
               Cancel
             </Button>
@@ -772,16 +772,16 @@ function SkillRow({
   noDescriptionLabel,
 }: SkillRowProps) {
   return (
-    <div className="group flex items-start gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40">
-      <div className="pt-0.5 shrink-0">
+    <div className="group d-flex align-items-start gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40">
+      <div className="pt-0.5 flex-shrink-0">
         <Switch
           checked={skill.enabled}
           onCheckedChange={onToggle}
           disabled={toggling}
         />
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+      <div className="flex-grow-1 min-w-0">
+        <div className="d-flex align-items-center gap-2 mb-1">
           <span
             className={`font-mono-ui text-sm ${
               skill.enabled ? "text-foreground" : "text-muted-foreground"
@@ -790,14 +790,14 @@ function SkillRow({
             {skill.name}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+        <p className="fs-6 text-body-secondary leading-relaxed line-clamp-2">
           {skill.description || noDescriptionLabel}
         </p>
       </div>
       <Button
         ghost
         size="icon"
-        className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-foreground"
+        className="flex-shrink-0 text-body-secondary opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-foreground"
         title="Edit SKILL.md"
         aria-label={`Edit ${skill.name}`}
         onClick={onEdit}
@@ -819,8 +819,8 @@ function PanelItem({ active, icon: Icon, label, onClick }: PanelItemProps) {
         active && "bg-foreground/90 text-background hover:text-background",
       )}
     >
-      <Icon className="h-3.5 w-3.5 shrink-0" />
-      <span className="flex-1 truncate">{label}</span>
+      <Icon className="icon-sm flex-shrink-0" />
+      <span className="flex-grow-1 text-truncate">{label}</span>
     </ListItem>
   );
 }
@@ -1031,15 +1031,15 @@ function HubBrowser({
   const showLanding = !searched && !searching;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="d-flex flex-column gap-3">
       {/* ── Search bar ── */}
-      <Card className="rounded-none">
-        <CardContent className="py-4 flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+      <Card className="rounded-0">
+        <CardContent className="py-4 d-flex flex-column gap-3">
+          <div className="d-flex align-items-center gap-2">
+            <div className="position-relative flex-grow-1">
+              <Search className="position-absolute left-2.5 top-1/2 -translate-y-1/2 icon-sm text-body-secondary" />
               <Input
-                className="h-8 pl-8 text-sm"
+                className="h-8 pl-8 fs-6"
                 placeholder="Search the skill hub (GitHub, official, community)…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -1052,7 +1052,7 @@ function HubBrowser({
               size="sm"
               onClick={() => void runSearch()}
               disabled={searching || !query.trim()}
-              prefix={searching ? <Spinner /> : <Search className="h-3.5 w-3.5" />}
+              prefix={searching ? <Spinner /> : <Search className="icon-sm" />}
             >
               Search
             </Button>
@@ -1060,7 +1060,7 @@ function HubBrowser({
               size="sm"
               outlined
               onClick={() => void updateAll()}
-              prefix={<RefreshCw className="h-3.5 w-3.5" />}
+              prefix={<RefreshCw className="icon-sm" />}
             >
               Update all
             </Button>
@@ -1073,11 +1073,11 @@ function HubBrowser({
 
       {/* ── Install/update action log ── */}
       {action && (
-        <Card className="rounded-none">
+        <Card className="rounded-0">
           <CardContent className="py-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Download className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="font-mono text-xs">{action}</span>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <Download className="icon-sm text-body-secondary" />
+              <span className="font-monospace fs-6">{action}</span>
               {actionRunning ? (
                 <Badge tone="warning">running</Badge>
               ) : (
@@ -1087,15 +1087,15 @@ function HubBrowser({
                 <Button
                   ghost
                   size="xs"
-                  className="ml-auto text-muted-foreground"
+                  className="ml-auto text-body-secondary"
                   onClick={() => setAction(null)}
                   aria-label="Dismiss"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="icon-sm" />
                 </Button>
               )}
             </div>
-            <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words bg-background/50 border border-border p-2 text-xs font-mono text-muted-foreground">
+            <pre className="max-h-48 overflow-auto text-wrap text-break bg-background/50 border border-secondary p-2 fs-6 font-monospace text-body-secondary">
               {actionLog.length ? actionLog.join("\n") : "Starting…"}
             </pre>
           </CardContent>
@@ -1106,17 +1106,17 @@ function HubBrowser({
       {showLanding && (
         <>
           {sourcesLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Spinner className="text-xl text-primary" />
+            <div className="d-flex align-items-center justify-content-center py-12">
+              <Spinner className="fs-4 text-primary" />
             </div>
           ) : featured.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 px-1">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="font-mondwest text-display text-xs tracking-[0.12em] text-text-secondary uppercase">
+            <div className="d-flex flex-column gap-2">
+              <div className="d-flex align-items-center gap-2 px-1">
+                <Sparkles className="icon-sm text-primary" />
+                <span className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary text-uppercase">
                   Featured skills
                 </span>
-                <span className="text-xs text-text-tertiary">
+                <span className="fs-6 text-body-tertiary">
                   from the Hermes index — search above for thousands more
                 </span>
               </div>
@@ -1131,8 +1131,8 @@ function HubBrowser({
               ))}
             </div>
           ) : (
-            <Card className="rounded-none">
-              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            <Card className="rounded-0">
+              <CardContent className="py-10 text-center fs-6 text-body-secondary">
                 Search the hub above to browse installable skills from the
                 connected sources.
               </CardContent>
@@ -1143,8 +1143,8 @@ function HubBrowser({
 
       {/* ── Searching spinner ── */}
       {searching && (
-        <div className="flex items-center justify-center py-8">
-          <Spinner className="text-xl text-primary" />
+        <div className="d-flex align-items-center justify-content-center py-8">
+          <Spinner className="fs-4 text-primary" />
         </div>
       )}
 
@@ -1158,8 +1158,8 @@ function HubBrowser({
             ms={searchMs}
           />
           {results.length === 0 ? (
-            <Card className="rounded-none">
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <Card className="rounded-0">
+              <CardContent className="py-8 text-center fs-6 text-body-secondary">
                 No matching skills found in the hub.
               </CardContent>
             </Card>
@@ -1201,21 +1201,21 @@ function ConnectedHubs({
 }) {
   if (loading) {
     return (
-      <p className="text-xs text-muted-foreground">Connecting to skill hubs…</p>
+      <p className="fs-6 text-body-secondary">Connecting to skill hubs…</p>
     );
   }
   if (sources.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="fs-6 text-body-secondary">
         Results come from the same sources as{" "}
-        <span className="font-mono">hermes skills search</span>.
+        <span className="font-monospace">hermes skills search</span>.
       </p>
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="flex items-center gap-1 text-xs text-text-tertiary">
-        <Globe className="h-3 w-3" />
+    <div className="d-flex flex-wrap align-items-center gap-2">
+      <span className="d-flex align-items-center gap-1 fs-6 text-body-tertiary">
+        <Globe className="icon-sm" />
         Connected hubs:
       </span>
       {sources.map((s) => {
@@ -1226,7 +1226,7 @@ function ConnectedHubs({
           <Badge
             key={s.id}
             tone={down ? "outline" : "secondary"}
-            className={cn("text-xs", down && "opacity-60")}
+            className={cn("fs-6", down && "opacity-60")}
             title={
               s.id === "github" && s.rate_limited
                 ? "GitHub API rate-limited — set GITHUB_TOKEN to raise the limit"
@@ -1258,23 +1258,23 @@ function SearchMeta({
 }) {
   const entries = Object.entries(sourceCounts).filter(([, n]) => n > 0);
   return (
-    <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-text-tertiary">
-      <Badge tone="secondary" className="text-xs">
+    <div className="d-flex flex-wrap align-items-center gap-2 px-1 fs-6 text-body-tertiary">
+      <Badge tone="secondary" className="fs-6">
         {count} result{count !== 1 ? "s" : ""}
       </Badge>
       {ms != null && <span>{(ms / 1000).toFixed(1)}s</span>}
       {entries.length > 0 && (
-        <span className="flex flex-wrap items-center gap-1.5">
+        <span className="d-flex flex-wrap align-items-center gap-2">
           {entries.map(([sid, n]) => (
-            <span key={sid} className="font-mono">
+            <span key={sid} className="font-monospace">
               {sid}:{n}
             </span>
           ))}
         </span>
       )}
       {timedOut.length > 0 && (
-        <span className="flex items-center gap-1 text-amber-400">
-          <AlertTriangle className="h-3 w-3" />
+        <span className="d-flex align-items-center gap-1 text-amber-400">
+          <AlertTriangle className="icon-sm" />
           {timedOut.join(", ")} timed out
         </span>
       )}
@@ -1296,65 +1296,65 @@ function HubResultCard({
 }) {
   const trust = trustVisual(result.trust_level);
   return (
-    <Card className="rounded-none transition-colors hover:bg-muted/30">
-      <CardContent className="py-3 flex items-start gap-3">
+    <Card className="rounded-0 transition-colors hover:bg-muted/30">
+      <CardContent className="py-3 d-flex align-items-start gap-3">
         <button
           type="button"
-          className="flex-1 min-w-0 text-left"
+          className="flex-grow-1 min-w-0 text-start"
           onClick={onOpen}
           aria-label={`Open ${result.name}`}
         >
-          <div className="flex flex-wrap items-center gap-2 mb-0.5">
-            <span className="font-mono-ui text-sm hover:underline">
+          <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
+            <span className="font-monospace fs-6 hover:underline">
               {result.name}
             </span>
-            <Badge tone={trust.tone} className="text-xs">
+            <Badge tone={trust.tone} className="fs-6">
               {trust.label}
             </Badge>
-            <Badge tone="secondary" className="text-xs">
+            <Badge tone="secondary" className="fs-6">
               {result.source}
             </Badge>
             {installed && (
-              <Badge tone="success" className="text-xs">
+              <Badge tone="success" className="fs-6">
                 installed
               </Badge>
             )}
           </div>
-          <p className="text-xs text-text-secondary line-clamp-2">
+          <p className="fs-6 text-body-secondary line-clamp-2">
             {result.description}
           </p>
-          <div className="flex flex-wrap items-center gap-1 mt-1">
+          <div className="d-flex flex-wrap align-items-center gap-1 mt-1">
             {result.tags.slice(0, 5).map((tag) => (
               <span
                 key={tag}
-                className="text-[0.65rem] font-mono text-text-tertiary border border-border px-1 py-px"
+                className="text-[0.65rem] font-monospace text-body-tertiary border border-secondary px-1 py-px"
               >
                 {tag}
               </span>
             ))}
           </div>
-          <p className="text-xs font-mono text-text-tertiary truncate mt-1">
+          <p className="fs-6 font-monospace text-body-tertiary text-truncate mt-1">
             {result.identifier}
           </p>
         </button>
-        <div className="flex shrink-0 flex-col gap-1.5">
+        <div className="d-flex flex-shrink-0 flex-column gap-2">
           <Button
             size="sm"
             outlined
             onClick={onOpen}
-            prefix={<FileText className="h-3.5 w-3.5" />}
+            prefix={<FileText className="icon-sm" />}
           >
             Details
           </Button>
           {installed ? (
-            <Button size="sm" ghost disabled prefix={<CheckCircle2 className="h-3.5 w-3.5" />}>
+            <Button size="sm" ghost disabled prefix={<CheckCircle2 className="icon-sm" />}>
               Installed
             </Button>
           ) : (
             <Button
               size="sm"
               onClick={onInstall}
-              prefix={<Download className="h-3.5 w-3.5" />}
+              prefix={<Download className="icon-sm" />}
             >
               Install
             </Button>
@@ -1416,19 +1416,19 @@ function SkillDetailDialog({
 
   return (
     <Dialog open onOpenChange={(o: boolean) => !o && onClose()}>
-      <DialogContent className="max-w-3xl rounded-none">
+      <DialogContent className="max-w-3xl rounded-0">
         <DialogHeader>
-          <DialogTitle className="flex flex-wrap items-center gap-2 text-sm">
-            <Package className="h-4 w-4" />
+          <DialogTitle className="d-flex flex-wrap align-items-center gap-2 fs-6">
+            <Package className="icon-md" />
             {result.name}
-            <Badge tone={trust.tone} className="text-xs">
+            <Badge tone={trust.tone} className="fs-6">
               {trust.label}
             </Badge>
-            <Badge tone="secondary" className="text-xs">
+            <Badge tone="secondary" className="fs-6">
               {result.source}
             </Badge>
             {installed && (
-              <Badge tone="success" className="text-xs">
+              <Badge tone="success" className="fs-6">
                 installed
               </Badge>
             )}
@@ -1439,20 +1439,20 @@ function SkillDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-1 flex flex-col gap-1">
-          <p className="text-xs text-text-secondary">{result.description}</p>
-          <p className="text-xs font-mono text-text-tertiary truncate">
+        <div className="mt-1 d-flex flex-column gap-1">
+          <p className="fs-6 text-body-secondary">{result.description}</p>
+          <p className="fs-6 font-monospace text-body-tertiary text-truncate">
             {result.identifier}
           </p>
         </div>
 
         {/* Action row */}
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-y border-border py-2.5">
+        <div className="mt-3 d-flex flex-wrap align-items-center gap-2 border-y border-secondary py-2.5">
           <Button
             size="sm"
             outlined={tab !== "readme"}
             onClick={() => setTab("readme")}
-            prefix={<FileText className="h-3.5 w-3.5" />}
+            prefix={<FileText className="icon-sm" />}
           >
             Read SKILL.md
           </Button>
@@ -1463,35 +1463,35 @@ function SkillDetailDialog({
             disabled={scanning}
             prefix={
               scanning ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="icon-sm animate-spin" />
               ) : (
-                <Shield className="h-3.5 w-3.5" />
+                <Shield className="icon-sm" />
               )
             }
           >
             {scan ? "Re-scan" : "Security scan"}
           </Button>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto d-flex align-items-center gap-3">
             {result.repo && (
               <a
                 href={`https://github.com/${result.repo}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                className="d-inline-flex align-items-center gap-1 fs-6 text-primary hover:underline"
               >
-                <ExternalLink className="h-3.5 w-3.5" />
+                <ExternalLink className="icon-sm" />
                 {result.repo}
               </a>
             )}
             {installed ? (
-              <Button size="sm" ghost disabled prefix={<CheckCircle2 className="h-3.5 w-3.5" />}>
+              <Button size="sm" ghost disabled prefix={<CheckCircle2 className="icon-sm" />}>
                 Installed
               </Button>
             ) : (
               <Button
                 size="sm"
                 onClick={onInstall}
-                prefix={<Download className="h-3.5 w-3.5" />}
+                prefix={<Download className="icon-sm" />}
               >
                 Install
               </Button>
@@ -1503,17 +1503,17 @@ function SkillDetailDialog({
         <div className="mt-3 max-h-[55vh] overflow-auto">
           {tab === "readme" ? (
             previewLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Spinner className="text-xl text-primary" />
+              <div className="d-flex align-items-center justify-content-center py-12">
+                <Spinner className="fs-4 text-primary" />
               </div>
             ) : preview ? (
-              <div className="flex flex-col gap-2.5">
+              <div className="d-flex flex-column gap-2.5">
                 {preview.tags.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1">
+                  <div className="d-flex flex-wrap align-items-center gap-1">
                     {preview.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-[0.65rem] font-mono text-text-tertiary border border-border px-1 py-px"
+                        className="text-[0.65rem] font-monospace text-body-tertiary border border-secondary px-1 py-px"
                       >
                         {tag}
                       </span>
@@ -1521,19 +1521,19 @@ function SkillDetailDialog({
                   </div>
                 )}
                 {preview.files.length > 0 && (
-                  <div className="text-xs text-text-tertiary">
-                    <span className="font-mondwest tracking-[0.1em] uppercase">
+                  <div className="fs-6 text-body-tertiary">
+                    <span className="font-mondwest tracking-[0.1em] text-uppercase">
                       Files:{" "}
                     </span>
-                    <span className="font-mono">{preview.files.join("  ")}</span>
+                    <span className="font-monospace">{preview.files.join("        ")}</span>
                   </div>
                 )}
-                <pre className="whitespace-pre-wrap break-words bg-background/50 border border-border p-3 text-xs font-mono text-text-secondary leading-relaxed">
+                <pre className="text-wrap text-break bg-background/50 border border-secondary p-3 fs-6 font-monospace text-body-secondary leading-relaxed">
                   {(preview.skill_md || "").trim() || "(SKILL.md is empty)"}
                 </pre>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-10">
+              <p className="fs-6 text-body-secondary text-center py-10">
                 Couldn't load the skill source.
               </p>
             )
@@ -1556,9 +1556,9 @@ function ScanPanel({
 }) {
   if (scanning && !scan) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <span className="text-xs text-muted-foreground">
+      <div className="d-flex flex-column align-items-center justify-content-center gap-2 py-12">
+        <Loader2 className="icon-xl animate-spin text-primary" />
+        <span className="fs-6 text-body-secondary">
           Fetching, quarantining, and scanning…
         </span>
       </div>
@@ -1566,7 +1566,7 @@ function ScanPanel({
   }
   if (!scan) {
     return (
-      <p className="text-sm text-muted-foreground text-center py-10">
+      <p className="fs-6 text-body-secondary text-center py-10">
         Run a security scan to inspect this skill for risky patterns before
         installing.
       </p>
@@ -1588,9 +1588,9 @@ function ScanPanel({
         : "Install blocked";
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="d-flex flex-column gap-3">
       {/* Verdict header */}
-      <div className="flex flex-wrap items-center gap-2 border border-border p-3">
+      <div className="d-flex flex-wrap align-items-center gap-2 border border-secondary p-3">
         <v.Icon
           className={cn(
             "h-6 w-6",
@@ -1601,60 +1601,60 @@ function ScanPanel({
                 : "text-amber-400",
           )}
         />
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Verdict: {v.label}</span>
-            <Badge tone={v.tone} className="text-xs">
+        <div className="d-flex flex-column">
+          <div className="d-flex align-items-center gap-2">
+            <span className="fs-6 fw-medium">Verdict: {v.label}</span>
+            <Badge tone={v.tone} className="fs-6">
               {scan.verdict}
             </Badge>
           </div>
-          <span className="text-xs text-text-tertiary">
+          <span className="fs-6 text-body-tertiary">
             {scan.trust_level} source · {scan.findings.length} finding
             {scan.findings.length !== 1 ? "s" : ""}
           </span>
         </div>
-        <Badge tone={policyTone} className="ml-auto text-xs">
+        <Badge tone={policyTone} className="ml-auto fs-6">
           {policyLabel}
         </Badge>
       </div>
 
       {/* Severity tally */}
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="d-flex flex-wrap align-items-center gap-2">
         {(["critical", "high", "medium", "low"] as const).map((sev) => {
           const n = scan.severity_counts[sev] || 0;
           if (n === 0) return null;
           return (
-            <Badge key={sev} tone={SEVERITY_TONE[sev]} className="text-xs">
+            <Badge key={sev} tone={SEVERITY_TONE[sev]} className="fs-6">
               {n} {sev}
             </Badge>
           );
         })}
         {scan.findings.length === 0 && (
-          <span className="flex items-center gap-1 text-xs text-emerald-400">
-            <CheckCircle2 className="h-3.5 w-3.5" />
+          <span className="d-flex align-items-center gap-1 fs-6 text-emerald-400">
+            <CheckCircle2 className="icon-sm" />
             No risky patterns detected
           </span>
         )}
       </div>
 
-      <p className="text-xs text-text-tertiary">{scan.policy_reason}</p>
+      <p className="fs-6 text-body-tertiary">{scan.policy_reason}</p>
 
       {/* Findings */}
       {scan.findings.length > 0 && (
-        <div className="flex flex-col border border-border divide-y divide-border">
+        <div className="d-flex flex-column border border-secondary divide-y divide-border">
           {scan.findings.map((f, i) => (
-            <div key={i} className="flex items-start gap-2 p-2">
-              <Badge tone={SEVERITY_TONE[f.severity] || "outline"} className="text-xs shrink-0">
+            <div key={i} className="d-flex align-items-start gap-2 p-2">
+              <Badge tone={SEVERITY_TONE[f.severity] || "outline"} className="fs-6 flex-shrink-0">
                 {f.severity}
               </Badge>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium">{f.category}</span>
-                  <span className="text-xs font-mono text-text-tertiary truncate">
+              <div className="flex-grow-1 min-w-0">
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                  <span className="fs-6 fw-medium">{f.category}</span>
+                  <span className="fs-6 font-monospace text-body-tertiary text-truncate">
                     {f.file}:{f.line}
                   </span>
                 </div>
-                <p className="text-xs text-text-secondary">{f.description}</p>
+                <p className="fs-6 text-body-secondary">{f.description}</p>
               </div>
             </div>
           ))}

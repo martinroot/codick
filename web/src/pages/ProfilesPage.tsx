@@ -73,7 +73,7 @@ function ProfilesLoadingSpinner() {
   return (
     <span
       aria-hidden
-      className="inline-block select-none font-mono text-xl leading-none text-muted-foreground"
+      className="d-inline-block user-select-none font-monospace fs-4 leading-none text-body-secondary"
     >
       {frames[frameIndex]}
     </span>
@@ -130,7 +130,7 @@ function ProfileActionsMenu({
     "flex w-full items-center gap-2.5 px-3 py-2 text-xs uppercase tracking-wider hover:bg-muted/50 disabled:opacity-40";
 
   return (
-    <div className="relative" data-profile-actions ref={containerRef}>
+    <div className="position-relative" data-profile-actions ref={containerRef}>
       <Button
         ghost
         size="icon"
@@ -140,13 +140,13 @@ function ProfileActionsMenu({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <MoreVertical className="h-4 w-4" />
+        <MoreVertical className="icon-md" />
       </Button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-1 min-w-[200px] border border-border bg-card shadow-lg"
+          className="position-absolute right-0 top-full z-50 mt-1 min-w-[200px] border border-secondary bg-card shadow-lg"
         >
           {!isActive && (
             <button
@@ -156,7 +156,7 @@ function ProfileActionsMenu({
               disabled={settingActive}
               onClick={run(onSetActive)}
             >
-              <Check className="h-4 w-4" />
+              <Check className="icon-md" />
               {labels.setActive}
             </button>
           )}
@@ -168,9 +168,9 @@ function ProfileActionsMenu({
             onClick={run(onEditModel)}
           >
             {isEditingModel ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="icon-md" />
             ) : (
-              <Cpu className="h-4 w-4" />
+              <Cpu className="icon-md" />
             )}
             {labels.editModel}
           </button>
@@ -182,9 +182,9 @@ function ProfileActionsMenu({
             onClick={run(onEditDescription)}
           >
             {isEditingDesc ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="icon-md" />
             ) : (
-              <AlignLeft className="h-4 w-4" />
+              <AlignLeft className="icon-md" />
             )}
             {labels.editDescription}
           </button>
@@ -196,9 +196,9 @@ function ProfileActionsMenu({
             onClick={run(onEditSoul)}
           >
             {isEditingSoul ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="icon-md" />
             ) : (
-              <span aria-hidden className="w-4 text-center text-xs font-bold">
+              <span aria-hidden className="w-4 text-center fs-6 fw-bold">
                 S
               </span>
             )}
@@ -211,7 +211,7 @@ function ProfileActionsMenu({
             className={itemClass}
             onClick={run(onManageSkills)}
           >
-            <Package className="h-4 w-4" />
+            <Package className="icon-md" />
             {labels.manageSkills}
           </button>
 
@@ -221,7 +221,7 @@ function ProfileActionsMenu({
             className={itemClass}
             onClick={run(onCopyCommand)}
           >
-            <Terminal className="h-4 w-4" />
+            <Terminal className="icon-md" />
             {labels.openInTerminal}
           </button>
 
@@ -229,10 +229,10 @@ function ProfileActionsMenu({
             <button
               type="button"
               role="menuitem"
-              className={cn(itemClass, "border-t border-border/50")}
+              className={cn(itemClass, "border-top border-border/50")}
               onClick={run(onRename)}
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil className="icon-md" />
               {labels.rename}
             </button>
           )}
@@ -241,10 +241,10 @@ function ProfileActionsMenu({
             <button
               type="button"
               role="menuitem"
-              className={cn(itemClass, "text-destructive hover:bg-destructive/10")}
+              className={cn(itemClass, "text-danger hover:bg-destructive/10")}
               onClick={run(onDelete)}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="icon-md" />
               {labels.delete}
             </button>
           )}
@@ -749,9 +749,9 @@ export default function ProfilesPage() {
   // Put "Build" (full builder) + "Create" (quick modal) buttons in header
   useLayoutEffect(() => {
     setEnd(
-      <div className="flex items-center gap-2">
+      <div className="d-flex align-items-center gap-2">
         <Button
-          className="uppercase"
+          className="text-uppercase"
           size="sm"
           outlined
           onClick={() => navigate("/profiles/new")}
@@ -759,7 +759,7 @@ export default function ProfilesPage() {
           Build
         </Button>
         <Button
-          className="uppercase"
+          className="text-uppercase"
           size="sm"
           onClick={() => setCreateModalOpen(true)}
         >
@@ -779,7 +779,7 @@ export default function ProfilesPage() {
       <div
         aria-busy="true"
         aria-live="polite"
-        className="flex items-center justify-center py-24"
+        className="d-flex align-items-center justify-content-center py-24"
       >
         <span className="sr-only">{t.common.loading}</span>
 
@@ -789,7 +789,7 @@ export default function ProfilesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="d-flex flex-column gap-6">
       <Toast toast={toast} />
 
       <DeleteConfirmDialog
@@ -805,7 +805,7 @@ export default function ProfilesPage() {
       {createModalOpen && (
         <div
           ref={createModalRef}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
           onClick={(e) =>
             e.target === e.currentTarget && setCreateModalOpen(false)
           }
@@ -823,23 +823,23 @@ export default function ProfilesPage() {
               ghost
               size="icon"
               onClick={() => setCreateModalOpen(false)}
-              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
               aria-label="Close"
             >
               <X />
             </Button>
 
-            <header className="p-5 pb-3 border-b border-border">
+            <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="create-profile-title"
-                className="font-mondwest text-display text-base tracking-wider"
+                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
               >
                 {t.profiles.newProfile}
               </h2>
             </header>
 
-            <div className="min-h-0 overflow-y-auto p-5 grid gap-4">
-              <div className="grid gap-2">
+            <div className="min-h-0 overflow-y-auto p-5 d-grid gap-4">
+              <div className="d-grid gap-2">
                 <Label htmlFor="profile-name">{t.profiles.name}</Label>
 
                 <Input
@@ -857,12 +857,12 @@ export default function ProfilesPage() {
                   }
                 />
 
-                <p className="text-xs text-muted-foreground">
+                <p className="fs-6 text-body-secondary">
                   {t.profiles.nameRule}
                 </p>
               </div>
 
-              <div className="grid gap-2">
+              <div className="d-grid gap-2">
                 <Label htmlFor="clone-from">{t.profiles.cloneFrom}</Label>
                 <Select
                   id="clone-from"
@@ -882,21 +882,21 @@ export default function ProfilesPage() {
                 </Select>
               </div>
 
-              <div className="grid gap-2">
+              <div className="d-grid gap-2">
                 <Label htmlFor="profile-description">
                   {L.descriptionOptional}
                 </Label>
 
                 <textarea
                   id="profile-description"
-                  className="flex min-h-[64px] w-full border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="d-flex min-h-[64px] w-100 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   placeholder={L.descriptionPlaceholder}
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                 />
               </div>
 
-              <div className="grid gap-2">
+              <div className="d-grid gap-2">
                 <Label htmlFor="profile-model">{L.modelOptional}</Label>
 
                 <Select
@@ -920,16 +920,16 @@ export default function ProfilesPage() {
                 </Select>
 
                 {modelChoices !== null && modelChoices.length === 0 && (
-                  <p className="text-xs text-muted-foreground">{L.modelNone}</p>
+                  <p className="fs-6 text-body-secondary">{L.modelNone}</p>
                 )}
               </div>
 
-              <fieldset className="grid gap-3 border-t border-border pt-4">
-                <legend className="font-mondwest text-display text-xs tracking-wider text-muted-foreground">
+              <fieldset className="d-grid gap-3 border-top border-secondary pt-4">
+                <legend className="font-mondwest fs-4 fw-semibold fs-6 ls-wide text-body-secondary">
                   {L.advancedOptions}
                 </legend>
 
-                <div className="flex items-center gap-2.5">
+                <div className="d-flex align-items-center gap-2.5">
                   <Checkbox
                     checked={cloneAll}
                     disabled={!cloning}
@@ -948,7 +948,7 @@ export default function ProfilesPage() {
                   </Label>
                 </div>
 
-                <div className="flex items-center gap-2.5">
+                <div className="d-flex align-items-center gap-2.5">
                   <Checkbox
                     checked={noSkills}
                     id="no-skills"
@@ -968,9 +968,9 @@ export default function ProfilesPage() {
                 </div>
               </fieldset>
 
-              <div className="flex justify-end">
+              <div className="d-flex justify-content-end">
                 <Button
-                  className="uppercase"
+                  className="text-uppercase"
                   size="sm"
                   onClick={handleCreate}
                   disabled={creating}
@@ -986,20 +986,20 @@ export default function ProfilesPage() {
       {/* Active profile banner */}
       {activeInfo && (
         <Card>
-          <CardContent className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3 text-xs">
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <Check className="h-3.5 w-3.5 text-success" />
+          <CardContent className="d-flex flex-wrap align-items-center gap-x-4 gap-y-1 py-3 fs-6">
+            <span className="d-flex align-items-center gap-2 text-body-secondary">
+              <Check className="icon-sm text-success" />
 
               <span>
                 {L.activeProfile}:{" "}
-                <span className="font-medium text-foreground">
+                <span className="fw-medium text-body-emphasis">
                   {activeInfo.active}
                 </span>
               </span>
             </span>
 
             {activeInfo.current !== activeInfo.active && (
-              <span className="font-mono text-muted-foreground/80">
+              <span className="font-monospace text-muted-foreground/80">
                 ({activeInfo.current})
               </span>
             )}
@@ -1008,24 +1008,24 @@ export default function ProfilesPage() {
       )}
 
       {/* List */}
-      <div className="flex flex-col gap-3">
+      <div className="d-flex flex-column gap-3">
         <H2
           variant="sm"
-          className="flex items-center gap-2 text-muted-foreground"
+          className="d-flex align-items-center gap-2 text-body-secondary"
         >
-          <Users className="h-4 w-4" />
+          <Users className="icon-md" />
           {t.profiles.allProfiles} ({profiles.length})
         </H2>
 
         {profiles.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <CardContent className="py-8 text-center fs-6 text-body-secondary">
               {t.profiles.noProfiles}
             </CardContent>
           </Card>
         )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="d-grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {profiles.map((p) => {
             const isRenaming = renamingFrom === p.name;
             const isEditingSoul = editingSoulFor === p.name;
@@ -1033,10 +1033,10 @@ export default function ProfilesPage() {
             const isEditingModel = editingModelFor === p.name;
             const active = isActive(p);
             return (
-              <Card key={p.name} className="h-full">
-                <CardContent className="flex h-full flex-col gap-2 py-4">
+              <Card key={p.name} className="h-100">
+                <CardContent className="d-flex h-100 flex-column gap-2 py-4">
                   {isRenaming ? (
-                    <div className="flex flex-col gap-2">
+                    <div className="d-flex flex-column gap-2">
                       <Input
                         autoFocus
                         value={renameTo}
@@ -1074,7 +1074,7 @@ export default function ProfilesPage() {
                         );
                       })()}
 
-                      <div className="flex gap-1.5">
+                      <div className="d-flex gap-2">
                         <Button size="sm" onClick={handleRenameSubmit}>
                           {t.common.save}
                         </Button>
@@ -1090,9 +1090,9 @@ export default function ProfilesPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-start gap-2">
-                        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-                          <span className="font-medium text-sm truncate">
+                      <div className="d-flex align-items-start gap-2">
+                        <div className="d-flex min-w-0 flex-grow-1 flex-wrap align-items-center gap-2">
+                          <span className="fw-medium fs-6 text-truncate">
                             {p.display_name?.trim() ? `${p.display_name.trim()} (${p.name})` : p.name}
                           </span>
 
@@ -1116,7 +1116,7 @@ export default function ProfilesPage() {
 
                           {p.distribution_name && (
                             <Badge tone="outline" className="gap-1">
-                              <Package className="h-3 w-3" />
+                              <Package className="icon-sm" />
                               {p.distribution_name}
                               {p.distribution_version
                                 ? `@${p.distribution_version}`
@@ -1163,7 +1163,7 @@ export default function ProfilesPage() {
                         />
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-xs">
+                      <div className="d-flex align-items-center gap-2 fs-6">
                         <span
                           className={cn(
                             "h-1.5 w-1.5 rounded-full",
@@ -1186,7 +1186,7 @@ export default function ProfilesPage() {
                         </span>
                       </div>
 
-                      <div className="flex items-start gap-2 text-xs">
+                      <div className="d-flex align-items-start gap-2 fs-6">
                         <span
                           className={cn(
                             "line-clamp-2",
@@ -1199,15 +1199,15 @@ export default function ProfilesPage() {
                         </span>
 
                         {p.description && p.description_auto && (
-                          <Badge tone="warning" className="shrink-0">
+                          <Badge tone="warning" className="flex-shrink-0">
                             {L.reviewBadge}
                           </Badge>
                         )}
                       </div>
 
-                      <div className="mt-auto flex flex-col gap-0.5 pt-1 text-xs text-muted-foreground">
+                      <div className="mt-auto d-flex flex-column gap-0.5 pt-1 fs-6 text-body-secondary">
                         {p.model && (
-                          <span className="truncate">
+                          <span className="text-truncate">
                             {t.profiles.model}: {p.model}
                             {p.provider ? ` (${p.provider})` : ""}
                           </span>
@@ -1217,7 +1217,7 @@ export default function ProfilesPage() {
                           {t.profiles.skills}: {p.skill_count}
                         </span>
 
-                        <span className="font-mono truncate">{p.path}</span>
+                        <span className="font-monospace text-truncate">{p.path}</span>
                       </div>
                     </>
                   )}
@@ -1232,7 +1232,7 @@ export default function ProfilesPage() {
       {editorName && (
         <div
           ref={editorModalRef}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
           onClick={(e) => e.target === e.currentTarget && closeEditor()}
           role="dialog"
           aria-modal="true"
@@ -1248,23 +1248,23 @@ export default function ProfilesPage() {
               ghost
               size="icon"
               onClick={closeEditor}
-              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
               aria-label="Close"
             >
               <X />
             </Button>
 
-            <header className="p-5 pb-3 border-b border-border">
+            <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="profile-editor-title"
-                className="font-mondwest text-display text-base tracking-wider"
+                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
               >
                 {editorKind === "model"
                   ? L.editModel
                   : editorKind === "desc"
                     ? L.description
                     : t.profiles.soulSection}
-                <span className="text-muted-foreground"> · {editorName}</span>
+                <span className="text-body-secondary"> · {editorName}</span>
               </h2>
             </header>
 
@@ -1276,7 +1276,7 @@ export default function ProfilesPage() {
             >
               {editorKind === "model" &&
                 (modelChoices !== null && modelChoices.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">{L.modelNone}</p>
+                  <p className="fs-6 text-body-secondary">{L.modelNone}</p>
                 ) : (
                   <>
                     <Select
@@ -1297,10 +1297,10 @@ export default function ProfilesPage() {
                       ))}
                     </Select>
 
-                    <div className="flex justify-end">
+                    <div className="d-flex justify-content-end">
                       <Button
                         size="sm"
-                        className="uppercase"
+                        className="text-uppercase"
                         onClick={() => handleSaveModel(editorName)}
                         disabled={
                           modelSaving ||
@@ -1319,10 +1319,10 @@ export default function ProfilesPage() {
 
               {editorKind === "desc" && (
                 <>
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="d-flex align-items-center justify-content-between gap-2">
                     <Label
                       htmlFor="profile-desc-editor"
-                      className="font-mondwest text-display text-xs tracking-wider text-muted-foreground"
+                      className="font-mondwest fs-4 fw-semibold fs-6 ls-wide text-body-secondary"
                     >
                       {L.description}
                     </Label>
@@ -1330,27 +1330,27 @@ export default function ProfilesPage() {
                     <Button
                       size="sm"
                       ghost
-                      className="gap-1.5"
+                      className="gap-2"
                       disabled={describing}
                       onClick={() => handleAutoDescribe(editorName)}
                     >
-                      <Sparkles className="h-3.5 w-3.5" />
+                      <Sparkles className="icon-sm" />
                       {describing ? L.generating : L.autoGenerate}
                     </Button>
                   </div>
 
                   <textarea
                     id="profile-desc-editor"
-                    className="flex min-h-[96px] w-full border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="d-flex min-h-[96px] w-100 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     placeholder={L.descriptionPlaceholder}
                     value={descText}
                     onChange={(e) => setDescText(e.target.value)}
                   />
 
-                  <div className="flex justify-end">
+                  <div className="d-flex justify-content-end">
                     <Button
                       size="sm"
-                      className="uppercase"
+                      className="text-uppercase"
                       onClick={() => handleSaveDesc(editorName)}
                       disabled={descSaving}
                     >
@@ -1364,23 +1364,23 @@ export default function ProfilesPage() {
                 <>
                   <Label
                     htmlFor="profile-soul-editor"
-                    className="font-mondwest text-display text-xs tracking-wider text-muted-foreground"
+                    className="font-mondwest fs-4 fw-semibold fs-6 ls-wide text-body-secondary"
                   >
                     {t.profiles.soulSection}
                   </Label>
 
                   <textarea
                     id="profile-soul-editor"
-                    className="flex min-h-[280px] w-full border border-input bg-transparent px-3 py-2 text-sm font-mono shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="d-flex min-h-[280px] w-100 border border-input bg-transparent px-3 py-2 fs-6 font-monospace shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     placeholder={t.profiles.soulPlaceholder}
                     value={soulText}
                     onChange={(e) => setSoulText(e.target.value)}
                   />
 
-                  <div className="flex justify-end">
+                  <div className="d-flex justify-content-end">
                     <Button
                       size="sm"
-                      className="uppercase"
+                      className="text-uppercase"
                       onClick={() => handleSaveSoul(editorName)}
                       disabled={soulSaving}
                     >

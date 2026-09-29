@@ -50,7 +50,7 @@ function CopyButton({ value }: { value: string }) {
       title="Copy"
       aria-label="Copy"
       onClick={handleCopy}
-      className="text-muted-foreground hover:text-foreground"
+      className="text-body-secondary hover:text-foreground"
     >
       {copied ? <Check /> : <Copy />}
     </Button>
@@ -255,7 +255,7 @@ export default function WebhooksPage() {
   useLayoutEffect(() => {
     setEnd(
       <Button
-        className="uppercase"
+        className="text-uppercase"
         size="sm"
         disabled={!enabled || enabling}
         prefix={<Plus />}
@@ -274,8 +274,8 @@ export default function WebhooksPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="text-2xl text-primary" />
+      <div className="d-flex align-items-center justify-content-center py-24">
+        <Spinner className="fs-3 text-primary" />
       </div>
     );
   }
@@ -283,7 +283,7 @@ export default function WebhooksPage() {
   const pendingName = webhookDelete.pendingId ?? "";
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="d-flex flex-column gap-6">
       <Toast toast={toast} />
 
       <DeleteConfirmDialog
@@ -303,62 +303,62 @@ export default function WebhooksPage() {
       {createModalOpen && (
         <div
           ref={createModalRef}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
           onClick={(e) => e.target === e.currentTarget && closeCreateModal()}
           role="dialog"
           aria-modal="true"
           aria-labelledby="create-webhook-title"
         >
-          <div className={cn(themedBody, "relative w-full max-w-lg border border-border bg-card shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto")}>
+          <div className={cn(themedBody, "position-relative w-100 max-w-lg border border-secondary bg-card shadow-2xl d-flex flex-column max-h-[90vh] overflow-y-auto")}>
             <Button
               ghost
               size="icon"
               onClick={closeCreateModal}
-              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
               aria-label="Close"
             >
               <X />
             </Button>
 
-            <header className="p-5 pb-3 border-b border-border">
+            <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="create-webhook-title"
-                className="font-mondwest text-display text-base tracking-wider"
+                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
               >
                 New subscription
               </h2>
             </header>
 
             {created ? (
-              <div className="p-5 grid gap-4">
-                <p className="text-sm text-muted-foreground">
+              <div className="p-5 d-grid gap-4">
+                <p className="fs-6 text-body-secondary">
                   Subscription created. Copy the secret now — it is only shown
                   once.
                 </p>
 
-                <div className="grid gap-2">
+                <div className="d-grid gap-2">
                   <Label>Webhook URL</Label>
-                  <div className="flex items-center gap-2 border border-border bg-background/40 px-3 py-2">
-                    <span className="flex-1 min-w-0 truncate font-mono text-xs">
+                  <div className="d-flex align-items-center gap-2 border border-secondary bg-background/40 px-3 py-2">
+                    <span className="flex-grow-1 min-w-0 text-truncate font-monospace fs-6">
                       {created.url}
                     </span>
                     <CopyButton value={created.url} />
                   </div>
                 </div>
 
-                <div className="grid gap-2">
+                <div className="d-grid gap-2">
                   <Label>Secret (shown once)</Label>
-                  <div className="flex items-center gap-2 border border-warning/40 bg-warning/10 px-3 py-2">
-                    <span className="flex-1 min-w-0 truncate font-mono text-xs">
+                  <div className="d-flex align-items-center gap-2 border border-warning/40 bg-warning/10 px-3 py-2">
+                    <span className="flex-grow-1 min-w-0 text-truncate font-monospace fs-6">
                       {created.secret}
                     </span>
                     <CopyButton value={created.secret} />
                   </div>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="d-flex justify-content-end">
                   <Button
-                    className="uppercase"
+                    className="text-uppercase"
                     size="sm"
                     onClick={closeCreateModal}
                   >
@@ -367,8 +367,8 @@ export default function WebhooksPage() {
                 </div>
               </div>
             ) : (
-              <div className="p-5 grid gap-4">
-                <div className="grid gap-2">
+              <div className="p-5 d-grid gap-4">
+                <div className="d-grid gap-2">
                   <Label htmlFor="webhook-name">Name</Label>
                   <Input
                     id="webhook-name"
@@ -379,7 +379,7 @@ export default function WebhooksPage() {
                   />
                 </div>
 
-                <div className="grid gap-2">
+                <div className="d-grid gap-2">
                   <Label htmlFor="webhook-description">Description</Label>
                   <Input
                     id="webhook-description"
@@ -389,7 +389,7 @@ export default function WebhooksPage() {
                   />
                 </div>
 
-                <div className="grid gap-2">
+                <div className="d-grid gap-2">
                   <Label htmlFor="webhook-events">Events</Label>
                   <Input
                     id="webhook-events"
@@ -399,8 +399,8 @@ export default function WebhooksPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="grid gap-2">
+                <div className="d-grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="d-grid gap-2">
                     <Label htmlFor="webhook-deliver">Deliver to</Label>
                     <Select
                       id="webhook-deliver"
@@ -418,9 +418,9 @@ export default function WebhooksPage() {
                     </Select>
                   </div>
 
-                  <div className="grid gap-2">
+                  <div className="d-grid gap-2">
                     <Label htmlFor="webhook-deliver-only">Deliver only</Label>
-                    <label className="flex items-center gap-2 text-sm text-muted-foreground h-9">
+                    <label className="d-flex align-items-center gap-2 fs-6 text-body-secondary h-9">
                       <input
                         id="webhook-deliver-only"
                         type="checkbox"
@@ -432,20 +432,20 @@ export default function WebhooksPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-2">
+                <div className="d-grid gap-2">
                   <Label htmlFor="webhook-prompt">Prompt</Label>
                   <textarea
                     id="webhook-prompt"
-                    className="flex min-h-[80px] w-full border border-border bg-background/40 px-3 py-2 text-sm font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+                    className="d-flex min-h-[80px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
                     placeholder="Instructions for the agent when this webhook fires (optional)"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                   />
                 </div>
 
-                <div className="flex justify-end">
+                <div className="d-flex justify-content-end">
                   <Button
-                    className="uppercase"
+                    className="text-uppercase"
                     size="sm"
                     onClick={handleCreate}
                     disabled={creating}
@@ -462,12 +462,12 @@ export default function WebhooksPage() {
 
       {!enabled && (
         <Card className="border-warning/50">
-          <CardContent className="flex flex-col gap-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <Webhook className="h-5 w-5 shrink-0 text-warning" />
-              <div className="flex flex-col gap-1">
-                <span className="font-medium">Webhook receiver disabled</span>
-                <span className="text-muted-foreground">
+          <CardContent className="d-flex flex-column gap-4 py-6 fs-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="d-flex align-items-start gap-3">
+              <Webhook className="icon-lg flex-shrink-0 text-warning" />
+              <div className="d-flex flex-column gap-1">
+                <span className="fw-medium">Webhook receiver disabled</span>
+                <span className="text-body-secondary">
                   Webhooks are their own gateway platform. Enable them here to
                   accept incoming HTTP events; chat channels are only needed
                   when a subscription delivers to Telegram, Discord, Slack, or
@@ -477,10 +477,10 @@ export default function WebhooksPage() {
             </div>
             <Button
               size="sm"
-              className="uppercase shrink-0"
+              className="text-uppercase flex-shrink-0"
               onClick={handleEnableWebhooks}
               disabled={enabling}
-              prefix={enabling ? <Spinner /> : <Webhook className="h-4 w-4" />}
+              prefix={enabling ? <Spinner /> : <Webhook className="icon-md" />}
             >
               {enabling ? "Enabling…" : "Enable webhooks"}
             </Button>
@@ -489,9 +489,9 @@ export default function WebhooksPage() {
       )}
 
       {restartMessage && !restartNeeded && (
-        <Card className="border-border">
-          <CardContent className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-            <RotateCw className="h-4 w-4 shrink-0 text-warning" />
+        <Card className="border-secondary">
+          <CardContent className="d-flex align-items-center gap-2 p-4 fs-6 text-body-secondary">
+            <RotateCw className="icon-md flex-shrink-0 text-warning" />
             <span>{restartMessage}</span>
           </CardContent>
         </Card>
@@ -499,9 +499,9 @@ export default function WebhooksPage() {
 
       {restartNeeded && (
         <Card className="border-warning/50">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-2 text-sm">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <CardContent className="d-flex flex-column gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="d-flex align-items-start gap-2 fs-6">
+              <AlertTriangle className="mt-1 icon-md flex-shrink-0 text-warning" />
               <span>
                 {restartError ??
                   "Webhooks are enabled, but the gateway still needs a restart before the receiver can come online."}
@@ -509,10 +509,10 @@ export default function WebhooksPage() {
             </div>
             <Button
               size="sm"
-              className="uppercase shrink-0"
+              className="text-uppercase flex-shrink-0"
               onClick={handleRestart}
               disabled={restarting}
-              prefix={restarting ? <Spinner /> : <RotateCw className="h-4 w-4" />}
+              prefix={restarting ? <Spinner /> : <RotateCw className="icon-md" />}
             >
               {restarting ? "Restarting…" : "Restart gateway"}
             </Button>
@@ -520,23 +520,23 @@ export default function WebhooksPage() {
         </Card>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="d-flex flex-column gap-3">
         <H2
           variant="sm"
-          className="flex items-center gap-2 text-muted-foreground"
+          className="d-flex align-items-center gap-2 text-body-secondary"
         >
-          <Webhook className="h-4 w-4" />
+          <Webhook className="icon-md" />
           Subscriptions ({subscriptions.length})
         </H2>
 
-        <p className="text-xs text-muted-foreground -mt-1">
+        <p className="fs-6 text-body-secondary -mt-1">
           Subscription changes hot-reload once the webhook receiver is running.
           Disabled subscriptions reject incoming events.
         </p>
 
         {subscriptions.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <CardContent className="py-8 text-center fs-6 text-body-secondary">
               No webhook subscriptions yet.
             </CardContent>
           </Card>
@@ -544,10 +544,10 @@ export default function WebhooksPage() {
 
         {subscriptions.map((sub: WebhookRoute) => (
           <Card key={sub.name}>
-            <CardContent className="flex items-start gap-4 py-4">
-              <div className={cn("flex-1 min-w-0", !sub.enabled && "opacity-60")}>
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="font-medium text-sm truncate">
+            <CardContent className="d-flex align-items-start gap-4 py-4">
+              <div className={cn("flex-grow-1 min-w-0", !sub.enabled && "opacity-60")}>
+                <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                  <span className="fw-medium fs-6 text-truncate">
                     {sub.name}
                   </span>
                   <Badge tone="outline">{sub.deliver}</Badge>
@@ -558,12 +558,12 @@ export default function WebhooksPage() {
                 </div>
 
                 {sub.description && (
-                  <p className="text-xs text-muted-foreground mb-2">
+                  <p className="fs-6 text-body-secondary mb-2">
                     {sub.description}
                   </p>
                 )}
 
-                <div className="flex items-center gap-1 flex-wrap mb-2">
+                <div className="d-flex align-items-center gap-1 flex-wrap mb-2">
                   {sub.events.length === 0 ? (
                     <Badge tone="secondary">(all)</Badge>
                   ) : (
@@ -575,19 +575,19 @@ export default function WebhooksPage() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="flex-1 min-w-0 truncate font-mono">
+                <div className="d-flex align-items-center gap-2 fs-6 text-body-secondary">
+                  <span className="flex-grow-1 min-w-0 text-truncate font-monospace">
                     {sub.url}
                   </span>
                   <CopyButton value={sub.url} />
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="d-flex align-items-center gap-1 flex-shrink-0">
                 <Button
                   ghost
                   size="sm"
-                  className="uppercase"
+                  className="text-uppercase"
                   disabled={togglingName === sub.name}
                   onClick={() => handleToggleEnabled(sub.name, !sub.enabled)}
                 >

@@ -231,7 +231,7 @@ function ToolCallBlock({
         <span className="text-warning/50 ml-auto">{toolCall.id}</span>
       </ListItem>
       {open && (
-        <pre className="border-top border-warning/20 px-3 py-2 fs-6 text-warning/80 overflow-x-auto text-wrap font-mono">
+        <pre className="border-top border-warning/20 px-3 py-2 fs-6 text-warning/80 overflow-x-auto text-wrap font-monospace">
           {args}
         </pre>
       )}

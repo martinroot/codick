@@ -171,15 +171,15 @@ export function MemoryPressureBanner({
           : "border-amber-500/40 bg-amber-500/10 text-amber-300"
       }`}
     >
-      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-      <span className="min-w-0 flex-1">{message}</span>
+      <AlertTriangle className="icon-sm flex-shrink-0" />
+      <span className="min-w-0 flex-grow-1">{message}</span>
       <button
         type="button"
         aria-label={t.app.dismiss ?? "Dismiss"}
         onClick={dismiss}
-        className="shrink-0 opacity-70 hover:opacity-100"
+        className="flex-shrink-0 opacity-70 hover:opacity-100"
       >
-        <X className="h-3.5 w-3.5" />
+        <X className="icon-sm" />
       </button>
     </div>
   );

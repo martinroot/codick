@@ -338,50 +338,50 @@ export function ModelPickerDialog(props: Props) {
   // Toast.tsx for the same pattern.
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
       aria-labelledby="model-picker-title"
     >
-      <div className={cn(themedBody, "relative w-full max-w-3xl max-h-[80vh] border border-border bg-card shadow-2xl flex flex-col")}>
+      <div className={cn(themedBody, "position-relative w-100 max-w-3xl max-h-[80vh] border border-secondary bg-card shadow-2xl d-flex flex-column")}>
         <Button
           ghost
           size="icon"
           onClick={onClose}
-          className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+          className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
           aria-label="Close"
         >
           <X />
         </Button>
 
-        <header className="p-5 pb-3 border-b border-border">
+        <header className="p-5 pb-3 border-bottom border-secondary">
           <h2
             id="model-picker-title"
-            className="font-mondwest text-display text-base tracking-wider"
+            className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
           >
             {title}
           </h2>
-          <p className="text-xs text-muted-foreground mt-1 font-mono">
+          <p className="fs-6 text-body-secondary mt-1 font-monospace">
             current: {currentModel || "(unknown)"}
             {currentProviderSlug && ` · ${currentProviderSlug}`}
           </p>
         </header>
 
-        <div className="px-5 pt-3 pb-2 border-b border-border">
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <div className="px-5 pt-3 pb-2 border-bottom border-secondary">
+          <div className="position-relative">
+            <Search className="position-absolute left-2 top-1/2 -translate-y-1/2 icon-sm text-body-secondary" />
             <Input
               autoFocus
               placeholder="Filter providers and models…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-7 h-8 text-sm"
+              className="pl-7 h-8 fs-6"
             />
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 grid grid-cols-[200px_1fr] overflow-hidden">
+        <div className="flex-grow-1 min-h-0 d-grid grid-cols-[200px_1fr] overflow-hidden">
           <ProviderColumn
             loading={loading}
             error={error}
@@ -416,13 +416,13 @@ export function ModelPickerDialog(props: Props) {
           />
         </div>
 
-        <footer className="border-t border-border p-3 flex items-center justify-between gap-3 flex-wrap">
+        <footer className="border-top border-secondary p-3 d-flex align-items-center justify-content-between gap-3 flex-wrap">
           {alwaysGlobal ? (
-            <span className="text-xs text-muted-foreground">
+            <span className="fs-6 text-body-secondary">
               Saves to config.yaml — applies to new sessions.
             </span>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="d-flex align-items-center gap-2">
               <Checkbox
                 checked={persistGlobal}
                 id="model-picker-persist-global"
@@ -432,7 +432,7 @@ export function ModelPickerDialog(props: Props) {
               />
 
               <Label
-                className="font-mondwest normal-case tracking-normal text-xs text-muted-foreground cursor-pointer"
+                className="font-mondwest text-lowercase ls-normal fs-6 text-body-secondary cursor-pointer"
                 htmlFor="model-picker-persist-global"
               >
                 Persist globally (otherwise this session only)
@@ -440,13 +440,13 @@ export function ModelPickerDialog(props: Props) {
             </div>
           )}
 
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="d-flex align-items-center gap-2 ml-auto">
             <Button
               outlined
               onClick={refreshOptions}
               disabled={applying || loading || refreshing}
             >
-              {refreshing ? <Spinner /> : <RefreshCw className="h-3.5 w-3.5" />}
+              {refreshing ? <Spinner /> : <RefreshCw className="icon-sm" />}
               Refresh Models
             </Button>
             <Button outlined onClick={onClose} disabled={applying}>
@@ -508,27 +508,27 @@ function ProviderColumn({
   onClose(): void;
 }) {
   return (
-    <div className="border-r border-border overflow-y-auto">
+    <div className="border-r border-secondary overflow-y-auto">
       {loading && (
-        <div className="flex items-center gap-2 p-4 text-xs text-muted-foreground">
-          <Spinner className="text-xs" /> loading…
+        <div className="d-flex align-items-center gap-2 p-4 fs-6 text-body-secondary">
+          <Spinner className="fs-6" /> loading…
         </div>
       )}
 
-      {error && <div className="p-4 text-xs text-destructive">{error}</div>}
+      {error && <div className="p-4 fs-6 text-danger">{error}</div>}
 
       {!loading && !error && providers.length === 0 && (
-        <div className="p-4 text-xs text-muted-foreground">
+        <div className="p-4 fs-6 text-body-secondary">
           {query || total > 0 ? (
-            <span className="italic">No providers match your search.</span>
+            <span className="fst-italic">No providers match your search.</span>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="d-flex flex-column gap-2">
               <span>{NO_PROVIDERS_MESSAGE}</span>
-              <div className="flex flex-wrap gap-2">
-                <Link to="/env" onClick={onClose} className="underline underline-offset-2 hover:text-foreground">
+              <div className="d-flex flex-wrap gap-2">
+                <Link to="/env" onClick={onClose} className="text-decoration-underline underline-offset-2 hover:text-foreground">
                   Open Keys
                 </Link>
-                <Link to="/models" onClick={onClose} className="underline underline-offset-2 hover:text-foreground">
+                <Link to="/models" onClick={onClose} className="text-decoration-underline underline-offset-2 hover:text-foreground">
                   Sign in to a provider
                 </Link>
               </div>
@@ -548,12 +548,12 @@ function ProviderColumn({
               active ? "border-l-primary" : "border-l-transparent"
             }`}
           >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium truncate">{p.name}</span>
+            <div className="flex-grow-1 min-w-0">
+              <div className="d-flex align-items-center gap-2">
+                <span className="fw-medium text-truncate">{p.name}</span>
                 {p.is_current && <CurrentTag />}
               </div>
-              <div className="text-xs text-text-secondary font-mono truncate">
+              <div className="fs-6 text-body-secondary font-monospace text-truncate">
                 {p.slug} · {p.total_models ?? p.models?.length ?? 0} models
               </div>
             </div>
@@ -590,7 +590,7 @@ function ModelColumn({
   if (!provider) {
     return (
       <div className="overflow-y-auto">
-        <div className="p-4 text-xs text-muted-foreground italic">
+        <div className="p-4 fs-6 text-body-secondary fst-italic">
           pick a provider →
         </div>
       </div>
@@ -600,13 +600,13 @@ function ModelColumn({
   return (
     <div className="overflow-y-auto">
       {provider.warning && (
-        <div className="p-3 text-xs text-destructive border-b border-border">
+        <div className="p-3 fs-6 text-danger border-bottom border-secondary">
           {provider.warning}
         </div>
       )}
 
       {models.length === 0 ? (
-        <div className="p-4 text-xs text-muted-foreground italic">
+        <div className="p-4 fs-6 text-body-secondary fst-italic">
           {allModels.length
             ? "no models match your filter"
             : "no models listed for this provider"}
@@ -623,12 +623,12 @@ function ModelColumn({
               active={active}
               onClick={() => onSelect(m)}
               onDoubleClick={() => onConfirm(m)}
-              className="px-3 py-1.5 text-xs font-mono"
+              className="px-3 py-2 fs-6 font-monospace"
             >
               <Check
-                className={`h-3 w-3 shrink-0 ${active ? "text-primary" : "text-transparent"}`}
+                className={`icon-sm flex-shrink-0 ${active ? "text-primary" : "text-transparent"}`}
               />
-              <span className="flex-1 truncate">
+              <span className="flex-grow-1 text-truncate">
                 <HighlightedText text={m} positions={positions} />
               </span>
               {isCurrent && <CurrentTag />}
@@ -642,7 +642,7 @@ function ModelColumn({
 
 function CurrentTag() {
   return (
-    <span className="text-display text-xs tracking-wider text-primary shrink-0">
+    <span className="fs-4 fw-semibold fs-6 ls-wide text-primary flex-shrink-0">
       current
     </span>
   );
@@ -672,7 +672,7 @@ function HighlightedText({
         hit.has(i) ? (
           <mark
             key={i}
-            className="bg-transparent text-primary font-semibold underline underline-offset-2"
+            className="bg-transparent text-primary fw-semibold text-decoration-underline underline-offset-2"
           >
             {ch}
           </mark>

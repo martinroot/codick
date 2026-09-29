@@ -100,7 +100,7 @@ export function AuthWidget({ className }: AuthWidgetProps) {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="self-start underline underline-offset-2 hover:text-foreground"
+          className="align-self-start text-decoration-underline underline-offset-2 hover:text-foreground"
         >
           Reload page
         </button>
@@ -145,11 +145,11 @@ export function AuthWidget({ className }: AuthWidgetProps) {
       role="status"
       aria-label={`Logged in as ${label}`}
     >
-      <div className="flex min-w-0 flex-col">
-        <span className="truncate font-mono text-foreground/90" title={me.user_id}>
+      <div className="d-flex min-w-0 flex-column">
+        <span className="text-truncate font-monospace text-foreground/90" title={me.user_id}>
           {label}
         </span>
-        <span className="truncate text-muted-foreground/70">
+        <span className="text-truncate text-muted-foreground/70">
           via {me.provider}
         </span>
       </div>
@@ -164,7 +164,7 @@ export function AuthWidget({ className }: AuthWidgetProps) {
         aria-label="Log out"
         title="Log out"
       >
-        <LogOut className="h-3.5 w-3.5" />
+        <LogOut className="icon-sm" />
       </button>
     </div>
   );

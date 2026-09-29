@@ -61,8 +61,8 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
   );
 
   return (
-    <div className="grid gap-3">
-      <div className="grid gap-2">
+    <div className="d-grid gap-3">
+      <div className="d-grid gap-2">
         <Label htmlFor="cron-schedule-mode">
           {cronStrings.scheduleMode ?? "Schedule"}
         </Label>
@@ -81,8 +81,8 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
       </div>
 
       {value.mode === "interval" && (
-        <div className="grid grid-cols-[1fr_1.4fr] gap-3">
-          <div className="grid gap-2">
+        <div className="d-grid grid-cols-[1fr_1.4fr] gap-3">
+          <div className="d-grid gap-2">
             <Label htmlFor="cron-interval-value">
               {modeStrings.intervalEvery}
             </Label>
@@ -100,7 +100,7 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
               }}
             />
           </div>
-          <div className="grid gap-2">
+          <div className="d-grid gap-2">
             <Label htmlFor="cron-interval-unit">{modeStrings.intervalUnit}</Label>
             <Select
               id="cron-interval-unit"
@@ -128,10 +128,10 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
 
       {value.mode === "weekly" && (
         <>
-          <div className="grid gap-2">
+          <div className="d-grid gap-2">
             <Label>{modeStrings.weekdays}</Label>
             <div
-              className="flex flex-wrap gap-1.5"
+              className="d-flex flex-wrap gap-2"
               role="group"
               aria-label={modeStrings.weekdays}
             >
@@ -145,7 +145,7 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
                     outlined={!isOn}
                     aria-pressed={isOn}
                     onClick={() => toggleWeekday(d)}
-                    className="min-w-[2.5rem] font-mono-ui text-xs uppercase"
+                    className="min-w-[2.5rem] font-monospace fs-6 text-uppercase"
                   >
                     {modeStrings.weekdaysShort[d]}
                   </Button>
@@ -163,8 +163,8 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
       )}
 
       {value.mode === "monthly" && (
-        <div className="grid grid-cols-[1fr_1fr] gap-3">
-          <div className="grid gap-2">
+        <div className="d-grid grid-cols-[1fr_1fr] gap-3">
+          <div className="d-grid gap-2">
             <Label htmlFor="cron-month-day">{modeStrings.dayOfMonth}</Label>
             <Input
               id="cron-month-day"
@@ -191,14 +191,14 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
       )}
 
       {value.mode === "once" && (
-        <div className="grid gap-2">
+        <div className="d-grid gap-2">
           <Label htmlFor="cron-once-at">{modeStrings.onceAt}</Label>
           {/* Native datetime-local — emits the exact "YYYY-MM-DDTHH:MM"
               shape ``parse_schedule`` accepts on the backend. */}
           <input
             id="cron-once-at"
             type="datetime-local"
-            className="flex h-9 w-full border border-border bg-background/40 px-3 py-2 text-sm font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+            className="d-flex h-9 w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
             value={value.onceAt}
             onChange={(e) => update({ onceAt: e.target.value })}
           />
@@ -206,16 +206,16 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
       )}
 
       {value.mode === "custom" && (
-        <div className="grid gap-2">
+        <div className="d-grid gap-2">
           <Label htmlFor="cron-custom-expr">{modeStrings.customLabel}</Label>
           <Input
             id="cron-custom-expr"
             placeholder={modeStrings.customPlaceholder}
             value={value.custom}
             onChange={(e) => update({ custom: e.target.value })}
-            className="font-mono-ui"
+            className="font-monospace"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="fs-6 text-body-secondary">
             {modeStrings.customHint}
           </p>
         </div>
@@ -224,9 +224,9 @@ export function ScheduleBuilder({ onChange, value }: ScheduleBuilderProps) {
       {/* Inline preview of what we'll send to the backend. Helps users
           eyeball the result before hitting Create, and keeps the
           schedule grammar discoverable for the custom mode. */}
-      <p className="text-xs text-muted-foreground">
+      <p className="fs-6 text-body-secondary">
         <span className="opacity-70">{modeStrings.preview}: </span>
-        <span className="font-mono-ui text-foreground">
+        <span className="font-monospace text-body-emphasis">
           {buildScheduleString(value) || modeStrings.previewEmpty}
         </span>
       </p>
@@ -241,7 +241,7 @@ function TimeOfDayField({
   value,
 }: TimeOfDayFieldProps) {
   return (
-    <div className="grid gap-2">
+    <div className="d-grid gap-2">
       <Label htmlFor={id}>{label}</Label>
       {/* Native time picker is the right tool for "HH:MM" — saves us
           two separate hour/minute selects, respects user locale's
@@ -250,7 +250,7 @@ function TimeOfDayField({
       <input
         id={id}
         type="time"
-        className="flex h-9 w-full border border-border bg-background/40 px-3 py-2 text-sm font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+        className="d-flex h-9 w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

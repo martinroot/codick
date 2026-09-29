@@ -105,11 +105,11 @@ export function ChatWorkspacePicker({
   }, [draft, onChange, value]);
 
   return (
-    <div className={cn("flex flex-col gap-1.5 px-2 pb-2", className)}>
-      <div className="flex items-center gap-2 text-xs">
-        <div className="flex items-center gap-1.5 text-text-tertiary">
-          <FolderGit2 className="h-3.5 w-3.5" />
-          <span className="text-display tracking-wider">{t.sessions.workspace}</span>
+    <div className={cn("d-flex flex-column gap-2 px-2 pb-2", className)}>
+      <div className="d-flex align-items-center gap-2 fs-6">
+        <div className="d-flex align-items-center gap-2 text-body-tertiary">
+          <FolderGit2 className="icon-sm" />
+          <span className="fs-4 fw-semibold ls-wide">{t.sessions.workspace}</span>
         </div>
         <Button
           ghost
@@ -118,7 +118,7 @@ export function ChatWorkspacePicker({
           disabled={loading}
           aria-label={t.sessions.workspaceRescan}
           title={t.sessions.workspaceRescan}
-          className="ml-auto text-text-secondary hover:text-foreground"
+          className="ml-auto text-body-secondary hover:text-foreground"
         >
           <RefreshCw className={cn(loading && "animate-spin")} />
         </Button>
@@ -151,7 +151,7 @@ export function ChatWorkspacePicker({
             if (e.key === "Enter") commitDraft();
             if (e.key === "Escape") setCustomOpen(false);
           }}
-          className="h-8 text-xs"
+          className="h-8 fs-6"
         />
       )}
     </div>

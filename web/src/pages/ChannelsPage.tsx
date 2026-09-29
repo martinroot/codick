@@ -285,11 +285,11 @@ export default function ChannelsPage() {
   useLayoutEffect(() => {
     setEnd(
       <Button
-        className="uppercase"
+        className="text-uppercase"
         size="sm"
         onClick={handleRestart}
         disabled={restarting}
-        prefix={restarting ? <Spinner /> : <RotateCw className="h-4 w-4" />}
+        prefix={restarting ? <Spinner /> : <RotateCw className="icon-md" />}
       >
         {restarting ? "Restarting…" : "Restart gateway"}
       </Button>,
@@ -305,32 +305,32 @@ export default function ChannelsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="text-2xl text-primary" />
+      <div className="d-flex align-items-center justify-content-center py-24">
+        <Spinner className="fs-3 text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="d-flex flex-column gap-6">
       <Toast toast={toast} />
 
       {/* Restart banner */}
       {restartNeeded && (
         <Card className="border-warning/50">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
+          <CardContent className="d-flex flex-column gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="d-flex align-items-center gap-2 fs-6">
+              <AlertTriangle className="icon-md flex-shrink-0 text-warning" />
               <span>
                 Changes are saved. Restart the gateway for them to take effect.
               </span>
             </div>
             <Button
               size="sm"
-              className="uppercase shrink-0"
+              className="text-uppercase flex-shrink-0"
               onClick={handleRestart}
               disabled={restarting}
-              prefix={restarting ? <Spinner /> : <RotateCw className="h-4 w-4" />}
+              prefix={restarting ? <Spinner /> : <RotateCw className="icon-md" />}
             >
               {restarting ? "Restarting…" : "Restart now"}
             </Button>
@@ -339,19 +339,19 @@ export default function ChannelsPage() {
       )}
 
       {!gatewayRunning && !restartNeeded && (
-        <Card className="border-border">
-          <CardContent className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-            <WifiOff className="h-4 w-4 shrink-0" />
+        <Card className="border-secondary">
+          <CardContent className="d-flex align-items-center gap-2 p-4 fs-6 text-body-secondary">
+            <WifiOff className="icon-md flex-shrink-0" />
             <span>
               The gateway is not running. Configure channels here, then start the
-              gateway with <code className="font-courier">{gatewayStartCommand}</code>{" "}
+              gateway with <code className="font-courier">{gatewayStartCommand}</code>{"    "}
               (or the Restart button above).
             </span>
           </CardContent>
         </Card>
       )}
 
-      <p className="text-xs text-muted-foreground">
+      <p className="fs-6 text-body-secondary">
         {configured} of {platforms.length} channels configured. Credentials are
         written to <code className="font-courier">{envPath}</code>; the
         gateway connects each enabled channel on its next restart.
@@ -381,16 +381,16 @@ export default function ChannelsPage() {
               ghost
               size="icon"
               onClick={() => setEditing(null)}
-              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
               aria-label="Close"
             >
               <X />
             </Button>
 
-            <header className="p-5 pb-3 border-b border-border">
+            <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="channel-config-title"
-                className="font-mondwest text-display text-base tracking-wider"
+                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
               >
                 {editing.id === "telegram"
                   ? "Use your own Telegram bot"
@@ -401,64 +401,64 @@ export default function ChannelsPage() {
                   href={editing.docs_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  className="mt-1 d-inline-flex align-items-center gap-1 fs-6 text-primary hover:underline"
                 >
                   {editing.id === "telegram" ? "BotFather guide" : "Setup guide"}
-                  <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="icon-sm" />
                 </a>
               )}
             </header>
 
-            <div className="grid gap-4 overflow-y-auto overscroll-contain p-4 sm:p-5">
+            <div className="d-grid gap-4 overflow-y-auto overscroll-contain p-4 sm:p-5">
               {editing.id === "telegram" && (
-                <div className="grid gap-3 text-sm text-muted-foreground">
+                <div className="d-grid gap-3 fs-6 text-body-secondary">
                   <p>
                     Connect a bot you already own, or create one in Telegram before
                     filling in this form.
                   </p>
-                  <ol className="grid list-decimal gap-1.5 pl-5">
+                  <ol className="d-grid list-decimal gap-2 pl-5">
                     <li>
-                      Open <span className="text-foreground">@BotFather</span>, send
-                      <code className="mx-1 font-courier text-xs">/newbot</code>, and
+                      Open <span className="text-body-emphasis">@BotFather</span>, send
+                      <code className="mx-1 font-courier fs-6">/newbot</code>, and
                       follow its prompts.
                     </li>
                     <li>Copy the complete bot token BotFather gives you.</li>
                     <li>
-                      Message <span className="text-foreground">@userinfobot</span> to
+                      Message <span className="text-body-emphasis">@userinfobot</span> to
                       find your numeric Telegram user ID, then add it below for
                       immediate access.
                     </li>
                   </ol>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                  <div className="d-flex flex-wrap gap-x-4 gap-y-2 fs-6">
                     <a
                       href="https://t.me/BotFather"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                      className="d-inline-flex align-items-center gap-1 text-primary hover:underline"
                     >
-                      Open @BotFather <ExternalLink className="h-3 w-3" />
+                      Open @BotFather <ExternalLink className="icon-sm" />
                     </a>
                     <a
                       href="https://t.me/userinfobot"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                      className="d-inline-flex align-items-center gap-1 text-primary hover:underline"
                     >
-                      Find my user ID <ExternalLink className="h-3 w-3" />
+                      Find my user ID <ExternalLink className="icon-sm" />
                     </a>
                   </div>
-                  <p className="text-xs">
+                  <p className="fs-6">
                     You can leave allowed users blank. Hermes will then send new DM
                     users a code that you approve from the Pairing page.
                   </p>
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="fs-6 text-body-secondary">
                 {editing.description}
               </p>
               {editing.env_vars.map((field: MessagingPlatformEnvVar) => (
-                <div className="grid gap-1.5" key={field.key}>
-                  <div className="flex items-center gap-1.5">
+                <div className="d-grid gap-2" key={field.key}>
+                  <div className="d-flex align-items-center gap-2">
                     <Label htmlFor={`field-${field.key}`}>
                       {field.prompt || field.key}
                       {field.required ? " *" : ""}
@@ -466,23 +466,23 @@ export default function ChannelsPage() {
                     {field.help && (
                       <span
                         aria-label={field.help}
-                        className="inline-flex text-muted-foreground hover:text-foreground"
+                        className="d-inline-flex text-body-secondary hover:text-foreground"
                         role="img"
                         title={field.help}
                       >
-                        <Info className="h-3.5 w-3.5" />
+                        <Info className="icon-sm" />
                       </span>
                     )}
                   </div>
                   {field.description && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="fs-6 text-body-secondary">
                       {field.description}
                     </span>
                   )}
                   <Input
                     id={`field-${field.key}`}
                     type={field.is_password ? "password" : "text"}
-                    className="text-base leading-6 sm:text-xs sm:leading-4"
+                    className="fs-6 leading-6 sm:text-xs sm:leading-4"
                     placeholder={
                       field.is_set
                         ? field.redacted_value || "•••••• (set — leave blank to keep)"
@@ -502,24 +502,24 @@ export default function ChannelsPage() {
                     }}
                   />
                   {fieldErrors[field.key] && (
-                    <span className="text-xs text-destructive">
+                    <span className="fs-6 text-danger">
                       {fieldErrors[field.key]}
                     </span>
                   )}
                 </div>
               ))}
 
-              <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+              <div className="d-flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
                 <Button
                   ghost
                   size="sm"
-                  className="w-full sm:w-auto"
+                  className="w-100 sm:w-auto"
                   onClick={() => setEditing(null)}
                 >
                   Cancel
                 </Button>
                 <Button
-                  className="w-full uppercase sm:w-auto"
+                  className="w-100 text-uppercase sm:w-auto"
                   size="sm"
                   onClick={handleSave}
                   disabled={saving}
@@ -534,7 +534,7 @@ export default function ChannelsPage() {
       )}
 
       {/* Platform list */}
-      <div className="grid gap-3">
+      <div className="d-grid gap-3">
         {platforms.map((platform) => {
           const badge = stateBadge(platform.state);
           const busy = togglingId === platform.id;
@@ -545,10 +545,10 @@ export default function ChannelsPage() {
                 ? AlertTriangle
                 : Radio;
           return (
-            <Card key={platform.id} className="border-border">
-              <CardContent className="flex flex-col gap-4 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-start gap-3 min-w-0">
+            <Card key={platform.id} className="border-secondary">
+              <CardContent className="d-flex flex-column gap-4 p-4">
+                <div className="d-flex flex-column gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="d-flex align-items-start gap-3 min-w-0">
                     <StateIcon
                       className={cn(
                         "h-5 w-5 shrink-0 mt-0.5",
@@ -560,34 +560,34 @@ export default function ChannelsPage() {
                             : "text-muted-foreground",
                       )}
                     />
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mondwest normal-case text-sm font-medium">
+                    <div className="d-flex flex-column gap-0.5 min-w-0">
+                      <div className="d-flex align-items-center gap-2 flex-wrap">
+                        <span className="font-mondwest text-lowercase fs-6 fw-medium">
                           {platform.name}
                         </span>
                         <Badge tone={badge.tone}>{badge.label}</Badge>
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="fs-6 text-body-secondary">
                         {platform.description}
                       </span>
                       {platform.error_message && (
-                        <span className="text-xs text-destructive">
+                        <span className="fs-6 text-danger">
                           {platform.error_message}
                         </span>
                       )}
                       {platform.ingress_url && (
-                        <span className="text-xs text-muted-foreground break-all">
+                        <span className="fs-6 text-body-secondary break-all">
                           Callback URL (shared listener):{" "}
-                          <code className="font-mono">{platform.ingress_url}</code>
+                          <code className="font-monospace">{platform.ingress_url}</code>
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-                    <div className="flex items-center gap-1.5">
+                  <div className="d-flex align-items-center gap-2 flex-shrink-0 align-self-start sm:self-center">
+                    <div className="d-flex align-items-center gap-2">
                       {busy ? (
-                        <Spinner className="text-sm" />
+                        <Spinner className="fs-6" />
                       ) : (
                         <Switch
                           checked={platform.enabled}
@@ -605,7 +605,7 @@ export default function ChannelsPage() {
                         testingId === platform.id ? (
                           <Spinner />
                         ) : (
-                          <PlugZap className="h-4 w-4" />
+                          <PlugZap className="icon-md" />
                         )
                       }
                     >
@@ -614,9 +614,9 @@ export default function ChannelsPage() {
                     {platform.id !== "telegram" && (
                       <Button
                         size="sm"
-                        className="uppercase"
+                        className="text-uppercase"
                         onClick={() => openConfig(platform)}
-                        prefix={<Settings2 className="h-4 w-4" />}
+                        prefix={<Settings2 className="icon-md" />}
                       >
                         Configure
                       </Button>
@@ -892,31 +892,31 @@ function WhatsAppOnboardingPanel({
         : "If no allowed numbers were entered, Hermes replies with a pairing code. Approve it from the dashboard Pairing page.";
 
   return (
-    <div className="rounded-sm border border-border bg-background/35 p-4">
-      <div className="grid gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="rounded-1 border border-secondary bg-background/35 p-4">
+      <div className="d-grid gap-3">
+        <div className="d-flex flex-wrap align-items-center gap-2">
           <Button
             size="sm"
-            className="uppercase"
+            className="text-uppercase"
             onClick={() => void start()}
             disabled={phase === "starting" || phase === "waiting" || phase === "applying"}
-            prefix={phase === "starting" ? <Spinner /> : <QrCode className="h-4 w-4" />}
+            prefix={phase === "starting" ? <Spinner /> : <QrCode className="icon-md" />}
           >
             {phase === "starting" ? "Starting…" : "Pair with QR"}
           </Button>
           {platform.configured && (
-            <span className="text-xs text-muted-foreground">
+            <span className="fs-6 text-body-secondary">
               Existing WhatsApp settings are configured.
             </span>
           )}
         </div>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <div className="grid gap-1.5">
-            <span className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+        <div className="d-flex flex-column gap-3 lg:flex-row lg:items-end">
+          <div className="d-grid gap-2">
+            <span className="fs-6 text-uppercase tracking-[0.12em] text-body-secondary">
               Mode
             </span>
-            <div className="flex flex-wrap gap-2">
+            <div className="d-flex flex-wrap gap-2">
               <Button
                 size="sm"
                 outlined={mode !== "bot"}
@@ -935,7 +935,7 @@ function WhatsAppOnboardingPanel({
               </Button>
             </div>
           </div>
-          <div className="grid min-w-0 flex-1 gap-1.5">
+          <div className="d-grid min-w-0 flex-grow-1 gap-2">
             <Label htmlFor="whatsapp-allowed-users">Allowed WhatsApp numbers</Label>
             <Input
               id="whatsapp-allowed-users"
@@ -948,15 +948,15 @@ function WhatsAppOnboardingPanel({
         </div>
 
         {error && (
-          <div className="border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div className="border border-destructive/40 bg-destructive/10 px-3 py-2 fs-6 text-danger">
             {error}
           </div>
         )}
 
         {setup && (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <div className="grid gap-3">
-              <div className="flex flex-wrap items-center gap-2">
+          <div className="d-grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+            <div className="d-grid gap-3">
+              <div className="d-flex flex-wrap align-items-center gap-2">
                 {phase === "connected" || phase === "applying" ? (
                   <Badge tone="success">Connected</Badge>
                 ) : (
@@ -967,48 +967,48 @@ function WhatsAppOnboardingPanel({
                 </Badge>
               </div>
 
-              <div className="text-sm text-muted-foreground">{setupHelp}</div>
+              <div className="fs-6 text-body-secondary">{setupHelp}</div>
 
               {phase === "waiting" && (
-                <div className="text-xs text-muted-foreground">
+                <div className="fs-6 text-body-secondary">
                   After saving, unknown DMs use Hermes pairing codes unless their
                   number is already allowed.
                 </div>
               )}
 
               {(phase === "connected" || phase === "applying") && (
-                <div className="grid gap-3">
-                  <div className="border border-border bg-background/45 p-3 text-sm">
-                    <div className="font-medium">
+                <div className="d-grid gap-3">
+                  <div className="border border-secondary bg-background/45 p-3 fs-6">
+                    <div className="fw-medium">
                       {linkedAccountLabel
                         ? `Linked as ${linkedAccountLabel}`
                         : "WhatsApp device linked"}
                     </div>
-                    <div className="mt-1 text-muted-foreground">{linkedAccountDetail}</div>
-                    <ol className="mt-3 list-decimal space-y-1 pl-5 text-muted-foreground">
+                    <div className="mt-1 text-body-secondary">{linkedAccountDetail}</div>
+                    <ol className="mt-3 list-decimal space-y-1 pl-5 text-body-secondary">
                       <li>Save and restart the gateway.</li>
                       <li>{messageInstruction}</li>
                       <li>{pairingInstruction}</li>
                     </ol>
                     {linkedAccountChatUrl && (
                       <a
-                        className="mt-3 inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
+                        className="mt-3 d-inline-flex align-items-center gap-1 fs-6 text-primary underline-offset-4 hover:underline"
                         href={linkedAccountChatUrl}
                         target="_blank"
                         rel="noreferrer"
                       >
                         Open chat link
-                        <ExternalLink className="h-3.5 w-3.5" />
+                        <ExternalLink className="icon-sm" />
                       </a>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="d-flex flex-wrap gap-2">
                     <Button
                       size="sm"
-                      className="uppercase"
+                      className="text-uppercase"
                       onClick={() => void apply()}
                       disabled={phase === "applying"}
-                      prefix={phase === "applying" ? <Spinner /> : <Save className="h-4 w-4" />}
+                      prefix={phase === "applying" ? <Spinner /> : <Save className="icon-md" />}
                     >
                       {phase === "applying" ? "Saving…" : "Save and restart"}
                     </Button>
@@ -1020,7 +1020,7 @@ function WhatsAppOnboardingPanel({
               )}
             </div>
 
-            <div className="flex flex-col items-center justify-center gap-3">
+            <div className="d-flex flex-column align-items-center justify-content-center gap-3">
               {qrDataUrl ? (
                 <img
                   src={qrDataUrl}
@@ -1028,22 +1028,22 @@ function WhatsAppOnboardingPanel({
                   className="h-60 w-60 bg-white p-2"
                 />
               ) : phase === "connected" || phase === "applying" ? (
-                <div className="flex h-60 w-60 flex-col items-center justify-center gap-2 border border-border bg-background/50 p-4 text-center">
+                <div className="d-flex h-60 w-60 flex-column align-items-center justify-content-center gap-2 border border-secondary bg-background/50 p-4 text-center">
                   <Badge tone="success">Linked</Badge>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="fs-6 text-body-secondary">
                     {linkedAccountLabel || "Existing WhatsApp session found"}
                   </div>
                 </div>
               ) : (
-                <div className="flex h-60 w-60 flex-col items-center justify-center gap-3 border border-border bg-background/50 p-4 text-center">
-                  <Spinner className="text-2xl" />
-                  <div className="text-xs text-muted-foreground">
+                <div className="d-flex h-60 w-60 flex-column align-items-center justify-content-center gap-3 border border-secondary bg-background/50 p-4 text-center">
+                  <Spinner className="fs-3" />
+                  <div className="fs-6 text-body-secondary">
                     Waiting for WhatsApp to provide a QR code…
                   </div>
                 </div>
               )}
               {phase === "waiting" && (
-                <span className="text-center text-xs text-muted-foreground">
+                <span className="text-center fs-6 text-body-secondary">
                   Scan with WhatsApp Linked Devices, not the camera app.
                 </span>
               )}
@@ -1273,55 +1273,55 @@ function TelegramOnboardingPanel({
   );
 
   return (
-    <div className="rounded-sm border border-border bg-background/35 p-4">
-      <div className="grid gap-1">
-        <span className="font-mondwest text-sm text-foreground">
+    <div className="rounded-1 border border-secondary bg-background/35 p-4">
+      <div className="d-grid gap-1">
+        <span className="font-mondwest fs-6 text-body-emphasis">
           Choose how to connect your Telegram bot
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="fs-6 text-body-secondary">
           Both options connect a bot you control and save its credentials only to
           this Hermes installation.
         </span>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 sm:divide-x sm:divide-border">
-        <div className="grid content-start gap-3 sm:pr-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium uppercase text-foreground">
+      <div className="mt-4 d-grid gap-4 sm:grid-cols-2 sm:divide-x sm:divide-border">
+        <div className="d-grid content-start gap-3 sm:pr-4">
+          <div className="d-flex flex-wrap align-items-center gap-2">
+            <span className="fs-6 fw-medium text-uppercase text-body-emphasis">
               Quick setup
             </span>
             <Badge tone="success">recommended</Badge>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="fs-6 text-body-secondary">
             Scan a QR code and confirm in Telegram. Hermes creates the bot and
             detects your Telegram user ID automatically.
           </p>
           <Button
             size="sm"
-            className="w-fit uppercase"
+            className="fit-content text-uppercase"
             onClick={() => void start()}
             disabled={phase !== "idle"}
-            prefix={phase === "starting" ? <Spinner /> : <QrCode className="h-4 w-4" />}
+            prefix={phase === "starting" ? <Spinner /> : <QrCode className="icon-md" />}
           >
             {phase === "starting" ? "Starting…" : "Create with QR"}
           </Button>
         </div>
 
-        <div className="grid content-start gap-3 border-t border-border pt-4 sm:border-t-0 sm:pl-4 sm:pt-0">
-          <span className="text-xs font-medium uppercase text-foreground">
+        <div className="d-grid content-start gap-3 border-top border-secondary pt-4 sm:border-t-0 sm:pl-4 sm:pt-0">
+          <span className="fs-6 fw-medium text-uppercase text-body-emphasis">
             Use your own bot
           </span>
-          <p className="text-xs text-muted-foreground">
+          <p className="fs-6 text-body-secondary">
             Create a bot with @BotFather, or connect one you already have, by
             entering its token and choosing who can use it.
           </p>
           <Button
             size="sm"
             outlined
-            className="w-fit uppercase"
+            className="fit-content text-uppercase"
             onClick={onManualSetup}
             disabled={phase !== "idle"}
-            prefix={<Bot className="h-4 w-4" />}
+            prefix={<Bot className="icon-md" />}
           >
             Manual setup
           </Button>
@@ -1329,55 +1329,55 @@ function TelegramOnboardingPanel({
       </div>
 
       {platform.configured && (
-        <div className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+        <div className="mt-4 border-top border-secondary pt-3 fs-6 text-body-secondary">
           Telegram credentials are already configured. A new QR setup or bot token
           will replace the current bot when you save.
         </div>
       )}
 
       {phase !== "idle" && (
-        <div className="mt-4 border-t border-border pt-4">
-          <span className="text-xs text-muted-foreground">
+        <div className="mt-4 border-top border-secondary pt-4">
+          <span className="fs-6 text-body-secondary">
             Finish or cancel the current QR setup before switching methods.
           </span>
         </div>
       )}
 
       {error && (
-        <div className="mt-3 border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div className="mt-3 border border-destructive/40 bg-destructive/10 px-3 py-2 fs-6 text-danger">
           {error}
         </div>
       )}
 
       {setup && qrDataUrl && (
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-          <div className="grid gap-3">
+        <div className="mt-4 d-grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="d-grid gap-3">
             {(phase === "ready" || phase === "applying") && (
-              <div className="grid gap-3">
-                <div className="flex flex-wrap items-center gap-2">
+              <div className="d-grid gap-3">
+                <div className="d-flex flex-wrap align-items-center gap-2">
                   <Badge tone="success">Ready</Badge>
                   {botUsername && (
-                    <span className="font-courier text-sm text-muted-foreground">
+                    <span className="font-courier fs-6 text-body-secondary">
                       @{botUsername}
                     </span>
                   )}
                 </div>
 
-                <div className="grid gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+                <div className="d-grid gap-2">
+                  <div className="d-flex flex-wrap align-items-center gap-2">
+                    <span className="fs-6 text-uppercase tracking-[0.12em] text-body-secondary">
                       Allowed users
                     </span>
                     {detectedOwnerId && allowedIds.includes(detectedOwnerId) && (
                       <Badge tone="success">owner detected</Badge>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="d-flex flex-wrap gap-2">
                     {allowedIds.map((id) => (
                       <button
                         key={id}
                         type="button"
-                        className="inline-flex items-center gap-1 border border-border px-2 py-1 font-courier text-xs text-foreground hover:border-destructive/50"
+                        className="d-inline-flex align-items-center gap-1 border border-secondary px-2 py-1 font-courier fs-6 text-body-emphasis hover:border-destructive/50"
                         onClick={() =>
                           setAllowedIds((ids) =>
                             ids.filter((existing) => existing !== id),
@@ -1385,18 +1385,18 @@ function TelegramOnboardingPanel({
                         }
                       >
                         {id}
-                        <X className="h-3 w-3" />
+                        <X className="icon-sm" />
                       </button>
                     ))}
                     {allowedIds.length === 0 && (
-                      <span className="text-sm text-muted-foreground">
+                      <span className="fs-6 text-body-secondary">
                         Add at least one Telegram user ID.
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="d-flex flex-column gap-2 sm:flex-row">
                   <Input
                     value={newAllowedId}
                     onChange={(event) => setNewAllowedId(event.target.value)}
@@ -1408,13 +1408,13 @@ function TelegramOnboardingPanel({
                   </Button>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="d-flex flex-wrap gap-2">
                   <Button
                     size="sm"
-                    className="uppercase"
+                    className="text-uppercase"
                     onClick={() => void apply()}
                     disabled={phase === "applying"}
-                    prefix={phase === "applying" ? <Spinner /> : <Save className="h-4 w-4" />}
+                    prefix={phase === "applying" ? <Spinner /> : <Save className="icon-md" />}
                   >
                     {phase === "applying" ? "Saving…" : "Save and restart"}
                   </Button>
@@ -1426,26 +1426,26 @@ function TelegramOnboardingPanel({
             )}
           </div>
 
-          <div className="flex flex-col items-center justify-center gap-3">
+          <div className="d-flex flex-column align-items-center justify-content-center gap-3">
             <img
               src={qrDataUrl}
               alt="Telegram setup QR code"
               className="h-56 w-56 bg-white p-2"
             />
-            <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+            <div className="d-flex flex-wrap align-items-center justify-content-center gap-2 fs-6">
               <Badge tone={expiresIn === "expired" ? "destructive" : "outline"}>
                 {expiresIn}
               </Badge>
               {phase === "waiting" && <Badge tone="warning">waiting</Badge>}
             </div>
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="d-flex flex-wrap justify-content-center gap-2">
               <a
                 href={setup.deep_link}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 items-center gap-1 border border-border px-3 text-xs uppercase text-foreground hover:border-foreground/40"
+                className="d-inline-flex h-8 align-items-center gap-1 border border-secondary px-3 fs-6 text-uppercase text-body-emphasis hover:border-foreground/40"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="icon-md" />
                 Open Telegram
               </a>
               <Button size="sm" ghost onClick={() => void cancel()}>

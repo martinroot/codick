@@ -95,7 +95,7 @@ function CategoryIcon({
   className?: string;
 }) {
   const Icon = CATEGORY_ICONS[category] ?? FileQuestion;
-  return <Icon className={className ?? "h-4 w-4"} />;
+  return <Icon className={className ?? "icon-md"} />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -132,10 +132,10 @@ export default function ConfigPage() {
       return;
     }
     setEnd(
-      <div className="relative w-full min-w-0 sm:max-w-xs">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+      <div className="position-relative w-100 min-w-0 sm:max-w-xs">
+        <Search className="position-absolute left-2.5 top-1/2 -translate-y-1/2 icon-sm text-body-secondary" />
         <Input
-          className="h-8 pl-8 pr-7 text-xs"
+          className="h-8 pl-8 pr-7 fs-6"
           placeholder={t.common.search}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -144,7 +144,7 @@ export default function ConfigPage() {
           <Button
             ghost
             size="xs"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="position-absolute right-1.5 top-1/2 -translate-y-1/2 text-body-secondary hover:text-foreground"
             onClick={() => setSearchQuery("")}
             aria-label={t.common.clear}
           >
@@ -370,8 +370,8 @@ export default function ConfigPage() {
   /* ---- Loading ---- */
   if (!config || !schema) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="text-2xl text-primary" />
+      <div className="d-flex align-items-center justify-content-center py-24">
+        <Spinner className="fs-3 text-primary" />
       </div>
     );
   }
@@ -399,23 +399,23 @@ export default function ConfigPage() {
       return (
         <div key={key}>
           {showCatBadge && (
-            <div className="flex items-center gap-2 pt-4 pb-2 first:pt-0">
+            <div className="d-flex align-items-center gap-2 pt-4 pb-2 first:pt-0">
               <CategoryIcon
                 category={cat}
-                className="h-4 w-4 text-muted-foreground"
+                className="icon-md text-body-secondary"
               />
-              <span className="font-mondwest text-display text-xs font-semibold tracking-wider text-muted-foreground">
+              <span className="font-mondwest fs-4 fw-semibold fs-6 fw-semibold ls-wide text-body-secondary">
                 {prettyCategoryName(cat)}
               </span>
-              <div className="flex-1 border-t border-border" />
+              <div className="flex-grow-1 border-top border-secondary" />
             </div>
           )}
           {showSection && (
-            <div className="flex items-center gap-2 pt-4 pb-2 first:pt-0">
-              <span className="font-mondwest text-display text-xs font-semibold tracking-wider text-muted-foreground">
+            <div className="d-flex align-items-center gap-2 pt-4 pb-2 first:pt-0">
+              <span className="font-mondwest fs-4 fw-semibold fs-6 fw-semibold ls-wide text-body-secondary">
                 {section.replace(/_/g, " ")}
               </span>
-              <div className="flex-1 border-t border-border" />
+              <div className="flex-grow-1 border-top border-secondary" />
             </div>
           )}
           <div className="py-1">
@@ -432,18 +432,18 @@ export default function ConfigPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="d-flex flex-column gap-4">
       <PluginSlot name="config:top" />
       <Toast toast={toast} />
 
-      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div className="flex min-w-0 items-center gap-2 sm:flex-1">
-          <Settings2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <code className="min-w-0 flex-1 break-words text-xs text-muted-foreground bg-muted/50 px-2 py-0.5">
+      <div className="d-flex min-w-0 flex-column gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="d-flex min-w-0 align-items-center gap-2 sm:flex-1">
+          <Settings2 className="icon-md flex-shrink-0 text-body-secondary" />
+          <code className="min-w-0 flex-grow-1 text-break fs-6 text-body-secondary bg-muted/50 px-2 py-0.5">
             {configPath ?? t.config.configPath}
           </code>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0">
+        <div className="d-flex flex-wrap align-items-center gap-2 sm:shrink-0">
           <Button
             ghost
             size="icon"
@@ -466,7 +466,7 @@ export default function ConfigPage() {
             ref={fileInputRef}
             type="file"
             accept=".json"
-            className="hidden"
+            className="d-none"
             onChange={handleImport}
           />
           {!yamlMode &&
@@ -505,7 +505,7 @@ export default function ConfigPage() {
           {yamlMode ? (
             <Button
               size="sm"
-              className="uppercase"
+              className="text-uppercase"
               onClick={handleYamlSave}
               disabled={yamlSaving}
             >
@@ -514,7 +514,7 @@ export default function ConfigPage() {
           ) : (
             <Button
               size="sm"
-              className="uppercase"
+              className="text-uppercase"
               onClick={handleSave}
               disabled={saving}
             >
@@ -527,19 +527,19 @@ export default function ConfigPage() {
       {yamlMode ? (
         <Card>
           <CardHeader className="py-3 px-4">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <FileText className="h-4 w-4" />
+            <CardTitle className="fs-6 d-flex align-items-center gap-2">
+              <FileText className="icon-md" />
               {t.config.rawYaml}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {yamlLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Spinner className="text-xl text-primary" />
+              <div className="d-flex align-items-center justify-content-center py-12">
+                <Spinner className="fs-4 text-primary" />
               </div>
             ) : (
               <textarea
-                className="flex min-h-[600px] w-full bg-transparent px-4 py-3 text-sm font-mono leading-relaxed placeholder:text-muted-foreground focus-visible:outline-none border-t border-border"
+                className="d-flex min-h-[600px] w-100 bg-transparent px-4 py-3 fs-6 font-monospace leading-relaxed placeholder:text-muted-foreground focus-visible:outline-none border-top border-secondary"
                 value={yamlText}
                 onChange={(e) => setYamlText(e.target.value)}
                 spellCheck={false}
@@ -548,22 +548,22 @@ export default function ConfigPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="d-flex flex-column sm:flex-row gap-4">
           <aside aria-label={t.config.filters} className="sm:w-56 sm:shrink-0">
             <div className="sm:sticky sm:top-4">
-              <div className="flex flex-col border border-border bg-muted/20">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-2 border-b border-border">
-                  <Filter className="h-3 w-3 text-text-tertiary" />
-                  <span className="font-mondwest text-display text-xs tracking-[0.12em] text-text-secondary">
+              <div className="d-flex flex-column border border-secondary bg-muted/20">
+                <div className="d-none sm:flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary">
+                  <Filter className="icon-sm text-body-tertiary" />
+                  <span className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
                     {t.config.filters}
                   </span>
                 </div>
 
-                <div className="hidden sm:block px-3 pt-2 pb-1 font-mondwest text-display text-xs tracking-[0.12em] text-text-tertiary">
+                <div className="d-none sm:block px-3 pt-2 pb-1 font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary">
                   {t.config.sections}
                 </div>
 
-                <div className="flex sm:flex-col gap-1 sm:gap-px p-2 sm:pt-1 overflow-x-auto sm:overflow-x-visible scrollbar-none sm:max-h-[calc(100vh-260px)] sm:overflow-y-auto">
+                <div className="d-flex sm:flex-col gap-1 sm:gap-px p-2 sm:pt-1 overflow-x-auto sm:overflow-x-visible scrollbar-none sm:max-h-[calc(100vh-260px)] sm:overflow-y-auto">
                   {categories.map((cat) => {
                     const isActive = !isSearching && activeCategory === cat;
 
@@ -575,13 +575,13 @@ export default function ConfigPage() {
                           setSearchQuery("");
                           setActiveCategory(cat);
                         }}
-                        className="rounded-none whitespace-nowrap px-2 py-1 text-xs"
+                        className="rounded-0 text-nowrap px-2 py-1 fs-6"
                       >
                         <CategoryIcon
                           category={cat}
-                          className="h-3.5 w-3.5 shrink-0"
+                          className="icon-sm flex-shrink-0"
                         />
-                        <span className="flex-1 truncate">
+                        <span className="flex-grow-1 text-truncate">
                           {prettyCategoryName(cat)}
                         </span>
                         <span
@@ -601,16 +601,16 @@ export default function ConfigPage() {
             </div>
           </aside>
 
-          <div className="flex-1 min-w-0">
+          <div className="flex-grow-1 min-w-0">
             {isSearching ? (
               <Card>
                 <CardHeader className="py-3 px-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Search className="h-4 w-4" />
+                  <div className="d-flex align-items-center justify-content-between">
+                    <CardTitle className="fs-6 d-flex align-items-center gap-2">
+                      <Search className="icon-md" />
                       {t.config.searchResults}
                     </CardTitle>
-                    <Badge tone="secondary" className="text-xs">
+                    <Badge tone="secondary" className="fs-6">
                       {searchMatchedFields.length}{" "}
                       {t.config.fields.replace(
                         "{s}",
@@ -619,9 +619,9 @@ export default function ConfigPage() {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="grid gap-2 px-4 pb-4">
+                <CardContent className="d-grid gap-2 px-4 pb-4">
                   {searchMatchedFields.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
+                    <p className="fs-6 text-body-secondary text-center py-8">
                       {t.config.noFieldsMatch.replace("{query}", searchQuery)}
                     </p>
                   ) : (
@@ -633,15 +633,15 @@ export default function ConfigPage() {
               /* Active category */
               <Card>
                 <CardHeader className="py-3 px-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm flex items-center gap-2">
+                  <div className="d-flex align-items-center justify-content-between">
+                    <CardTitle className="fs-6 d-flex align-items-center gap-2">
                       <CategoryIcon
                         category={activeCategory}
-                        className="h-4 w-4"
+                        className="icon-md"
                       />
                       {prettyCategoryName(activeCategory)}
                     </CardTitle>
-                    <Badge tone="secondary" className="text-xs">
+                    <Badge tone="secondary" className="fs-6">
                       {activeFields.length}{" "}
                       {t.config.fields.replace(
                         "{s}",
@@ -650,7 +650,7 @@ export default function ConfigPage() {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="grid gap-2 px-4 pb-4">
+                <CardContent className="d-grid gap-2 px-4 pb-4">
                   {renderFields(activeFields)}
                 </CardContent>
               </Card>

@@ -215,7 +215,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -229,7 +229,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
         <Button
           ghost
           size="xs"
-          className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+          className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
           onClick={onClose}
           aria-label="Close"
         >
@@ -237,26 +237,26 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
         </Button>
 
         {/* Header — toolset identity + enable toggle */}
-        <header className="p-5 pb-3 border-b border-border">
-          <div className="flex items-center gap-3 pr-8">
-            <span className="font-mondwest text-display text-base tracking-wider">
+        <header className="p-5 pb-3 border-bottom border-secondary">
+          <div className="d-flex align-items-center gap-3 pr-8">
+            <span className="font-mondwest fs-4 fw-semibold fs-6 ls-wide">
               {labelText}
             </span>
-            <Badge tone={enabled ? "success" : "outline"} className="text-xs">
+            <Badge tone={enabled ? "success" : "outline"} className="fs-6">
               {enabled ? "Active" : "Inactive"}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="fs-6 text-body-secondary mt-1">
             {toolset.description}
           </p>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 d-flex align-items-center gap-2">
             <Switch
               checked={enabled}
               onCheckedChange={(v) => void handleToggle(v)}
               disabled={toggling}
               aria-label={`Enable toolset for ${platformText}`}
             />
-            <span className="text-xs text-muted-foreground">
+            <span className="fs-6 text-body-secondary">
               {enabled
                 ? `Enabled for ${platformText}`
                 : `Disabled for ${platformText}`}
@@ -265,18 +265,18 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
         </header>
 
         {/* Body — provider matrix */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-5 pt-4 space-y-4">
+        <div className="flex-grow-1 min-h-0 overflow-y-auto p-5 pt-4 space-y-4">
           {loading ? (
-            <div className="flex items-center justify-center py-10">
+            <div className="d-flex align-items-center justify-content-center py-10">
               <Spinner />
             </div>
           ) : !config?.has_category ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
+            <p className="fs-6 text-body-secondary py-6 text-center">
               This toolset has no configurable backends — toggle it on or off
               above. It works with no provider selection or API keys.
             </p>
           ) : config.providers.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
+            <p className="fs-6 text-body-secondary py-6 text-center">
               No providers are available for this toolset in this install.
             </p>
           ) : (
@@ -290,25 +290,25 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                     isActive && "border-emerald-500/60 bg-emerald-500/5",
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-medium text-sm">
+                  <div className="d-flex align-items-center justify-content-between gap-2">
+                    <div className="d-flex align-items-center gap-2 min-w-0">
+                      <span className="fw-medium fs-6">
                         {provider.name}
                       </span>
                       {provider.badge && (
-                        <Badge tone="secondary" className="text-xs">
+                        <Badge tone="secondary" className="fs-6">
                           {provider.badge}
                         </Badge>
                       )}
                       {provider.requires_nous_auth && (
-                        <Badge tone="outline" className="text-xs">
+                        <Badge tone="outline" className="fs-6">
                           Nous Portal
                         </Badge>
                       )}
                     </div>
                     {isActive ? (
-                      <Badge tone="success" className="text-xs shrink-0">
-                        <Check className="h-3 w-3 mr-0.5" /> Selected
+                      <Badge tone="success" className="fs-6 flex-shrink-0">
+                        <Check className="icon-sm mr-0.5" /> Selected
                       </Badge>
                     ) : (
                       <Button
@@ -318,7 +318,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                         disabled={selecting !== null}
                       >
                         {selecting === provider.name ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <Loader2 className="icon-sm animate-spin" />
                         ) : (
                           "Select"
                         )}
@@ -326,7 +326,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                     )}
                   </div>
                   {provider.tag && (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="fs-6 text-body-secondary mt-1">
                       {provider.tag}
                     </p>
                   )}
@@ -336,15 +336,15 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                     <div className="mt-3 space-y-2.5">
                       {provider.env_vars.map((ev) => (
                         <div key={ev.key} className="space-y-1">
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="d-flex align-items-center justify-content-between gap-2">
                             <Label
                               htmlFor={`env-${ev.key}`}
-                              className="text-xs font-mono"
+                              className="fs-6 font-monospace"
                             >
                               {ev.key}
                             </Label>
                             {isSet[ev.key] && (
-                              <Badge tone="success" className="text-xs">
+                              <Badge tone="success" className="fs-6">
                                 Saved
                               </Badge>
                             )}
@@ -352,7 +352,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                           <Input
                             id={`env-${ev.key}`}
                             type="password"
-                            className="h-8 rounded-none text-xs font-mono"
+                            className="h-8 rounded-0 fs-6 font-monospace"
                             placeholder={
                               isSet[ev.key]
                                 ? "•••••••• (saved — leave blank to keep)"
@@ -371,9 +371,9 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                               href={ev.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                              className="d-inline-flex align-items-center gap-1 fs-6 text-body-secondary hover:text-foreground"
                             >
-                              <ExternalLink className="h-3 w-3" /> Get a key
+                              <ExternalLink className="icon-sm" /> Get a key
                             </a>
                           )}
                         </div>
@@ -384,7 +384,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                         disabled={savingProvider !== null}
                       >
                         {savingProvider === provider.name ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <Loader2 className="icon-sm animate-spin" />
                         ) : (
                           "Save keys"
                         )}
@@ -394,11 +394,11 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
 
                   {/* Post-setup install hook */}
                   {provider.post_setup && (
-                    <div className="mt-3 border-t border-border pt-3">
-                      <p className="text-xs text-muted-foreground mb-1.5">
+                    <div className="mt-3 border-top border-secondary pt-3">
+                      <p className="fs-6 text-body-secondary mb-1.5">
                         This backend needs a one-time install
                         {" "}
-                        <span className="font-mono">
+                        <span className="font-monospace">
                           ({provider.post_setup})
                         </span>
                         . Runs on this host — may take a few minutes.
@@ -436,17 +436,17 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
 
           {/* Post-setup live log */}
           {(postSetupRunning || postSetupLog.length > 0) && (
-            <div className="border border-border">
-              <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border bg-muted/30">
-                <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-mono text-muted-foreground">
+            <div className="border border-secondary">
+              <div className="d-flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary bg-muted/30">
+                <Terminal className="icon-sm text-body-secondary" />
+                <span className="fs-6 font-monospace text-body-secondary">
                   post-setup: {postSetupKey}
                 </span>
                 {postSetupRunning && (
-                  <Loader2 className="h-3 w-3 animate-spin ml-auto text-muted-foreground" />
+                  <Loader2 className="icon-sm animate-spin ml-auto text-body-secondary" />
                 )}
               </div>
-              <pre className="max-h-48 overflow-y-auto p-3 text-xs font-mono whitespace-pre-wrap text-text-secondary">
+              <pre className="max-h-48 overflow-y-auto p-3 fs-6 font-monospace text-wrap text-body-secondary">
                 {postSetupLog.length ? postSetupLog.join("\n") : "Starting…"}
               </pre>
             </div>

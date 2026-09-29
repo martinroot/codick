@@ -61,7 +61,7 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
   const sheetTitle = t.theme?.title ?? "Theme";
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} className="position-relative">
       <Button
         ghost
         size={collapsed ? "icon" : undefined}
@@ -76,12 +76,12 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
         aria-expanded={open}
         aria-haspopup="listbox"
       >
-        <span className="inline-flex items-center gap-1.5">
-          <Palette className="h-3.5 w-3.5" />
+        <span className="d-inline-flex align-items-center gap-2">
+          <Palette className="icon-sm" />
 
           {!collapsed && (
             <Typography
-              className="hidden sm:inline text-display tracking-wide text-xs"
+              className="d-none sm:inline fs-4 fw-semibold tracking-wide fs-6"
             >
               {label}
             </Typography>
@@ -131,9 +131,9 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
                 : undefined
             }
           >
-            <div className="border-b border-current/20 px-3 py-2">
+            <div className="border-bottom border-current/20 px-3 py-2">
               <Typography
-                className="text-display text-xs tracking-[0.12em] text-text-tertiary"
+                className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary"
               >
                 {sheetTitle}
               </Typography>
@@ -188,14 +188,14 @@ function ThemeSwitcherOptions({
               <PlaceholderSwatch />
             )}
 
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <div className="d-flex min-w-0 flex-grow-1 flex-column gap-0.5">
               <Typography
-                className="truncate text-display text-xs tracking-wide"
+                className="text-truncate fs-4 fw-semibold fs-6 tracking-wide"
               >
                 {th.label}
               </Typography>
               {th.description && (
-                <Typography className="truncate text-xs tracking-normal text-text-tertiary">
+                <Typography className="text-truncate fs-6 ls-normal text-body-tertiary">
                   {th.description}
                 </Typography>
               )}
@@ -228,11 +228,11 @@ function FontSection({ fontChoices, fontId, setFont }: FontSectionProps) {
   const order: FontChoice["category"][] = ["sans", "serif", "mono"];
   return (
     <>
-      <div className="mt-1 border-t border-current/20 px-3 pb-1 pt-2">
-        <span className="inline-flex items-center gap-1.5">
-          <Type className="h-3 w-3 text-text-tertiary" />
+      <div className="mt-1 border-top border-current/20 px-3 pb-1 pt-2">
+        <span className="d-inline-flex align-items-center gap-2">
+          <Type className="icon-sm text-body-tertiary" />
           <Typography
-            className="text-display text-xs tracking-[0.12em] text-text-tertiary"
+            className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary"
           >
             {t.theme?.fontTitle ?? "Font"}
           </Typography>
@@ -247,12 +247,12 @@ function FontSection({ fontChoices, fontId, setFont }: FontSectionProps) {
         onClick={() => setFont(THEME_DEFAULT_FONT_ID)}
         role="option"
       >
-        <span aria-hidden className="h-4 w-9 shrink-0" />
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <Typography className="truncate text-xs tracking-normal">
+        <span aria-hidden className="h-4 w-9 flex-shrink-0" />
+        <div className="d-flex min-w-0 flex-grow-1 flex-column gap-0.5">
+          <Typography className="text-truncate fs-6 ls-normal">
             {t.theme?.fontDefault ?? "Theme default"}
           </Typography>
-          <Typography className="truncate text-xs tracking-normal text-text-tertiary">
+          <Typography className="text-truncate fs-6 ls-normal text-body-tertiary">
             {t.theme?.fontDefaultHint ?? "Use the active theme's font"}
           </Typography>
         </div>
@@ -271,7 +271,7 @@ function FontSection({ fontChoices, fontId, setFont }: FontSectionProps) {
         return (
           <div key={cat}>
             <div className="px-3 pb-0.5 pt-1.5">
-              <Typography className="text-[0.65rem] uppercase tracking-[0.1em] text-text-tertiary">
+              <Typography className="text-[0.65rem] text-uppercase tracking-[0.1em] text-body-tertiary">
                 {catLabel}
               </Typography>
             </div>
@@ -286,11 +286,11 @@ function FontSection({ fontChoices, fontId, setFont }: FontSectionProps) {
                   onClick={() => setFont(f.id)}
                   role="option"
                 >
-                  <span aria-hidden className="h-4 w-9 shrink-0" />
-                  <div className="flex min-w-0 flex-1 flex-col">
+                  <span aria-hidden className="h-4 w-9 flex-shrink-0" />
+                  <div className="d-flex min-w-0 flex-grow-1 flex-column">
                     {/* Preview the font in its own stack. */}
                     <span
-                      className="truncate text-sm"
+                      className="text-truncate fs-6"
                       style={{ fontFamily: f.stack }}
                     >
                       {f.label}
@@ -321,11 +321,11 @@ function ThemeSwatch({ theme }: { theme: DashboardTheme }) {
   return (
     <div
       aria-hidden
-      className="flex h-4 w-9 shrink-0 overflow-hidden border border-current/20"
+      className="d-flex h-4 w-9 flex-shrink-0 overflow-hidden border border-current/20"
     >
-      <span className="flex-1" style={{ background: c1 }} />
-      <span className="flex-1" style={{ background: c2 }} />
-      <span className="flex-1" style={{ background: c3 }} />
+      <span className="flex-grow-1" style={{ background: c1 }} />
+      <span className="flex-grow-1" style={{ background: c2 }} />
+      <span className="flex-grow-1" style={{ background: c3 }} />
     </div>
   );
 }
@@ -334,7 +334,7 @@ function PlaceholderSwatch() {
   return (
     <div
       aria-hidden
-      className="h-4 w-9 shrink-0 border border-dashed border-current/20"
+      className="h-4 w-9 flex-shrink-0 border border-dashed border-current/20"
     />
   );
 }

@@ -163,16 +163,16 @@ export function ChatSessionList({
   const content = useMemo(() => {
     if (loading && sessions === null) {
       return (
-        <div className="flex items-center justify-center gap-2 px-2 py-6 text-xs text-text-secondary">
+        <div className="d-flex align-items-center justify-content-center gap-2 px-2 py-6 fs-6 text-body-secondary">
           <Spinner /> {t.common.loading}
         </div>
       );
     }
     if (error) {
       return (
-        <div className="flex flex-col items-start gap-2 px-2 py-4 text-xs">
-          <div className="flex items-start gap-2 text-destructive">
-            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <div className="d-flex flex-column align-items-start gap-2 px-2 py-4 fs-6">
+          <div className="d-flex align-items-start gap-2 text-danger">
+            <AlertCircle className="mt-1 icon-sm flex-shrink-0" />
             <span className="wrap-break-word">{error}</span>
           </div>
           <Button size="sm" outlined onClick={reload} prefix={<RefreshCw />}>
@@ -183,13 +183,13 @@ export function ChatSessionList({
     }
     if (!sessions || sessions.length === 0) {
       return (
-        <div className="px-2 py-6 text-center text-xs text-text-secondary">
+        <div className="px-2 py-6 text-center fs-6 text-body-secondary">
           {t.sessions.noSessions}
         </div>
       );
     }
     return (
-      <div className="flex flex-col gap-0.5">
+      <div className="d-flex flex-column gap-0.5">
         {sessions.map((s) => {
           const isActive = s.id === activeSessionId;
           return (
@@ -205,10 +205,10 @@ export function ChatSessionList({
                   : "text-text-secondary hover:bg-midground/5 hover:text-foreground",
               )}
             >
-              <span className="w-full truncate text-sm font-medium">
+              <span className="w-100 text-truncate fs-6 fw-medium">
                 {rowLabel(s, t.sessions.untitledSession)}
               </span>
-              <span className="flex w-full items-center gap-1.5 text-[0.6875rem] text-text-tertiary">
+              <span className="d-flex w-100 align-items-center gap-2 text-[0.6875rem] text-body-tertiary">
                 <span>{timeAgo(s.last_active)}</span>
                 {s.message_count > 0 && (
                   <>
@@ -219,7 +219,7 @@ export function ChatSessionList({
                 {s.source && s.source !== "cli" && (
                   <>
                     <span aria-hidden>·</span>
-                    <span className="truncate">{s.source}</span>
+                    <span className="text-truncate">{s.source}</span>
                   </>
                 )}
               </span>
@@ -237,8 +237,8 @@ export function ChatSessionList({
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2 px-2 pb-2">
-        <span className="text-display text-xs tracking-wider text-text-tertiary">
+      <div className="d-flex align-items-center justify-content-between gap-2 px-2 pb-2">
+        <span className="fs-4 fw-semibold fs-6 ls-wide text-body-tertiary">
           {t.sessions.title}
         </span>
         <Button
@@ -247,7 +247,7 @@ export function ChatSessionList({
           onClick={reload}
           aria-label={t.common.refresh}
           title={t.common.refresh}
-          className="text-text-secondary hover:text-foreground"
+          className="text-body-secondary hover:text-foreground"
         >
           <RefreshCw className={cn(loading && "animate-spin")} />
         </Button>
@@ -266,12 +266,12 @@ export function ChatSessionList({
         size="sm"
         onClick={startNew}
         prefix={<MessageSquarePlus />}
-        className="mx-2 mb-2 justify-center"
+        className="mx-2 mb-2 justify-content-center"
       >
         {t.sessions.newChat}
       </Button>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-1 pb-1">
+      <div className="min-h-0 flex-grow-1 overflow-y-auto overflow-x-hidden px-1 pb-1">
         {content}
       </div>
     </aside>

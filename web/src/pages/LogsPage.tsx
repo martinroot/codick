@@ -91,8 +91,8 @@ export default function LogsPage() {
 
   useLayoutEffect(() => {
     setAfterTitle(
-      <span className="flex items-center gap-1.5">
-        <Badge tone="secondary" className="text-xs">
+      <span className="d-flex align-items-center gap-2">
+        <Badge tone="secondary" className="fs-6">
           {formatFilterLabel(file)} · {formatFilterLabel(level)} ·{" "}
           {formatFilterLabel(component)}
         </Badge>
@@ -100,7 +100,7 @@ export default function LogsPage() {
           type="button"
           ghost
           size="icon"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-body-secondary hover:text-foreground"
           onClick={fetchLogs}
           disabled={loading}
           aria-label={t.common.refresh}
@@ -110,9 +110,9 @@ export default function LogsPage() {
       </span>,
     );
     setEnd(
-      <div className="flex w-full min-w-0 flex-wrap items-center justify-start gap-2 sm:justify-end sm:gap-3">
-        <div className="flex items-center gap-2">
-          <Label htmlFor="logs-auto-refresh" className="text-xs cursor-pointer">
+      <div className="d-flex w-100 min-w-0 flex-wrap align-items-center justify-content-start gap-2 sm:justify-end sm:gap-3">
+        <div className="d-flex align-items-center gap-2">
+          <Label htmlFor="logs-auto-refresh" className="fs-6 cursor-pointer">
             {t.logs.autoRefresh}
           </Label>
           <Switch
@@ -121,8 +121,8 @@ export default function LogsPage() {
             id="logs-auto-refresh"
           />
           {autoRefresh && (
-            <Badge tone="success" className="text-xs">
-              <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+            <Badge tone="success" className="fs-6">
+              <span className="mr-1 d-inline-block h-1.5 w-1.5 animate-pulse rounded-circle bg-current" />
               {t.common.live}
             </Badge>
           )}
@@ -158,12 +158,12 @@ export default function LogsPage() {
   }, [autoRefresh, fetchLogs]);
 
   return (
-    <div className="flex min-w-0 max-w-full flex-col gap-4">
+    <div className="d-flex min-w-0 max-w-full flex-column gap-4">
       <PluginSlot name="logs:top" />
       <div
         role="toolbar"
         aria-label={t.logs.title}
-        className="flex min-w-0 max-w-full flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:gap-x-6 sm:gap-y-3"
+        className="d-flex min-w-0 max-w-full flex-column align-items-start gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:gap-x-6 sm:gap-y-3"
       >
         <FilterGroup label={t.logs.file} className={filterGroupClass}>
           <Segmented
@@ -209,24 +209,24 @@ export default function LogsPage() {
 
       <Card className="min-w-0 max-w-full overflow-hidden">
         <CardHeader className="py-3 px-4">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <FileText className="h-4 w-4" />
+          <CardTitle className="fs-6 d-flex align-items-center gap-2">
+            <FileText className="icon-md" />
             {file}.log
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {error && (
-            <div className="bg-destructive/10 border-b border-destructive/20 p-3">
-              <p className="text-sm text-destructive">{error}</p>
+            <div className="bg-destructive/10 border-bottom border-destructive/20 p-3">
+              <p className="fs-6 text-danger">{error}</p>
             </div>
           )}
 
           <div
             ref={scrollRef}
-            className="max-w-full min-h-[400px] max-h-[calc(100vh-220px)] overflow-auto p-4 font-mono-ui text-xs leading-5 break-words"
+            className="max-w-full min-h-[400px] max-h-[calc(100vh-220px)] overflow-auto p-4 font-monospace fs-6 leading-5 text-break"
           >
             {lines.length === 0 && !loading && (
-              <p className="text-muted-foreground text-center py-8">
+              <p className="text-body-secondary text-center py-8">
                 {t.logs.noLogLines}
               </p>
             )}

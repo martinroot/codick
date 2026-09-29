@@ -137,22 +137,22 @@ function EnvVarRow({
   // Compact inline row for unset, non-editing keys (used inside provider groups)
   if (compact && !info.is_set && !isEditing) {
     return (
-      <div className="flex items-center justify-between gap-3 py-1.5 min-w-0 overflow-hidden text-text-secondary hover:text-foreground transition-colors">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono-ui text-xs">
+      <div className="d-flex align-items-center justify-content-between gap-3 py-2 min-w-0 overflow-hidden text-body-secondary hover:text-foreground transition-colors">
+        <div className="d-flex align-items-center gap-2 min-w-0">
+          <span className="font-monospace fs-6">
             {varKey}
           </span>
-          <span className="text-xs text-text-tertiary truncate hidden sm:block">
+          <span className="fs-6 text-body-tertiary text-truncate d-none sm:block">
             {info.description}
           </span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="d-flex align-items-center gap-2 flex-shrink-0">
           {info.url && (
             <a
               href={info.url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              className="d-inline-flex align-items-center gap-1 fs-6 text-primary hover:underline"
             >
               {t.env.getKey} <ExternalLink className="h-2.5 w-2.5" />
             </a>
@@ -173,22 +173,22 @@ function EnvVarRow({
   // Non-compact unset row
   if (!info.is_set && !isEditing) {
     return (
-      <div className="flex items-center justify-between gap-3 border border-border/50 px-4 py-2.5 min-w-0 overflow-hidden text-text-secondary hover:text-foreground transition-colors">
-        <div className="flex items-center gap-3 min-w-0">
-          <Label className="font-mono-ui text-xs">
+      <div className="d-flex align-items-center justify-content-between gap-3 border border-border/50 px-4 py-2.5 min-w-0 overflow-hidden text-body-secondary hover:text-foreground transition-colors">
+        <div className="d-flex align-items-center gap-3 min-w-0">
+          <Label className="font-monospace fs-6">
             {varKey}
           </Label>
-          <span className="text-xs text-text-tertiary truncate hidden sm:block">
+          <span className="fs-6 text-body-tertiary text-truncate d-none sm:block">
             {info.description}
           </span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="d-flex align-items-center gap-2 flex-shrink-0">
           {info.url && (
             <a
               href={info.url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              className="d-inline-flex align-items-center gap-1 fs-6 text-primary hover:underline"
             >
               {t.env.getKey} <ExternalLink className="h-2.5 w-2.5" />
             </a>
@@ -208,10 +208,10 @@ function EnvVarRow({
 
   // Full expanded row for set keys or keys being edited
   return (
-    <div className="grid gap-2 border border-border p-4 min-w-0 overflow-hidden">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Label className="font-mono-ui text-xs">{varKey}</Label>
+    <div className="d-grid gap-2 border border-secondary p-4 min-w-0 overflow-hidden">
+      <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+        <div className="d-flex align-items-center gap-2">
+          <Label className="font-monospace fs-6">{varKey}</Label>
           <Badge tone={info.is_set ? "success" : "outline"}>
             {info.is_set ? t.common.set : t.env.notSet}
           </Badge>
@@ -221,22 +221,22 @@ function EnvVarRow({
             href={info.url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            className="d-inline-flex align-items-center gap-1 fs-6 text-primary hover:underline"
           >
             {t.env.getKey} <ExternalLink className="h-2.5 w-2.5" />
           </a>
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground">{info.description}</p>
+      <p className="fs-6 text-body-secondary">{info.description}</p>
 
       {info.tools.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="d-flex flex-wrap gap-1">
           {info.tools.map((tool) => (
             <Badge
               key={tool}
               tone="secondary"
-              className="text-xs py-0 px-1.5"
+              className="fs-6 py-0 px-2"
             >
               {tool}
             </Badge>
@@ -245,7 +245,7 @@ function EnvVarRow({
       )}
 
       {!isEditing && (
-        <div className="flex items-center gap-2">
+        <div className="d-flex align-items-center gap-2">
           <div
             className={`flex-1 border border-border px-3 py-2 font-mono-ui text-xs ${
               isRevealed
@@ -293,7 +293,7 @@ function EnvVarRow({
       )}
 
       {isEditing && (
-        <div className="flex items-center gap-2">
+        <div className="d-flex align-items-center gap-2">
           <Input
             autoFocus
             type="text"
@@ -309,7 +309,7 @@ function EnvVarRow({
                   )
                 : t.env.enterValue
             }
-            className="flex-1 font-mono-ui text-xs"
+            className="flex-grow-1 font-monospace fs-6"
           />
           <Button
             size="sm"
@@ -383,41 +383,41 @@ function ProviderGroupCard({
   const keyUrl = apiKeys.find(([, info]) => info.url)?.[1]?.url ?? null;
 
   return (
-    <div className="border border-border">
+    <div className="border border-secondary">
       {/* Header — always visible */}
       <ListItem
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
-        className="justify-between gap-3 px-4 py-3 hover:bg-primary/5"
+        className="justify-content-between gap-3 px-4 py-3 hover:bg-primary/5"
       >
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="d-flex align-items-center gap-3 min-w-0">
           {expanded ? (
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <ChevronDown className="icon-sm text-body-secondary flex-shrink-0" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <ChevronRight className="icon-sm text-body-secondary flex-shrink-0" />
           )}
-          <span className="font-semibold text-sm tracking-wide">
+          <span className="fw-semibold fs-6 tracking-wide">
             {group.name === "Other" ? t.common.other : group.name}
           </span>
           {hasAnyConfigured && (
-            <Badge tone="success" className="text-xs">
+            <Badge tone="success" className="fs-6">
               {configuredCount} {t.common.set.toLowerCase()}
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="d-flex align-items-center gap-2 flex-shrink-0">
           {keyUrl && (
             <a
               href={keyUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              className="d-inline-flex align-items-center gap-1 fs-6 text-primary hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
               {t.env.getKey} <ExternalLink className="h-2.5 w-2.5" />
             </a>
           )}
-          <span className="text-xs text-text-tertiary">
+          <span className="fs-6 text-body-tertiary">
             {t.env.keysCount
               .replace("{count}", String(group.entries.length))
               .replace("{s}", group.entries.length !== 1 ? "s" : "")}
@@ -426,7 +426,7 @@ function ProviderGroupCard({
       </ListItem>
 
       {expanded && (
-        <div className="border-t border-border px-4 py-3 grid gap-2">
+        <div className="border-top border-secondary px-4 py-3 d-grid gap-2">
           {apiKeys.map(([key, info]) => (
             <EnvVarRow
               key={key}
@@ -545,33 +545,33 @@ function CustomKeysCard({
 
   return (
     <Card id="section-custom">
-      <CardHeader className="border-b border-border bg-card">
-        <div className="flex items-center gap-2">
-          <KeyRound className="h-5 w-5 text-muted-foreground" />
-          <CardTitle className="text-base">{t.env.customTitle}</CardTitle>
+      <CardHeader className="border-bottom border-secondary bg-card">
+        <div className="d-flex align-items-center gap-2">
+          <KeyRound className="icon-lg text-body-secondary" />
+          <CardTitle className="fs-6">{t.env.customTitle}</CardTitle>
         </div>
         <CardDescription>
           {t.env.customConfigured
             .replace("{count}", String(entries.length))
             .replace("{s}", entries.length !== 1 ? "s" : "")}
         </CardDescription>
-        <CardDescription className="text-text-tertiary">
+        <CardDescription className="text-body-tertiary">
           {t.env.customHint}
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="grid gap-3 overflow-hidden pt-4">
+      <CardContent className="d-grid gap-3 overflow-hidden pt-4">
         {entries.map(([key, info]) => (
           <EnvVarRow key={key} varKey={key} info={info} {...rowProps} />
         ))}
 
         {/* Add-key form */}
-        <div className="grid gap-2 border border-dashed border-border p-4">
-          <Label className="text-xs font-semibold tracking-wide">
+        <div className="d-grid gap-2 border border-dashed border-secondary p-4">
+          <Label className="fs-6 fw-semibold tracking-wide">
             {t.env.addCustomKey}
           </Label>
-          <div className="flex items-start gap-2">
-            <div className="flex-1">
+          <div className="d-flex align-items-start gap-2">
+            <div className="flex-grow-1">
               <Input
                 type="text"
                 value={newKey}
@@ -581,10 +581,10 @@ function CustomKeysCard({
                 }}
                 placeholder={t.env.customKeyNamePlaceholder}
                 aria-label={t.env.customKeyName}
-                className="w-full font-mono-ui text-xs"
+                className="w-100 font-monospace fs-6"
               />
               {showInvalid && (
-                <p className="mt-1 text-xs text-destructive">
+                <p className="mt-1 fs-6 text-danger">
                   {t.env.invalidKeyName}
                 </p>
               )}
@@ -662,7 +662,7 @@ export default function EnvPage() {
     };
     setAfterTitle(
       <nav
-        className="flex shrink-0 flex-nowrap items-center gap-1"
+        className="d-flex flex-shrink-0 flex-nowrap align-items-center gap-1"
         aria-label="Jump to section"
       >
         {sections.map((s) => (
@@ -670,7 +670,7 @@ export default function EnvPage() {
             key={s.id}
             type="button"
             onClick={() => scrollTo(s.id)}
-            className="shrink-0 cursor-pointer px-2 py-0.5 font-mondwest text-display text-xs tracking-wider text-text-secondary hover:text-foreground border border-border/50 hover:border-foreground/30 transition-colors"
+            className="flex-shrink-0 cursor-pointer px-2 py-0.5 font-mondwest fs-4 fw-semibold fs-6 ls-wide text-body-secondary hover:text-foreground border border-border/50 hover:border-foreground/30 transition-colors"
           >
             {s.label}
           </button>
@@ -880,8 +880,8 @@ export default function EnvPage() {
 
   if (!vars) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="text-2xl text-primary" />
+      <div className="d-flex align-items-center justify-content-center py-24">
+        <Spinner className="fs-3 text-primary" />
       </div>
     );
   }
@@ -894,7 +894,7 @@ export default function EnvPage() {
     pendingClearKey && vars ? vars[pendingClearKey]?.description : undefined;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="d-flex flex-column gap-6">
       <PluginSlot name="env:top" />
       <Toast toast={toast} />
 
@@ -911,12 +911,12 @@ export default function EnvPage() {
         loading={keyClear.isDeleting}
       />
 
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex flex-column gap-1">
+          <p className="fs-6 text-body-secondary">
             {t.env.description} <code>~/.hermes/.env</code>
           </p>
-          <p className="text-xs text-text-tertiary">
+          <p className="fs-6 text-body-tertiary">
             {t.env.changesNote}
           </p>
         </div>
@@ -937,10 +937,10 @@ export default function EnvPage() {
       </div>
 
       <Card id="section-providers">
-        <CardHeader className="border-b border-border bg-card">
-          <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-base">{t.env.llmProviders}</CardTitle>
+        <CardHeader className="border-bottom border-secondary bg-card">
+          <div className="d-flex align-items-center gap-2">
+            <Zap className="icon-lg text-body-secondary" />
+            <CardTitle className="fs-6">{t.env.llmProviders}</CardTitle>
           </div>
           <CardDescription>
             {t.env.providersConfigured
@@ -949,7 +949,7 @@ export default function EnvPage() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="grid gap-0 p-0">
+        <CardContent className="d-grid gap-0 p-0">
           {providerGroups.map((group) => (
             <ProviderGroupCard
               key={group.name}
@@ -1060,12 +1060,12 @@ function EnvCategoryCard({
   return (
     <Card id={`section-${section.category}`}>
       <CardHeader
-        className={`bg-card${hasContent ? " border-b border-border" : ""}`}
+        className={`bg-card${hasContent ? " border-bottom border-border" : ""}`}
       >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
-            <CardTitle className="text-base">{section.label}</CardTitle>
+        <div className="d-flex align-items-center justify-content-between gap-3">
+          <div className="d-flex min-w-0 align-items-center gap-2">
+            <Icon className="icon-lg flex-shrink-0 text-body-secondary" />
+            <CardTitle className="fs-6">{section.label}</CardTitle>
           </div>
 
           {section.unsetEntries.length > 0 && (
@@ -1073,7 +1073,7 @@ function EnvCategoryCard({
               type="button"
               onClick={() => setShowAll((open) => !open)}
               aria-expanded={showAll}
-              className="shrink-0 cursor-pointer border-0 bg-transparent p-0 font-mondwest text-xs tracking-[0.08em] text-text-secondary transition-colors hover:text-foreground"
+              className="flex-shrink-0 cursor-pointer border-0 bg-transparent p-0 font-mondwest fs-6 tracking-[0.08em] text-body-secondary transition-colors hover:text-foreground"
             >
               {showAll ? t.env.showLess : t.env.showMore}
             </button>
@@ -1086,14 +1086,14 @@ function EnvCategoryCard({
         </CardDescription>
 
         {section.hint && (
-          <CardDescription className="text-text-tertiary">
+          <CardDescription className="text-body-tertiary">
             {section.hint}
           </CardDescription>
         )}
       </CardHeader>
 
       {hasContent && (
-        <CardContent className="grid gap-3 overflow-hidden pt-4">
+        <CardContent className="d-grid gap-3 overflow-hidden pt-4">
           {section.setEntries.map(([key, info]) => (
             <EnvVarRow key={key} varKey={key} info={info} {...rowProps} />
           ))}

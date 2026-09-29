@@ -32,16 +32,16 @@ export function LoadErrorNotice({ what, detail, onRetry, className }: LoadErrorN
         className,
       )}
     >
-      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
-      <div className="min-w-0 flex-1">
-        <div className="text-destructive">{copy.title}</div>
-        {copy.details && <div className="mt-0.5 text-muted-foreground">{copy.details}</div>}
+      <AlertCircle className="mt-1 icon-sm flex-shrink-0 text-danger" />
+      <div className="min-w-0 flex-grow-1">
+        <div className="text-danger">{copy.title}</div>
+        {copy.details && <div className="mt-1 text-body-secondary">{copy.details}</div>}
         <Button
           size="sm"
           outlined
           className="mt-1"
           onClick={onRetry}
-          prefix={<RotateCcw className="h-3.5 w-3.5" />}
+          prefix={<RotateCcw className="icon-sm" />}
         >
           {t.common.retry}
         </Button>

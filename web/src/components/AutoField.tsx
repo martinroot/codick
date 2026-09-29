@@ -10,9 +10,9 @@ function FieldHint({ schema, schemaKey }: { schema: Record<string, unknown>; sch
   if (!keyPath && !description) return null;
 
   return (
-    <div className="flex flex-col gap-0.5">
-      {keyPath && <span className="text-xs font-mono text-text-tertiary">{keyPath}</span>}
-      {description && <span className="text-xs text-text-secondary">{description}</span>}
+    <div className="d-flex flex-column gap-0.5">
+      {keyPath && <span className="fs-6 font-monospace text-body-tertiary">{keyPath}</span>}
+      {description && <span className="fs-6 text-body-secondary">{description}</span>}
     </div>
   );
 }
@@ -39,10 +39,10 @@ function NestedValueEditor({
 }) {
   if (isRecord(value)) {
     return (
-      <div className="grid gap-2 border border-border p-2">
+      <div className="d-grid gap-2 border border-secondary p-2">
         {Object.entries(value).map(([subKey, subVal]) => (
-          <div key={subKey} className="grid gap-1">
-            <Label className="text-xs text-muted-foreground">{subKey}</Label>
+          <div key={subKey} className="d-grid gap-1">
+            <Label className="fs-6 text-body-secondary">{subKey}</Label>
             <NestedValueEditor
               fieldKey={`${fieldKey}.${subKey}`}
               value={subVal}
@@ -56,10 +56,10 @@ function NestedValueEditor({
 
   if (Array.isArray(value)) {
     return (
-      <div className="grid gap-2">
+      <div className="d-grid gap-2">
         {value.map((item, index) => (
-          <div key={`${fieldKey}.${index}`} className="grid gap-1">
-            <Label className="text-xs text-muted-foreground">Item {index + 1}</Label>
+          <div key={`${fieldKey}.${index}`} className="d-grid gap-1">
+            <Label className="fs-6 text-body-secondary">Item {index + 1}</Label>
             <NestedValueEditor
               fieldKey={`${fieldKey}.${index}`}
               value={item}
@@ -77,7 +77,7 @@ function NestedValueEditor({
     <Input
       value={formatScalar(value)}
       onChange={(e) => onChange(e.target.value)}
-      className="text-xs"
+      className="fs-6"
     />
   );
 }
@@ -93,8 +93,8 @@ export function AutoField({
 
   if (isRecord(value) || (Array.isArray(value) && value.some((item) => isRecord(item)))) {
     return (
-      <div className="grid gap-3 border border-border p-3">
-        <Label className="text-xs font-medium">{label}</Label>
+      <div className="d-grid gap-3 border border-secondary p-3">
+        <Label className="fs-6 fw-medium">{label}</Label>
         <FieldHint schema={schema} schemaKey={schemaKey} />
         <NestedValueEditor fieldKey={schemaKey} value={value} onChange={onChange} />
       </div>
@@ -103,9 +103,9 @@ export function AutoField({
 
   if (schema.type === "boolean") {
     return (
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-col gap-0.5">
-          <Label className="text-sm">{label}</Label>
+      <div className="d-flex align-items-center justify-content-between gap-4">
+        <div className="d-flex flex-column gap-0.5">
+          <Label className="fs-6">{label}</Label>
           <FieldHint schema={schema} schemaKey={schemaKey} />
         </div>
         <Switch checked={!!value} onCheckedChange={onChange} />
@@ -116,8 +116,8 @@ export function AutoField({
   if (schema.type === "select") {
     const options = (schema.options as string[]) ?? [];
     return (
-      <div className="grid gap-1.5">
-        <Label className="text-sm">{label}</Label>
+      <div className="d-grid gap-2">
+        <Label className="fs-6">{label}</Label>
         <FieldHint schema={schema} schemaKey={schemaKey} />
         <Select value={String(value ?? "")} onValueChange={(v) => onChange(v)}>
           {options.map((opt) => (
@@ -132,8 +132,8 @@ export function AutoField({
 
   if (schema.type === "number") {
     return (
-      <div className="grid gap-1.5">
-        <Label className="text-sm">{label}</Label>
+      <div className="d-grid gap-2">
+        <Label className="fs-6">{label}</Label>
         <FieldHint schema={schema} schemaKey={schemaKey} />
         <Input
           type="number"
@@ -156,11 +156,11 @@ export function AutoField({
 
   if (schema.type === "text") {
     return (
-      <div className="grid gap-1.5">
-        <Label className="text-sm">{label}</Label>
+      <div className="d-grid gap-2">
+        <Label className="fs-6">{label}</Label>
         <FieldHint schema={schema} schemaKey={schemaKey} />
         <textarea
-          className="flex min-h-[80px] w-full border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="d-flex min-h-[80px] w-100 border border-input bg-transparent px-3 py-2 fs-6 shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           value={String(value ?? "")}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -170,8 +170,8 @@ export function AutoField({
 
   if (schema.type === "list") {
     return (
-      <div className="grid gap-1.5">
-        <Label className="text-sm">{label}</Label>
+      <div className="d-grid gap-2">
+        <Label className="fs-6">{label}</Label>
         <FieldHint schema={schema} schemaKey={schemaKey} />
         <Input
           value={Array.isArray(value) ? value.join(", ") : String(value ?? "")}
@@ -190,8 +190,8 @@ export function AutoField({
   }
 
   return (
-    <div className="grid gap-1.5">
-      <Label className="text-sm">{label}</Label>
+    <div className="d-grid gap-2">
+      <Label className="fs-6">{label}</Label>
       <FieldHint schema={schema} schemaKey={schemaKey} />
       <Input value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />
     </div>

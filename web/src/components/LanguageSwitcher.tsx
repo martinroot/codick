@@ -63,7 +63,7 @@ export function LanguageSwitcher({ collapsed = false, dropUp = false }: Language
   const sheetTitle = t.language.switchTo;
 
   return (
-    <div ref={containerRef} className="relative inline-flex">
+    <div ref={containerRef} className="position-relative d-inline-flex">
       <Button
         ghost
         onClick={() => setOpen((v) => !v)}
@@ -76,9 +76,9 @@ export function LanguageSwitcher({ collapsed = false, dropUp = false }: Language
           collapsed && "hover:bg-transparent",
         )}
       >
-        <span className="inline-flex items-center gap-1.5">
+        <span className="d-inline-flex align-items-center gap-2">
           <Typography
-            className="hidden sm:inline text-display tracking-wide text-xs"
+            className="d-none sm:inline fs-4 fw-semibold tracking-wide fs-6"
           >
             {locale === "en" ? "EN" : current.name}
           </Typography>
@@ -162,9 +162,9 @@ function LanguageSwitcherOptions({
             role="option"
             type="button"
           >
-            <span className="truncate">{meta.name}</span>
+            <span className="text-truncate">{meta.name}</span>
 
-            {selected && <Check className="ml-auto h-3 w-3 shrink-0 text-midground" />}
+            {selected && <Check className="ml-auto icon-sm flex-shrink-0 text-midground" />}
           </button>
         );
       })}

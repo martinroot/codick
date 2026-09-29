@@ -115,11 +115,11 @@ import type { StatusResponse, UpdateCheckResponse } from "@/lib/api";
 function RouteFallback({ label = "Loading…" }: { label?: string }) {
   return (
     <div
-      className="flex min-h-[12rem] flex-1 items-center justify-center"
+      className="d-flex min-h-[12rem] flex-grow-1 align-items-center justify-content-center"
       aria-busy="true"
       aria-live="polite"
     >
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="d-flex align-items-center gap-2 fs-6 text-body-secondary">
         <Spinner />
         <span>{label}</span>
       </div>
@@ -526,13 +526,13 @@ export default function App() {
     <ProfileProvider>
     <div
       data-layout-variant={layoutVariant}
-      className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-background-base text-text-primary antialiased"
+      className="d-flex h-dvh max-h-dvh min-h-0 flex-column overflow-hidden bg-body text-body-emphasis antialiased"
     >
       <SelectionSwitcher />
 
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 z-0"
+        className="pointer-events-none position-fixed top-0 start-0 w-100 h-100 z-0"
       >
         <PluginSlot name="backdrop" />
       </div>
@@ -565,12 +565,12 @@ export default function App() {
           aria-label={t.app.openNavigation}
           aria-expanded={mobileOpen}
           aria-controls="app-sidebar"
-          className="text-text-secondary hover:text-midground"
+          className="text-body-secondary hover:text-midground"
         >
           <Menu />
         </Button>
 
-        <Typography className="font-bold text-[0.95rem] leading-[0.95] tracking-[0.05em] text-midground">
+        <Typography className="fw-bold text-[0.95rem] leading-[0.95] tracking-[0.05em] text-midground">
           {t.app.brand}
         </Typography>
       </header>
@@ -591,7 +591,7 @@ export default function App() {
           fixed lg:hidden header is h-14/z-40; previously each banner carried
           its own mt-14 AND the content kept pt-14, so two visible banners
           stacked three offsets (NS-656 review P3). One spacer, applied once. */}
-      <div aria-hidden className="h-14 shrink-0 lg:hidden" />
+      <div aria-hidden className="h-14 flex-shrink-0 lg:hidden" />
       <PluginSlot name="header-banner" />
       <ProfileScopeBanner />
       <MemoryPressureBanner status={sidebarStatus} />
@@ -640,7 +640,7 @@ export default function App() {
               >
                 <PluginSlot name="header-left" />
 
-                <Typography className="font-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground uppercase">
+                <Typography className="fw-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground text-uppercase">
                   Hermes
                   <br />
                   Agent
@@ -652,7 +652,7 @@ export default function App() {
                 size="icon"
                 onClick={closeMobile}
                 aria-label={t.app.closeNavigation}
-                className="d-lg-none text-text-secondary hover:text-midground"
+                className="d-lg-none text-body-secondary hover:text-midground"
               >
                 <X />
               </Button>
@@ -664,12 +664,12 @@ export default function App() {
                 aria-label={
                   collapsed ? t.common.expand : t.common.collapse
                 }
-                className="d-none d-lg-flex text-text-secondary hover:text-midground"
+                className="d-none d-lg-flex text-body-secondary hover:text-midground"
               >
                 {collapsed ? (
-                  <PanelLeftOpen className="h-4 w-4" />
+                  <PanelLeftOpen className="icon-md" />
                 ) : (
-                  <PanelLeftClose className="h-4 w-4" />
+                  <PanelLeftClose className="icon-md" />
                 )}
               </Button>
             </div>
@@ -700,7 +700,7 @@ export default function App() {
               {sidebarNav.pluginItems.length > 0 && (
                 <div
                   aria-labelledby="hermes-sidebar-plugin-nav-heading"
-                  className="flex flex-col border-t border-current/10 pb-2"
+                  className="d-flex flex-column border-top border-current/10 pb-2"
                   role="group"
                 >
                   <span
@@ -714,7 +714,7 @@ export default function App() {
                     {t.app.pluginNavSection}
                   </span>
 
-                  <ul className="flex flex-col">
+                  <ul className="d-flex flex-column">
                     {sidebarNav.pluginItems.map((item) => (
                       <SidebarNavLink
                         closeMobile={closeMobile}
@@ -928,7 +928,7 @@ function SidebarNavLink({
       >
         {() => (
           <>
-            <Icon className="shrink-0 h-4 w-4" />
+            <Icon className="flex-shrink-0 icon-md" />
 
             <span
               className={cn(
@@ -1077,7 +1077,7 @@ function SidebarSystemActions({
 
       <GatewayDot collapsed={collapsed} status={status} tooltipWarmRef={tooltipWarmRef} />
 
-      <ul className="flex flex-col">
+      <ul className="d-flex flex-column">
         {items.map((item) => (
           <SystemActionButton
             key={item.action}
@@ -1178,9 +1178,9 @@ function SystemActionButton({
         )}
       >
         {isPending ? (
-          <Spinner className="shrink-0 text-[0.875rem]" />
+          <Spinner className="flex-shrink-0 text-[0.875rem]" />
         ) : isActionRunning && spin ? (
-          <Spinner className="shrink-0 text-[0.875rem]" />
+          <Spinner className="flex-shrink-0 text-[0.875rem]" />
         ) : (
           <Icon
             className={cn(
@@ -1199,13 +1199,13 @@ function SystemActionButton({
 
         <span
           aria-hidden
-          className="absolute inset-y-0.5 left-1.5 right-1.5 bg-midground opacity-0 pointer-events-none transition-opacity duration-200 group-hover/action:opacity-5"
+          className="position-absolute inset-y-0.5 left-1.5 right-1.5 bg-midground opacity-0 pointer-events-none transition-opacity duration-200 group-hover/action:opacity-5"
         />
 
         {busy && (
           <span
             aria-hidden
-            className="absolute left-0 top-0 bottom-0 w-px bg-midground"
+            className="position-absolute left-0 top-0 bottom-0 w-px bg-midground"
           />
         )}
       </button>
@@ -1248,7 +1248,7 @@ function SidebarIconWithTooltip({
       {collapsed && (
         <span
           aria-hidden
-          className="absolute inset-y-0 inset-x-[-0.375rem] bg-midground opacity-0 pointer-events-none transition-opacity duration-200 group-hover/icon:opacity-5 hidden lg:block"
+          className="position-absolute inset-y-0 inset-x-[-0.375rem] bg-midground opacity-0 pointer-events-none transition-opacity duration-200 group-hover/icon:opacity-5 d-none lg:block"
         />
       )}
 
@@ -1307,7 +1307,7 @@ function GatewayDot({ collapsed, status, tooltipWarmRef }: GatewayDotProps) {
     >
       <span
         aria-hidden
-        className={cn("h-1.5 w-1.5 rounded-full", color)}
+        className={cn("h-1.5 w-1.5 rounded-circle", color)}
       />
 
       {hovered && tooltipAnchor && (

@@ -298,7 +298,7 @@ export default function McpPage() {
   useLayoutEffect(() => {
     setEnd(
       <Button
-        className="uppercase"
+        className="text-uppercase"
         size="sm"
         onClick={() => setCreateModalOpen(true)}
       >
@@ -312,8 +312,8 @@ export default function McpPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="text-2xl text-primary" />
+      <div className="d-flex align-items-center justify-content-center py-24">
+        <Spinner className="fs-3 text-primary" />
       </div>
     );
   }
@@ -324,7 +324,7 @@ export default function McpPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="d-flex flex-column gap-6">
       <Toast toast={toast} />
 
       <DeleteConfirmDialog
@@ -344,7 +344,7 @@ export default function McpPage() {
       {createModalOpen && (
         <div
           ref={createModalRef}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
           onClick={(e) => e.target === e.currentTarget && closeCreateModal()}
           role="dialog"
           aria-modal="true"
@@ -360,23 +360,23 @@ export default function McpPage() {
               ghost
               size="icon"
               onClick={closeCreateModal}
-              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
               aria-label="Close"
             >
               <X />
             </Button>
 
-            <header className="p-5 pb-3 border-b border-border">
+            <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="create-mcp-title"
-                className="font-mondwest text-display text-base tracking-wider"
+                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
               >
                 Add MCP server
               </h2>
             </header>
 
-            <div className="p-5 grid gap-4">
-              <div className="grid gap-2">
+            <div className="p-5 d-grid gap-4">
+              <div className="d-grid gap-2">
                 <Label htmlFor="mcp-name">Name</Label>
                 <Input
                   id="mcp-name"
@@ -387,7 +387,7 @@ export default function McpPage() {
                 />
               </div>
 
-              <div className="grid gap-2">
+              <div className="d-grid gap-2">
                 <Label htmlFor="mcp-transport">Transport</Label>
                 <Select
                   id="mcp-transport"
@@ -405,7 +405,7 @@ export default function McpPage() {
 
               {transport === "http" ? (
                 <>
-                  <div className="grid gap-2">
+                  <div className="d-grid gap-2">
                     <Label htmlFor="mcp-url">URL</Label>
                     <Input
                       id="mcp-url"
@@ -414,7 +414,7 @@ export default function McpPage() {
                       onChange={(e) => setUrl(e.target.value)}
                     />
                   </div>
-                  <div className="grid gap-2">
+                  <div className="d-grid gap-2">
                     <Label htmlFor="mcp-auth">Authentication</Label>
                     <Select
                       id="mcp-auth"
@@ -431,7 +431,7 @@ export default function McpPage() {
                     </Select>
                   </div>
                   {httpAuth === "header" && (
-                    <div className="grid gap-2">
+                    <div className="d-grid gap-2">
                       <Label htmlFor="mcp-bearer-token">Bearer token</Label>
                       <Input
                         id="mcp-bearer-token"
@@ -441,14 +441,14 @@ export default function McpPage() {
                         value={bearerToken}
                         onChange={(e) => setBearerToken(e.target.value)}
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="fs-6 text-body-secondary">
                         Stored in this profile&apos;s .env; config.yaml keeps
                         only an environment-variable reference.
                       </p>
                     </div>
                   )}
                   {httpAuth === "oauth" && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="fs-6 text-body-secondary">
                       Add the server, then use Authenticate. Hermes opens the
                       OAuth browser on the machine running the Dashboard
                       backend.
@@ -457,7 +457,7 @@ export default function McpPage() {
                 </>
               ) : (
                 <>
-                  <div className="grid gap-2">
+                  <div className="d-grid gap-2">
                     <Label htmlFor="mcp-command">Command</Label>
                     <Input
                       id="mcp-command"
@@ -466,7 +466,7 @@ export default function McpPage() {
                       onChange={(e) => setCommand(e.target.value)}
                     />
                   </div>
-                  <div className="grid gap-2">
+                  <div className="d-grid gap-2">
                     <Label htmlFor="mcp-args">Args</Label>
                     <Input
                       id="mcp-args"
@@ -475,13 +475,13 @@ export default function McpPage() {
                       onChange={(e) => setArgs(e.target.value)}
                     />
                   </div>
-                  <div className="grid gap-2">
+                  <div className="d-grid gap-2">
                     <Label htmlFor="mcp-env">
                       Environment (KEY=VALUE per line)
                     </Label>
                     <textarea
                       id="mcp-env"
-                      className="flex min-h-[80px] w-full border border-border bg-background/40 px-3 py-2 text-sm font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+                      className="d-flex min-h-[80px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
                       placeholder={"API_KEY=secret\nDEBUG=1"}
                       value={env}
                       onChange={(e) => setEnv(e.target.value)}
@@ -490,9 +490,9 @@ export default function McpPage() {
                 </>
               )}
 
-              <div className="flex justify-end">
+              <div className="d-flex justify-content-end">
                 <Button
-                  className="uppercase"
+                  className="text-uppercase"
                   size="sm"
                   onClick={handleCreate}
                   disabled={creating}
@@ -510,7 +510,7 @@ export default function McpPage() {
       {installEntry && (
         <div
           ref={installModalRef}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
           onClick={(e) => e.target === e.currentTarget && setInstallEntry(null)}
           role="dialog"
           aria-modal="true"
@@ -526,27 +526,27 @@ export default function McpPage() {
               ghost
               size="icon"
               onClick={() => setInstallEntry(null)}
-              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
               aria-label="Close"
             >
               <X />
             </Button>
 
-            <header className="p-5 pb-3 border-b border-border">
+            <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="install-mcp-title"
-                className="font-mondwest text-display text-base tracking-wider"
+                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
               >
                 Install {installEntry.name}
               </h2>
             </header>
 
-            <div className="p-5 grid gap-4">
-              <p className="text-xs text-muted-foreground">
+            <div className="p-5 d-grid gap-4">
+              <p className="fs-6 text-body-secondary">
                 This MCP requires the following values to be configured.
               </p>
               {installEntry.required_env.map((item) => (
-                <div className="grid gap-2" key={item.name}>
+                <div className="d-grid gap-2" key={item.name}>
                   <Label htmlFor={`install-env-${item.name}`}>
                     {item.prompt}
                     {item.required ? " *" : ""}
@@ -566,9 +566,9 @@ export default function McpPage() {
                 </div>
               ))}
 
-              <div className="flex justify-end">
+              <div className="d-flex justify-content-end">
                 <Button
-                  className="uppercase"
+                  className="text-uppercase"
                   size="sm"
                   onClick={handleInstallSubmit}
                   disabled={installingName === installEntry.name}
@@ -589,22 +589,22 @@ export default function McpPage() {
       )}
 
       {/* ── Your MCP servers ── */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="d-flex flex-column gap-3">
+        <div className="d-flex flex-column gap-3 sm:flex-row sm:items-end sm:justify-between">
           <H2
             variant="sm"
-            className="flex items-center gap-2 text-muted-foreground"
+            className="d-flex align-items-center gap-2 text-body-secondary"
           >
-            <Server className="h-4 w-4" />
+            <Server className="icon-md" />
             Your MCP servers ({servers.length})
           </H2>
         </div>
 
-        {restartNote && <p className="text-xs text-warning">{restartNote}</p>}
+        {restartNote && <p className="fs-6 text-warning">{restartNote}</p>}
 
         {servers.length === 0 && (
           <Card>
-            <CardContent className="flex flex-col items-center gap-3 py-8 text-center text-sm text-muted-foreground">
+            <CardContent className="d-flex flex-column align-items-center gap-3 py-8 text-center fs-6 text-body-secondary">
               <p>
                 No MCP servers yet. MCP servers give the agent extra tools (GitHub, databases,
                 browsers…). Pick one from the catalog below, or click Add Server at the top of the page.
@@ -616,7 +616,7 @@ export default function McpPage() {
                     .getElementById("mcp-catalog")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                prefix={<Package className="h-3.5 w-3.5" />}
+                prefix={<Package className="icon-sm" />}
               >
                 Browse catalog
               </Button>
@@ -636,9 +636,9 @@ export default function McpPage() {
                   !server.enabled && "opacity-60",
                 )}
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-sm truncate">
+                <div className="flex-grow-1 min-w-0">
+                  <div className="d-flex align-items-center gap-2 mb-1">
+                    <span className="fw-medium fs-6 text-truncate">
                       {server.name}
                     </span>
                     <Badge
@@ -654,13 +654,13 @@ export default function McpPage() {
                     )}
                     {!server.enabled && <Badge tone="outline">disabled</Badge>}
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="d-flex align-items-center gap-4 fs-6 text-body-secondary">
                     {server.transport === "http" ? (
-                      <span className="font-mono truncate">
+                      <span className="font-monospace text-truncate">
                         {server.url ?? "—"}
                       </span>
                     ) : (
-                      <span className="font-mono truncate">
+                      <span className="font-monospace text-truncate">
                         {[server.command, ...(server.args ?? [])]
                           .filter(Boolean)
                           .join(" ") || "—"}
@@ -673,7 +673,7 @@ export default function McpPage() {
                     )}
                   </div>
                   {result && (
-                    <div className="mt-2 text-xs">
+                    <div className="mt-2 fs-6">
                       {result.ok ? (
                         <p className="text-success">
                           {result.tools.length === 0
@@ -683,7 +683,7 @@ export default function McpPage() {
                                 .join(", ")}`}
                         </p>
                       ) : (
-                        <p className="text-destructive">
+                        <p className="text-danger">
                           {result.error ?? "Connection failed"}
                         </p>
                       )}
@@ -691,7 +691,7 @@ export default function McpPage() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="d-flex align-items-center gap-1 flex-shrink-0">
                   {server.auth === "oauth" && (
                     <Button
                       ghost
@@ -755,24 +755,24 @@ export default function McpPage() {
       </div>
 
       {/* ── Catalog ── */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="d-flex flex-column gap-3">
+        <div className="d-flex flex-column gap-3 sm:flex-row sm:items-end sm:justify-between">
           <H2
             variant="sm"
-            className="flex items-center gap-2 text-muted-foreground"
+            className="d-flex align-items-center gap-2 text-body-secondary"
           >
-            <Package className="h-4 w-4" />
+            <Package className="icon-md" />
             <span id="mcp-catalog">Catalog ({catalog.length})</span>
           </H2>
         </div>
 
-        <p className="text-xs text-muted-foreground">
+        <p className="fs-6 text-body-secondary">
           Browse Nous-approved MCP servers and install them with one click.
         </p>
 
         {catalog.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <CardContent className="py-8 text-center fs-6 text-body-secondary">
               No catalog entries available.
             </CardContent>
           </Card>
@@ -784,10 +784,10 @@ export default function McpPage() {
 
           return (
             <Card key={entry.name}>
-              <CardContent className="flex items-start gap-4 py-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="font-medium text-sm truncate">
+              <CardContent className="d-flex align-items-start gap-4 py-4">
+                <div className="flex-grow-1 min-w-0">
+                  <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                    <span className="fw-medium fs-6 text-truncate">
                       {entry.name}
                     </span>
                     <Badge
@@ -801,7 +801,7 @@ export default function McpPage() {
                         href={entry.source}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-primary underline underline-offset-2 hover:opacity-80"
+                        className="fs-6 text-primary text-decoration-underline underline-offset-2 hover:opacity-80"
                       >
                         source ↗
                       </a>
@@ -816,21 +816,21 @@ export default function McpPage() {
                     )}
                   </div>
                   {entry.description && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="fs-6 text-body-secondary">
                       {entry.description}
                     </p>
                   )}
                   {/* Connection detail: what the agent actually talks to. */}
                   {entry.transport === "http" && entry.url && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      <span className="font-medium">Endpoint:</span>{" "}
-                      <code className="font-mono">{entry.url}</code>
+                    <p className="mt-1 fs-6 text-body-secondary">
+                      <span className="fw-medium">Endpoint:</span>{"    "}
+                      <code className="font-monospace">{entry.url}</code>
                     </p>
                   )}
                   {entry.transport === "stdio" && entry.command && (
-                    <p className="mt-1 text-xs text-muted-foreground break-all">
-                      <span className="font-medium">Runs:</span>{" "}
-                      <code className="font-mono">
+                    <p className="mt-1 fs-6 text-body-secondary break-all">
+                      <span className="fw-medium">Runs:</span>{"    "}
+                      <code className="font-monospace">
                         {[entry.command, ...entry.args].join(" ")}
                       </code>
                     </p>
@@ -838,26 +838,26 @@ export default function McpPage() {
                   {/* Git bootstrap — surfaced so users see what gets cloned/run
                       before they install (matches the docs trust model). */}
                   {entry.install_url && (
-                    <p className="mt-1 text-xs text-muted-foreground break-all">
-                      <span className="font-medium">Installs from:</span>{" "}
+                    <p className="mt-1 fs-6 text-body-secondary break-all">
+                      <span className="fw-medium">Installs from:</span>{"    "}
                       {isHttpUrl(entry.install_url) ? (
                         <a
                           href={entry.install_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary underline underline-offset-2 hover:opacity-80"
+                          className="text-primary text-decoration-underline underline-offset-2 hover:opacity-80"
                         >
                           {entry.install_url}
                         </a>
                       ) : (
-                        <code className="font-mono">{entry.install_url}</code>
+                        <code className="font-monospace">{entry.install_url}</code>
                       )}
                       {entry.install_ref && <span> @ {entry.install_ref}</span>}
                     </p>
                   )}
                   {entry.bootstrap.length > 0 && (
-                    <details className="mt-1 text-xs text-muted-foreground">
-                      <summary className="cursor-pointer select-none">
+                    <details className="mt-1 fs-6 text-body-secondary">
+                      <summary className="cursor-pointer user-select-none">
                         Bootstrap commands ({entry.bootstrap.length})
                       </summary>
                       <ul className="mt-1 ml-3 list-disc space-y-0.5">
@@ -866,18 +866,18 @@ export default function McpPage() {
                             key={`${entry.name}-bs-${i}`}
                             className="break-all"
                           >
-                            <code className="font-mono">{cmd}</code>
+                            <code className="font-monospace">{cmd}</code>
                           </li>
                         ))}
                       </ul>
                     </details>
                   )}
                   {entry.post_install && (
-                    <details className="mt-1 text-xs text-muted-foreground">
-                      <summary className="cursor-pointer select-none">
+                    <details className="mt-1 fs-6 text-body-secondary">
+                      <summary className="cursor-pointer user-select-none">
                         Setup notes
                       </summary>
-                      <p className="mt-1 whitespace-pre-wrap">
+                      <p className="mt-1 text-wrap">
                         {entry.post_install.trim()}
                       </p>
                     </details>
@@ -885,19 +885,19 @@ export default function McpPage() {
                   {entryDiags.map((d, i) => (
                     <p
                       key={`${entry.name}-diag-${i}`}
-                      className="text-xs text-warning mt-1"
+                      className="fs-6 text-warning mt-1"
                     >
                       {d.message}
                     </p>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="d-flex align-items-center gap-1 flex-shrink-0">
                   {entry.installed ? (
                     <Badge tone="success">Installed</Badge>
                   ) : (
                     <Button
-                      className="uppercase"
+                      className="text-uppercase"
                       size="sm"
                       onClick={() => handleInstallClick(entry)}
                       disabled={isInstalling}

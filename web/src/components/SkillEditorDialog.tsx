@@ -148,10 +148,10 @@ function EditorBody({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="grid gap-3">
+      <div className="d-grid gap-3">
         {!isEdit && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
+          <div className="d-grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="d-grid gap-2">
               <Label htmlFor="skill-editor-name">Name</Label>
               <Input
                 id="skill-editor-name"
@@ -161,7 +161,7 @@ function EditorBody({
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <div className="grid gap-1.5">
+            <div className="d-grid gap-2">
               <Label htmlFor="skill-editor-category">Category (optional)</Label>
               <Input
                 id="skill-editor-category"
@@ -173,17 +173,17 @@ function EditorBody({
           </div>
         )}
 
-        <div className="grid gap-1.5">
+        <div className="d-grid gap-2">
           <Label htmlFor="skill-editor-content">SKILL.md</Label>
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Spinner className="text-xl text-primary" />
+            <div className="d-flex align-items-center justify-content-center py-16">
+              <Spinner className="fs-4 text-primary" />
             </div>
           ) : (
             <textarea
               id="skill-editor-content"
               spellCheck={false}
-              className="min-h-[320px] max-h-[55vh] w-full resize-y border border-border bg-background/40 px-3 py-2 font-mono text-xs leading-relaxed shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+              className="min-h-[320px] max-h-[55vh] w-100 resize-y border border-secondary bg-background/40 px-3 py-2 font-monospace fs-6 leading-relaxed shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
               value={content}
               onChange={(e) => setContent(e.target.value)}
             />
@@ -191,18 +191,18 @@ function EditorBody({
         </div>
 
         {error && (
-          <p className="whitespace-pre-wrap text-xs text-destructive">
+          <p className="text-wrap fs-6 text-danger">
             {error}
           </p>
         )}
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="d-flex align-items-center justify-content-end gap-2">
           <Button ghost size="sm" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
           <Button
             size="sm"
-            className="uppercase"
+            className="text-uppercase"
             onClick={handleSave}
             disabled={saving || loading}
             prefix={saving ? <Spinner /> : undefined}

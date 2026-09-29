@@ -97,7 +97,7 @@ function NameCheckboxPicker({
   const all = [...orphaned.map((name) => ({ name, description: "" })), ...available];
 
   if (all.length === 0) {
-    return <p className="text-xs text-muted-foreground">{emptyLabel}</p>;
+    return <p className="fs-6 text-body-secondary">{emptyLabel}</p>;
   }
 
   const toggle = (name: string, checked: boolean) => {
@@ -108,12 +108,12 @@ function NameCheckboxPicker({
   return (
     <div
       id={id}
-      className="max-h-36 overflow-y-auto border border-border bg-background/40 p-1"
+      className="max-h-36 overflow-y-auto border border-secondary bg-background/40 p-1"
     >
       {all.map((item) => (
         <label
           key={item.name}
-          className="flex cursor-pointer items-center gap-2 px-2 py-1 text-xs hover:bg-muted/40"
+          className="d-flex cursor-pointer align-items-center gap-2 px-2 py-1 fs-6 hover:bg-muted/40"
           title={item.description || undefined}
         >
           <input
@@ -122,7 +122,7 @@ function NameCheckboxPicker({
             checked={selected.includes(item.name)}
             onChange={(e) => toggle(item.name, e.target.checked)}
           />
-          <span className="font-mono-ui truncate">{item.name}</span>
+          <span className="font-monospace text-truncate">{item.name}</span>
         </label>
       ))}
     </div>
@@ -221,13 +221,13 @@ function CronAdvancedFields({
   const models = selectedProvider?.models ?? [];
 
   return (
-    <details className="border border-border bg-background/30 p-3" open>
-      <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <details className="border border-secondary bg-background/30 p-3" open>
+      <summary className="cursor-pointer fs-6 fw-medium text-uppercase tracking-wide text-body-secondary">
         Advanced fields
       </summary>
-      <div className="mt-3 grid gap-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="grid gap-1">
+      <div className="mt-3 d-grid gap-3">
+        <div className="d-grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="d-grid gap-1">
             <Label htmlFor={`${idPrefix}-provider`}>Provider</Label>
             <Select
               id={`${idPrefix}-provider`}
@@ -243,7 +243,7 @@ function CronAdvancedFields({
               )}
             </Select>
           </div>
-          <div className="grid gap-1">
+          <div className="d-grid gap-1">
             <Label htmlFor={`${idPrefix}-model`}>Model</Label>
             <Select
               id={`${idPrefix}-model`}
@@ -259,7 +259,7 @@ function CronAdvancedFields({
           </div>
         </div>
 
-        <div className="grid gap-1">
+        <div className="d-grid gap-1">
           <Label htmlFor={`${idPrefix}-base-url`}>Base URL override</Label>
           <Input
             id={`${idPrefix}-base-url`}
@@ -269,8 +269,8 @@ function CronAdvancedFields({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="d-grid grid-cols-1 sm:grid-cols-2 gap-3 align-items-end">
+          <label className="d-flex align-items-center gap-2 fs-6 text-body-secondary">
             <input
               type="checkbox"
               className="accent-foreground"
@@ -279,7 +279,7 @@ function CronAdvancedFields({
             />
             no_agent: run the script only and deliver stdout verbatim
           </label>
-          <div className="grid gap-1">
+          <div className="d-grid gap-1">
             <Label htmlFor={`${idPrefix}-script`}>Script</Label>
             <Input
               id={`${idPrefix}-script`}
@@ -290,7 +290,7 @@ function CronAdvancedFields({
           </div>
         </div>
 
-        <div className="grid gap-1">
+        <div className="d-grid gap-1">
           <Label htmlFor={`${idPrefix}-workdir`}>Workdir</Label>
           <Input
             id={`${idPrefix}-workdir`}
@@ -300,7 +300,7 @@ function CronAdvancedFields({
           />
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <label className="d-flex align-items-center gap-2 fs-6 text-body-secondary">
           <input
             type="checkbox"
             className="accent-foreground"
@@ -310,18 +310,18 @@ function CronAdvancedFields({
           continuity: each run sees the previous run&apos;s output (dedupe, pick up where it left off)
         </label>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="grid gap-1">
+        <div className="d-grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="d-grid gap-1">
             <Label htmlFor={`${idPrefix}-context-from`}>context_from job IDs</Label>
             <textarea
               id={`${idPrefix}-context-from`}
-              className="flex min-h-[64px] w-full border border-border bg-background/40 px-3 py-2 text-xs font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+              className="d-flex min-h-[64px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
               placeholder="one job id per line"
               value={form.context_from}
               onChange={(e) => update("context_from", e.target.value)}
             />
           </div>
-          <div className="grid gap-1">
+          <div className="d-grid gap-1">
             <Label htmlFor={`${idPrefix}-toolsets`}>enabled_toolsets</Label>
             <NameCheckboxPicker
               id={`${idPrefix}-toolsets`}
@@ -377,7 +377,7 @@ function CronJobFormFields({
 
   return (
     <>
-      <div className="grid gap-2">
+      <div className="d-grid gap-2">
         <Label htmlFor={`${idPrefix}-name`}>{t.cron.nameOptional}</Label>
         <Input
           id={`${idPrefix}-name`}
@@ -388,11 +388,11 @@ function CronJobFormFields({
         />
       </div>
 
-      <div className="grid gap-2">
+      <div className="d-grid gap-2">
         <Label htmlFor={`${idPrefix}-prompt`}>{t.cron.prompt}</Label>
         <textarea
           id={`${idPrefix}-prompt`}
-          className="flex min-h-[80px] w-full border border-border bg-background/40 px-3 py-2 text-sm font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+          className="d-flex min-h-[80px] w-100 border border-secondary bg-background/40 px-3 py-2 fs-6 font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
           placeholder={t.cron.promptPlaceholder}
           value={form.prompt}
           onChange={(e) => update("prompt", e.target.value)}
@@ -404,7 +404,7 @@ function CronJobFormFields({
         onChange={(state) => update("scheduleState", state)}
       />
 
-      <div className="grid gap-2">
+      <div className="d-grid gap-2">
         <Label htmlFor={`${idPrefix}-deliver`}>{t.cron.deliverTo}</Label>
         <Select
           id={`${idPrefix}-deliver`}
@@ -414,14 +414,14 @@ function CronJobFormFields({
           {deliveryOptions}
         </Select>
         {onlyLocalAvailable && (
-          <p className="text-xs text-muted-foreground">
+          <p className="fs-6 text-body-secondary">
             {t.cron.delivery.noneConfigured ??
               "No messaging platforms configured. Set one up under Channels to deliver reports."}
           </p>
         )}
       </div>
 
-      <div className="grid gap-2">
+      <div className="d-grid gap-2">
         <Label htmlFor={`${idPrefix}-skills`}>Skills (optional)</Label>
         <NameCheckboxPicker
           id={`${idPrefix}-skills`}
@@ -430,7 +430,7 @@ function CronJobFormFields({
           onChange={(skills) => update("skills", skills)}
           emptyLabel="No skills installed for this profile."
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="fs-6 text-body-secondary">
           Selected skills are loaded before the prompt runs — the cron
           sets when, the skill sets how.
         </p>
@@ -862,7 +862,7 @@ export default function CronPage() {
   useLayoutEffect(() => {
     setEnd(
       <Button
-        className="uppercase"
+        className="text-uppercase"
         size="sm"
         onClick={() => {
           setCreateProfile(selectedProfile === "all" ? "default" : selectedProfile);
@@ -879,8 +879,8 @@ export default function CronPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="text-2xl text-primary" />
+      <div className="d-flex align-items-center justify-content-center py-24">
+        <Spinner className="fs-3 text-primary" />
       </div>
     );
   }
@@ -890,7 +890,7 @@ export default function CronPage() {
     : null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="d-flex flex-column gap-6">
       <PluginSlot name="cron:top" />
       <Toast toast={toast} />
 
@@ -903,7 +903,7 @@ export default function CronPage() {
       )}
 
       {schedulerStaleAgeS !== null && (
-        <p className="text-sm text-warning font-medium" data-testid="cron-scheduler-stale">
+        <p className="fs-6 text-warning fw-medium" data-testid="cron-scheduler-stale">
           {(t.cron.schedulerLastTicked ?? en.cron.schedulerLastTicked!).replace(
             "{when}",
             cronAgoLabel(schedulerStaleAgeS),
@@ -947,34 +947,34 @@ export default function CronPage() {
       {createModalOpen && (
         <div
           ref={createModalRef}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
           onClick={(e) => e.target === e.currentTarget && setCreateModalOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="create-cron-title"
         >
-          <div className={cn(themedBody, "relative w-full max-w-3xl max-h-[90vh] border border-border bg-card shadow-2xl flex flex-col")}>
+          <div className={cn(themedBody, "position-relative w-100 max-w-3xl max-h-[90vh] border border-secondary bg-card shadow-2xl d-flex flex-column")}>
             <Button
               ghost
               size="icon"
               onClick={() => setCreateModalOpen(false)}
-              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
               aria-label="Close"
             >
               <X />
             </Button>
 
-            <header className="p-5 pb-3 border-b border-border">
+            <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="create-cron-title"
-                className="font-mondwest text-display text-base tracking-wider"
+                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
               >
                 {t.cron.newJob}
               </h2>
             </header>
 
-            <div className="min-h-0 overflow-y-auto p-5 grid gap-4">
-              <div className="grid gap-2">
+            <div className="min-h-0 overflow-y-auto p-5 d-grid gap-4">
+              <div className="d-grid gap-2">
                 <Label htmlFor="cron-profile">Profile</Label>
                 <Select
                   id="cron-profile"
@@ -1002,9 +1002,9 @@ export default function CronPage() {
                 }}
               />
 
-              <div className="flex justify-end">
+              <div className="d-flex justify-content-end">
                 <Button
-                  className="uppercase"
+                  className="text-uppercase"
                   size="sm"
                   onClick={handleCreate}
                   disabled={creating}
@@ -1022,33 +1022,33 @@ export default function CronPage() {
       {editJob && (
         <div
           ref={editModalRef}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+          className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
           onClick={(e) => e.target === e.currentTarget && setEditJob(null)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-cron-title"
         >
-          <div className={cn(themedBody, "relative w-full max-w-3xl max-h-[90vh] border border-border bg-card shadow-2xl flex flex-col")}>
+          <div className={cn(themedBody, "position-relative w-100 max-w-3xl max-h-[90vh] border border-secondary bg-card shadow-2xl d-flex flex-column")}>
             <Button
               ghost
               size="icon"
               onClick={() => setEditJob(null)}
-              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
               aria-label="Close"
             >
               <X />
             </Button>
 
-            <header className="p-5 pb-3 border-b border-border">
+            <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="edit-cron-title"
-                className="font-mondwest text-display text-base tracking-wider"
+                className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
               >
                 Edit job
               </h2>
             </header>
 
-            <div className="min-h-0 overflow-y-auto p-5 grid gap-4">
+            <div className="min-h-0 overflow-y-auto p-5 d-grid gap-4">
               <CronJobFormFields
                 idPrefix="edit-cron"
                 autoFocus
@@ -1062,12 +1062,12 @@ export default function CronPage() {
                 }}
               />
 
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground font-mono-ui truncate pr-4">
+              <div className="d-flex align-items-center justify-content-between">
+                <span className="fs-6 text-body-secondary font-monospace text-truncate pr-4">
                   {editJob.id}
                 </span>
                 <Button
-                  className="uppercase"
+                  className="text-uppercase"
                   size="sm"
                   onClick={handleEdit}
                   disabled={saving}
@@ -1082,17 +1082,17 @@ export default function CronPage() {
       )}
 
       {view === "jobs" && (
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="d-flex flex-column gap-3">
+        <div className="d-flex flex-column gap-3 sm:flex-row sm:items-end sm:justify-between">
           <H2
             variant="sm"
-            className="flex items-center gap-2 text-muted-foreground"
+            className="d-flex align-items-center gap-2 text-body-secondary"
           >
-            <Clock className="h-4 w-4" />
+            <Clock className="icon-md" />
             {t.cron.scheduledJobs} ({jobs.length})
           </H2>
 
-          <div className="grid gap-1 min-w-[220px]">
+          <div className="d-grid gap-1 min-w-[220px]">
             <Label htmlFor="cron-profile-filter">Profile</Label>
             <Select
               id="cron-profile-filter"
@@ -1111,10 +1111,10 @@ export default function CronPage() {
 
         {jobs.length === 0 && !jobsLoadError && (
           <Card>
-            <CardContent className="flex flex-col items-center gap-3 py-8 text-center text-sm text-muted-foreground">
+            <CardContent className="d-flex flex-column align-items-center gap-3 py-8 text-center fs-6 text-body-secondary">
               <span>{t.cron.noJobs}</span>
               <Button
-                className="uppercase"
+                className="text-uppercase"
                 size="sm"
                 onClick={() => {
                   setCreateProfile(
@@ -1146,10 +1146,10 @@ export default function CronPage() {
 
           return (
             <Card key={jobKey}>
-              <CardContent className="flex items-start gap-4 py-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="font-medium text-sm truncate min-w-0">
+              <CardContent className="d-flex align-items-start gap-4 py-4">
+                <div className="flex-grow-1 min-w-0">
+                  <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <span className="fw-medium fs-6 text-truncate min-w-0">
                       {title}
                     </span>
                     <Badge tone={STATUS_TONE[state] ?? "secondary"}>
@@ -1190,12 +1190,12 @@ export default function CronPage() {
                     )}
                   </div>
                   {hasName && promptText && (
-                    <p className="text-xs text-muted-foreground truncate mb-1">
+                    <p className="fs-6 text-body-secondary text-truncate mb-1">
                       {truncateText(promptText, 100)}
                     </p>
                   )}
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="font-mono-ui">
+                  <div className="d-flex align-items-center gap-4 fs-6 text-body-secondary">
+                    <span className="font-monospace">
                       {getJobScheduleDisplay(job, scheduleDescribeStrings)}
                     </span>
                     <span>repeat: {getRepeatDisplay(job)}</span>
@@ -1208,7 +1208,7 @@ export default function CronPage() {
                       </span>
                     ) : (
                       <span
-                        className="text-warning font-medium"
+                        className="text-warning fw-medium"
                         data-testid="cron-next-run-overdue"
                       >
                         {t.cron.overdueSince ?? en.cron.overdueSince!}: {formatTime(job.next_run_at)}
@@ -1216,24 +1216,24 @@ export default function CronPage() {
                     )}
                   </div>
                   {job.last_delivery_error && (
-                    <p className="text-xs text-destructive mt-1">
+                    <p className="fs-6 text-danger mt-1">
                       delivery: {job.last_delivery_error}
                     </p>
                   )}
                   {job.last_fire_error?.detail && (
-                    <p className="text-xs text-destructive mt-1">
+                    <p className="fs-6 text-danger mt-1">
                       missed scheduled fire ({formatTime(job.last_fire_error.at ?? null)}):{" "}
                       {job.last_fire_error.detail}
                     </p>
                   )}
                   {job.last_error && (
-                    <p className="text-xs text-destructive mt-1">
+                    <p className="fs-6 text-danger mt-1">
                       {job.last_error}
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="d-flex align-items-center gap-1 flex-shrink-0">
                   <Button
                     ghost
                     size="icon"

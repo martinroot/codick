@@ -95,10 +95,10 @@ export function ReasoningPicker({
   );
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 text-xs">
-      <div className="flex items-center gap-1.5 text-text-tertiary">
-        <Brain className="h-3.5 w-3.5" />
-        <span className="text-display tracking-wider">reasoning</span>
+    <div className="d-flex align-items-center gap-2 px-3 py-2 fs-6">
+      <div className="d-flex align-items-center gap-2 text-body-tertiary">
+        <Brain className="icon-sm" />
+        <span className="fs-4 fw-semibold ls-wide">reasoning</span>
       </div>
       <Select
         className="ml-auto min-w-0"

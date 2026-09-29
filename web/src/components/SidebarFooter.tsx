@@ -15,7 +15,7 @@ export function SidebarFooter({ status }: SidebarFooterProps) {
       )}
     >
       <Typography
-        className="font-mono-ui text-xs tabular-nums tracking-[0.08em] text-text-tertiary lowercase"
+        className="font-monospace fs-6 tabular-nums tracking-[0.08em] text-body-tertiary text-lowercase"
       >
         {status?.version != null ? `v${status.version}` : "—"}
       </Typography>

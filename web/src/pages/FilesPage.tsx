@@ -364,7 +364,7 @@ export default function FilesPage() {
             <span>Name</span>
             <span>Size</span>
             <span>Modified</span>
-            <span className="text-right">Actions</span>
+            <span className="text-end">Actions</span>
           </div>
 
           {listing?.parent && (

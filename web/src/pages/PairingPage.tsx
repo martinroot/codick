@@ -109,11 +109,11 @@ export default function PairingPage() {
   useLayoutEffect(() => {
     setEnd(
       <Button
-        className="uppercase"
+        className="text-uppercase"
         size="sm"
         onClick={handleClearPending}
         disabled={clearing}
-        prefix={clearing ? <Spinner /> : <Trash2 className="h-4 w-4" />}
+        prefix={clearing ? <Spinner /> : <Trash2 className="icon-md" />}
       >
         Clear pending
       </Button>,
@@ -126,8 +126,8 @@ export default function PairingPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="text-2xl text-primary" />
+      <div className="d-flex align-items-center justify-content-center py-24">
+        <Spinner className="fs-3 text-primary" />
       </div>
     );
   }
@@ -137,7 +137,7 @@ export default function PairingPage() {
     : null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="d-flex flex-column gap-6">
       <Toast toast={toast} />
 
       <DeleteConfirmDialog
@@ -155,18 +155,18 @@ export default function PairingPage() {
       />
 
       {/* Pending requests */}
-      <div className="flex flex-col gap-3">
+      <div className="d-flex flex-column gap-3">
         <H2
           variant="sm"
-          className="flex items-center gap-2 text-muted-foreground"
+          className="d-flex align-items-center gap-2 text-body-secondary"
         >
-          <Users className="h-4 w-4" />
+          <Users className="icon-md" />
           Pending requests ({pending.length})
         </H2>
 
         {pending.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <CardContent className="py-8 text-center fs-6 text-body-secondary">
               No pending pairing requests
             </CardContent>
           </Card>
@@ -176,33 +176,33 @@ export default function PairingPage() {
           const key = getUserKey(user);
           return (
             <Card key={key}>
-              <CardContent className="flex items-start gap-4 py-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+              <CardContent className="d-flex align-items-start gap-4 py-4">
+                <div className="flex-grow-1 min-w-0">
+                  <div className="d-flex align-items-center gap-2 mb-1">
                     <Badge tone="outline">{user.platform}</Badge>
-                    <span className="font-medium text-sm truncate">
+                    <span className="fw-medium fs-6 text-truncate">
                       {getUserLabel(user)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="truncate">{user.user_id}</span>
+                  <div className="d-flex align-items-center gap-4 fs-6 text-body-secondary">
+                    <span className="text-truncate">{user.user_id}</span>
                     {typeof user.age_minutes === "number" && (
                       <span>{user.age_minutes}m ago</span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="d-flex align-items-center gap-1 flex-shrink-0">
                   <Button
                     size="sm"
-                    className="uppercase"
+                    className="text-uppercase"
                     onClick={() => handleApprove(user)}
                     disabled={approving === key || !user.request_id}
                     prefix={
                       approving === key ? (
                         <Spinner />
                       ) : (
-                        <Check className="h-4 w-4" />
+                        <Check className="icon-md" />
                       )
                     }
                   >
@@ -216,18 +216,18 @@ export default function PairingPage() {
       </div>
 
       {/* Approved users */}
-      <div className="flex flex-col gap-3">
+      <div className="d-flex flex-column gap-3">
         <H2
           variant="sm"
-          className="flex items-center gap-2 text-muted-foreground"
+          className="d-flex align-items-center gap-2 text-body-secondary"
         >
-          <ShieldCheck className="h-4 w-4" />
+          <ShieldCheck className="icon-md" />
           Approved users ({approved.length})
         </H2>
 
         {approved.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <CardContent className="py-8 text-center fs-6 text-body-secondary">
               No approved users
             </CardContent>
           </Card>
@@ -237,28 +237,28 @@ export default function PairingPage() {
           const key = getUserKey(user);
           return (
             <Card key={key}>
-              <CardContent className="flex items-start gap-4 py-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+              <CardContent className="d-flex align-items-start gap-4 py-4">
+                <div className="flex-grow-1 min-w-0">
+                  <div className="d-flex align-items-center gap-2 mb-1">
                     <Badge tone="outline">{user.platform}</Badge>
-                    <span className="font-medium text-sm truncate">
+                    <span className="fw-medium fs-6 text-truncate">
                       {user.user_id}
                     </span>
                   </div>
                   {user.user_name && (
-                    <div className="text-xs text-muted-foreground truncate">
+                    <div className="fs-6 text-body-secondary text-truncate">
                       {user.user_name}
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="d-flex align-items-center gap-1 flex-shrink-0">
                   <Button
                     ghost
                     size="icon"
                     title="Revoke"
                     aria-label="Revoke"
-                    className="text-destructive"
+                    className="text-danger"
                     onClick={() => userRevoke.requestDelete(key)}
                   >
                     <X />

@@ -220,36 +220,36 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-4"
       onClick={handleBackdrop}
       role="dialog"
       aria-modal="true"
       aria-labelledby="oauth-modal-title"
     >
-      <div className={cn(themedBody, "relative w-full max-w-md border border-border bg-card shadow-2xl")}>
+      <div className={cn(themedBody, "position-relative w-100 max-w-md border border-secondary bg-card shadow-2xl")}>
         <Button
           ghost
           size="icon"
           onClick={handleClose}
-          className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+          className="position-absolute right-2 top-2 text-body-secondary hover:text-foreground"
           aria-label={t.common.close}
         >
           <X />
         </Button>
-        <div className="p-6 flex flex-col gap-4">
+        <div className="p-6 d-flex flex-column gap-4">
           <div>
             <H2
               id="oauth-modal-title"
               variant="sm"
               mondwest
-              className="tracking-wider uppercase"
+              className="ls-wide text-uppercase"
             >
               {t.oauth.connect} {provider.name}
             </H2>
             {secondsLeft !== null &&
               phase !== "approved" &&
               phase !== "error" && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="fs-6 text-body-secondary mt-1">
                   {t.oauth.sessionExpires.replace(
                     "{time}",
                     fmtTime(secondsLeft),
@@ -259,7 +259,7 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
           </div>
 
           {phase === "starting" && (
-            <div className="flex items-center gap-3 py-6 text-sm text-muted-foreground">
+            <div className="d-flex align-items-center gap-3 py-6 fs-6 text-body-secondary">
               <Spinner />
               {t.oauth.initiatingLogin}
             </div>
@@ -267,12 +267,12 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
 
           {start?.flow === "pkce" && phase === "awaiting_user" && (
             <>
-              <ol className="text-sm space-y-2 list-decimal list-inside text-muted-foreground">
+              <ol className="fs-6 space-y-2 list-decimal list-inside text-body-secondary">
                 <li>{t.oauth.pkceStep1}</li>
                 <li>{t.oauth.pkceStep2}</li>
                 <li>{t.oauth.pkceStep3}</li>
               </ol>
-              <div className="flex flex-col gap-2">
+              <div className="d-flex flex-column gap-2">
                 <Input
                   value={pkceCode}
                   onChange={(e) => setPkceCode(e.target.value)}
@@ -280,7 +280,7 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
                   onKeyDown={(e) => e.key === "Enter" && handleSubmitPkceCode()}
                   autoFocus
                 />
-                <div className="flex items-center gap-2 justify-between">
+                <div className="d-flex align-items-center gap-2 justify-content-between">
                   <a
                     href={
                       (start as Extract<OAuthStartResponse, { flow: "pkce" }>)
@@ -288,9 +288,9 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
                     }
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                    className="fs-6 text-body-secondary hover:text-foreground d-inline-flex align-items-center gap-1"
                   >
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className="icon-sm" />
                     {t.oauth.reOpenAuth}
                   </a>
                   <Button
@@ -305,7 +305,7 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
           )}
 
           {phase === "submitting" && (
-            <div className="flex items-center gap-3 py-6 text-sm text-muted-foreground">
+            <div className="d-flex align-items-center gap-3 py-6 fs-6 text-body-secondary">
               <Spinner />
               {t.oauth.exchangingCode}
             </div>
@@ -313,23 +313,23 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
 
           {start?.flow === "device_code" && phase === "polling" && (
             <>
-              <p className="text-sm text-muted-foreground">
+              <p className="fs-6 text-body-secondary">
                 {t.oauth.enterCodePrompt}
               </p>
-              <div className="flex items-center justify-between gap-2 border border-border bg-secondary/30 p-4">
-                <code className="font-mono-ui text-2xl tracking-widest text-foreground">
+              <div className="d-flex align-items-center justify-content-between gap-2 border border-secondary bg-secondary/30 p-4">
+                <code className="font-monospace fs-3 tracking-widest text-body-emphasis">
                   {deviceCode}
                 </code>
                 <Button
                   size="sm"
                   outlined
-                  className="shrink-0 uppercase"
+                  className="flex-shrink-0 text-uppercase"
                   onClick={() => void handleCopyDeviceCode(deviceCode)}
                   prefix={
                     copyStatus === "copied" ? (
-                      <Check className="h-4 w-4" />
+                      <Check className="icon-md" />
                     ) : (
-                      <Copy className="h-4 w-4" />
+                      <Copy className="icon-md" />
                     )
                   }
                   aria-label={t.oauth.copyCode}
@@ -338,7 +338,7 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
                 </Button>
               </div>
               {copyStatus === "failed" && (
-                <p className="text-xs text-destructive">
+                <p className="fs-6 text-danger">
                   {t.oauth.copyFailed}
                 </p>
               )}
@@ -346,31 +346,31 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
                 href={verificationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                className="fs-6 text-body-secondary hover:text-foreground d-inline-flex align-items-center gap-1"
               >
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="icon-sm" />
                 {t.oauth.reOpenVerification}
               </a>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground border-t border-border pt-3">
-                <Spinner className="text-xs" />
+              <div className="d-flex align-items-center gap-2 fs-6 text-body-secondary border-top border-secondary pt-3">
+                <Spinner className="fs-6" />
                 {t.oauth.waitingAuth}
               </div>
             </>
           )}
 
           {phase === "approved" && (
-            <div className="flex items-center gap-3 py-6 text-sm text-success">
-              <Check className="h-5 w-5" />
+            <div className="d-flex align-items-center gap-3 py-6 fs-6 text-success">
+              <Check className="icon-lg" />
               {t.oauth.connectedClosing}
             </div>
           )}
 
           {phase === "error" && (
             <>
-              <div className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="border border-destructive/30 bg-destructive/10 p-3 fs-6 text-danger">
                 {errorMsg || t.oauth.loginFailed}
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="d-flex justify-content-end gap-2">
                 <Button outlined onClick={handleClose}>
                   {t.common.close}
                 </Button>

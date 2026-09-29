@@ -502,7 +502,7 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
   return createPortal(
     <div
       ref={modalRef}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-3 sm:p-4"
+      className="position-fixed top-0 start-0 w-100 h-100 z-[100] d-flex align-items-center justify-content-center bg-background/85 p-3 sm:p-4"
       onClick={(event) => event.target === event.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
@@ -514,20 +514,20 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
           "relative flex h-[min(82dvh,760px)] w-full max-w-5xl flex-col border border-border bg-card shadow-2xl",
         )}
       >
-        <header className="flex min-h-14 items-center gap-3 border-b border-border px-4 py-3">
-          <div className="flex h-9 w-9 items-center justify-center border border-border bg-background/60 text-primary">
-            <Terminal className="h-4 w-4" />
+        <header className="d-flex min-h-14 align-items-center gap-3 border-bottom border-secondary px-4 py-3">
+          <div className="d-flex h-9 w-9 align-items-center justify-content-center border border-secondary bg-background/60 text-primary">
+            <Terminal className="icon-md" />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-grow-1">
             <h2
               id="hermes-console-title"
-              className="font-mondwest text-display text-base tracking-wider"
+              className="font-mondwest fs-4 fw-semibold fs-6 ls-wide"
             >
               Hermes Console
             </h2>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="mt-1 d-flex flex-wrap align-items-center gap-2 fs-6 text-body-secondary">
               <Badge tone={statusTone}>{connectionState}</Badge>
-              <span className="font-mono">{consoleProfile}</span>
+              <span className="font-monospace">{consoleProfile}</span>
               {(connectionState === "closed" || connectionState === "error") && (
                 <Button
                   size="sm"
@@ -547,16 +547,16 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
             ghost
             size="icon"
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-body-secondary hover:text-foreground"
             aria-label="Close console"
           >
             <X />
           </Button>
         </header>
-        <div className="min-h-0 flex-1 bg-black">
+        <div className="min-h-0 flex-grow-1 bg-black">
           <div
             ref={hostRef}
-            className="h-full min-h-0 w-full overflow-hidden p-2 [&_.xterm]:h-full [&_.xterm-viewport]:!bg-transparent"
+            className="h-100 min-h-0 w-100 overflow-hidden p-2 [&_.xterm]:h-full [&_.xterm-viewport]:!bg-transparent"
           />
         </div>
       </div>

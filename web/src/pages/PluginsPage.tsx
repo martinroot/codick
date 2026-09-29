@@ -68,12 +68,12 @@ function fieldIsVisible(field: MemoryProviderField, values: Record<string, Memor
 
 function SetupCommandBlock({ code, label }: { code: string; label: string }) {
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.6875rem] text-muted-foreground">{label}</span>
+    <div className="d-flex flex-column gap-1">
+      <div className="d-flex align-items-center justify-content-between gap-2">
+        <span className="text-[0.6875rem] text-body-secondary">{label}</span>
         <CopyButton text={code} />
       </div>
-      <div className="border border-border bg-background/40 px-3 py-2 font-mono text-[0.6875rem] leading-relaxed">
+      <div className="border border-secondary bg-background/40 px-3 py-2 font-monospace text-[0.6875rem] leading-relaxed">
         <code className="break-all">{code}</code>
       </div>
     </div>
@@ -99,13 +99,13 @@ function MemoryProviderSetupResults({ results }: { results: MemoryProviderSetupR
   if (!results.length) return null;
 
   return (
-    <div className="grid gap-2 border border-border bg-background/20 p-3">
-      <p className="text-muted-foreground">Setup results</p>
+    <div className="d-grid gap-2 border border-secondary bg-background/20 p-3">
+      <p className="text-body-secondary">Setup results</p>
       {results.map((result, index) => {
         const detail = result.stderr || result.stdout;
         return (
-          <div key={`${result.kind}-${result.name}-${index}`} className="grid gap-1">
-            <div className="flex flex-wrap items-center gap-2">
+          <div key={`${result.kind}-${result.name}-${index}`} className="d-grid gap-1">
+            <div className="d-flex flex-wrap align-items-center gap-2">
               <span
                 className={cn(
                   "border px-2 py-0.5 font-mono text-[0.6875rem]",
@@ -114,18 +114,18 @@ function MemoryProviderSetupResults({ results }: { results: MemoryProviderSetupR
               >
                 {setupResultLabel(result.status)}
               </span>
-              <span className="text-muted-foreground">
+              <span className="text-body-secondary">
                 {result.name}
                 {result.kind ? ` (${result.kind.replace(/_/g, " ")})` : ""}
               </span>
             </div>
             {result.command ? (
-              <code className="block break-all border border-border bg-background/40 px-2 py-1 font-mono text-[0.6875rem]">
+              <code className="d-block break-all border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem]">
                 {result.command}
               </code>
             ) : null}
             {detail ? (
-              <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-words border border-border bg-background/40 px-2 py-1 font-mono text-[0.6875rem] text-muted-foreground">
+              <pre className="max-h-32 overflow-auto text-wrap text-break border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem] text-body-secondary">
                 {detail}
               </pre>
             ) : null}
@@ -163,7 +163,7 @@ function MemoryProviderSetupHint({
 
   if (!hasDetails || !setup) {
     return (
-      <p className="border border-destructive/50 px-3 py-2 text-xs text-destructive">
+      <p className="border border-destructive/50 px-3 py-2 fs-6 text-danger">
         This provider is installed but unavailable. It may need local dependencies or a manual setup step before Hermes can activate it.
       </p>
     );
@@ -176,7 +176,7 @@ function MemoryProviderSetupHint({
         isBlocked ? "border-destructive/50" : "border-border",
       )}
     >
-      <p className={isBlocked ? "text-destructive" : "text-muted-foreground"}>
+      <p className={isBlocked ? "text-danger" : "text-body-secondary"}>
         {needsDependencySetup
           ? "Finish these setup steps before Hermes can activate this provider."
           : "Provider dependency setup completed."}
@@ -184,12 +184,12 @@ function MemoryProviderSetupHint({
 
       {needsDependencySetup ? (
         <Button
-          className="w-fit uppercase"
+          className="fit-content text-uppercase"
           disabled={installing}
           onClick={onInstall}
           size="sm"
         >
-          <span className="inline-flex items-center gap-2">
+          <span className="d-inline-flex align-items-center gap-2">
             {installing ? <Spinner /> : null}
             {installing ? "Installing provider dependencies" : "Install provider dependencies"}
           </span>
@@ -197,7 +197,7 @@ function MemoryProviderSetupHint({
       ) : null}
 
       {installing ? (
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className="d-flex align-items-center gap-2 text-body-secondary">
           <Spinner /> Running provider setup. This may take a minute…
         </div>
       ) : null}
@@ -207,8 +207,8 @@ function MemoryProviderSetupHint({
       {needsDependencySetup ? (
         <>
           {setup.external_dependencies.map((dep, index) => (
-            <div key={`${dep.name || "dependency"}-${index}`} className="grid gap-2">
-              <p className="text-muted-foreground">
+            <div key={`${dep.name || "dependency"}-${index}`} className="d-grid gap-2">
+              <p className="text-body-secondary">
                 External dependency{dep.name ? `: ${dep.name}` : ""}
               </p>
               {dep.install ? (
@@ -227,13 +227,13 @@ function MemoryProviderSetupHint({
           ))}
 
           {setup.pip_dependencies.length ? (
-            <div className="grid gap-2">
-              <p className="text-muted-foreground">Python dependencies</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="d-grid gap-2">
+              <p className="text-body-secondary">Python dependencies</p>
+              <div className="d-flex flex-wrap gap-2">
                 {setup.pip_dependencies.map((dep) => (
                   <code
                     key={dep}
-                    className="border border-border bg-background/40 px-2 py-1 font-mono text-[0.6875rem]"
+                    className="border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem]"
                   >
                     {dep}
                   </code>
@@ -245,15 +245,15 @@ function MemoryProviderSetupHint({
       ) : null}
 
       {setup.required_env.length && needsDependencySetup ? (
-        <div className="grid gap-2">
-          <p className="text-muted-foreground">
+        <div className="d-grid gap-2">
+          <p className="text-body-secondary">
             Required environment values. Fill the matching fields below, or set them in the Hermes environment.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="d-flex flex-wrap gap-2">
             {setup.required_env.map((envKey) => (
               <code
                 key={envKey}
-                className="border border-border bg-background/40 px-2 py-1 font-mono text-[0.6875rem]"
+                className="border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem]"
               >
                 {envKey}
               </code>
@@ -433,7 +433,7 @@ export default function PluginsPage() {
       <Button
         ghost
         size="icon"
-        className="shrink-0 text-muted-foreground hover:text-foreground"
+        className="flex-shrink-0 text-body-secondary hover:text-foreground"
         disabled={loading || rescanBusy}
         onClick={() => void onRescan()}
         aria-label={t.pluginsPage.refreshDashboard}
@@ -559,25 +559,25 @@ export default function PluginsPage() {
     memoryConfig?.fields.filter((field) => fieldIsVisible(field, memoryValues)) ?? [];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="d-flex flex-column gap-4">
       <PluginSlot name="plugins:top" />
 
-      <div className={cn("flex w-full flex-col gap-8")}>
+      <div className={cn("d-flex w-100 flex-column gap-8")}>
 
         {providers && (
           <Card>
             <CardHeader>
               <CardTitle>{t.pluginsPage.providersHeading}</CardTitle>
-              <p className="text-xs tracking-[0.08em] text-text-tertiary">
+              <p className="fs-6 tracking-[0.08em] text-body-tertiary">
                 Configure memory providers and runtime context engine selection.
               </p>
             </CardHeader>
 
-            <CardContent className="flex flex-col gap-6">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)]">
-                <div className="flex flex-col gap-4 min-w-0">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
+            <CardContent className="d-flex flex-column gap-6">
+              <div className="d-grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)]">
+                <div className="d-flex flex-column gap-4 min-w-0">
+                  <div className="d-flex flex-column gap-2">
+                    <div className="d-flex flex-wrap align-items-center gap-2">
                       <Label htmlFor="mem-provider">{t.pluginsPage.memoryProviderLabel}</Label>
                       {selectedMemoryName && selectedMemoryInfo && (
                         <Badge tone={MEMORY_STATUS_TONE[selectedMemoryInfo.status]}>
@@ -594,7 +594,7 @@ export default function PluginsPage() {
 
                     <Select
                       id="mem-provider"
-                      className="w-full"
+                      className="w-100"
                       value={memorySel}
                       onValueChange={setMemorySel}
                     >
@@ -611,19 +611,19 @@ export default function PluginsPage() {
                   </div>
 
                   {!selectedMemoryName && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="fs-6 text-body-secondary">
                       Hermes will use the built-in MEMORY.md and USER.md files.
                     </p>
                   )}
 
                   {activeMemoryInfo?.status === "missing" && (
-                    <p className="border border-destructive/50 px-3 py-2 text-xs text-destructive">
+                    <p className="border border-destructive/50 px-3 py-2 fs-6 text-danger">
                       Active provider {providers.memory_provider} is no longer installed. Select another provider and save.
                     </p>
                   )}
 
                   {selectedMemoryName && selectedMemoryInfo?.description && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="fs-6 text-body-secondary">
                       {selectedMemoryInfo.description}
                     </p>
                   )}
@@ -638,31 +638,31 @@ export default function PluginsPage() {
                   )}
 
                   {selectedMemoryName && selectedMemoryInfo?.status === "needs_config" && (
-                    <p className="border border-warning/50 px-3 py-2 text-xs text-warning">
+                    <p className="border border-warning/50 px-3 py-2 fs-6 text-warning">
                       Provider dependencies are installed. Add the required credentials or self-hosted URL below, then save the provider.
                     </p>
                   )}
 
                   {selectedMemoryName && memoryConfigBusy && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="d-flex align-items-center gap-2 fs-6 text-body-secondary">
                       <Spinner /> Loading provider settings…
                     </div>
                   )}
 
                   {selectedMemoryName && !memoryConfigBusy && visibleMemoryFields.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="fs-6 text-body-secondary">
                       This provider does not expose dashboard settings.
                     </p>
                   )}
 
                   {selectedMemoryName && !memoryConfigBusy && visibleMemoryFields.length > 0 && (
-                    <div className="grid gap-4 border border-border p-4">
+                    <div className="d-grid gap-4 border border-secondary p-4">
                       {visibleMemoryFields.map((field) => {
                         const value = memoryValues[field.key];
                         const secretIsVisible = !!secretVisible[field.key];
                         return (
-                          <div key={field.key} className="grid gap-2 min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
+                          <div key={field.key} className="d-grid gap-2 min-w-0">
+                            <div className="d-flex flex-wrap align-items-center gap-2">
                               <Label htmlFor={`memory-${field.key}`}>{field.label}</Label>
                               {field.required && <Badge tone="outline">required</Badge>}
                               {field.kind === "secret" && field.is_set && !value && (
@@ -673,9 +673,9 @@ export default function PluginsPage() {
                                   href={field.url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="inline-flex items-center gap-1 text-xs underline"
+                                  className="d-inline-flex align-items-center gap-1 fs-6 text-decoration-underline"
                                 >
-                                  Open <ExternalLink className="h-3 w-3" />
+                                  Open <ExternalLink className="icon-sm" />
                                 </a>
                               )}
                             </div>
@@ -683,7 +683,7 @@ export default function PluginsPage() {
                             {field.kind === "select" ? (
                               <Select
                                 id={`memory-${field.key}`}
-                                className="w-full"
+                                className="w-100"
                                 value={String(value ?? "")}
                                 onValueChange={(next) =>
                                   setMemoryValues((current) => ({ ...current, [field.key]: next }))
@@ -703,7 +703,7 @@ export default function PluginsPage() {
                                 }
                               />
                             ) : (
-                              <div className="flex items-center gap-2">
+                              <div className="d-flex align-items-center gap-2">
                                 <Input
                                   id={`memory-${field.key}`}
                                   type={
@@ -744,9 +744,9 @@ export default function PluginsPage() {
                                     }
                                   >
                                     {secretIsVisible ? (
-                                      <EyeOff className="h-3.5 w-3.5" />
+                                      <EyeOff className="icon-sm" />
                                     ) : (
-                                      <Eye className="h-3.5 w-3.5" />
+                                      <Eye className="icon-sm" />
                                     )}
                                   </Button>
                                 )}
@@ -754,7 +754,7 @@ export default function PluginsPage() {
                             )}
 
                             {field.description && (
-                              <p className="text-xs text-muted-foreground">{field.description}</p>
+                              <p className="fs-6 text-body-secondary">{field.description}</p>
                             )}
                           </div>
                         );
@@ -763,7 +763,7 @@ export default function PluginsPage() {
                   )}
 
                   <Button
-                    className="w-fit uppercase"
+                    className="fit-content text-uppercase"
                     size="sm"
                     disabled={memoryBusy || memoryConfigBusy || memorySetupBusy}
                     onClick={() => void onSaveMemoryProvider()}
@@ -773,12 +773,12 @@ export default function PluginsPage() {
                   </Button>
                 </div>
 
-                <div className="grid content-start gap-3 min-w-0">
+                <div className="d-grid content-start gap-3 min-w-0">
                   <Label htmlFor="ctx-engine">{t.pluginsPage.contextEngineLabel}</Label>
 
                   <Select
                     id="ctx-engine"
-                    className="w-full"
+                    className="w-100"
                     value={contextSel}
                     onValueChange={setContextSel}
                   >
@@ -794,7 +794,7 @@ export default function PluginsPage() {
                   </Select>
 
                   <Button
-                    className="w-fit uppercase"
+                    className="fit-content text-uppercase"
                     size="sm"
                     disabled={contextBusy}
                     onClick={() => void onSaveContextEngine()}
@@ -811,20 +811,20 @@ export default function PluginsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t.pluginsPage.installHeading}</CardTitle>
-            <p className="text-xs tracking-[0.08em] text-text-tertiary">
+            <p className="fs-6 tracking-[0.08em] text-body-tertiary">
               {t.pluginsPage.installHint}
             </p>
           </CardHeader>
 
 
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="d-flex flex-column gap-4">
 
-            <div className="flex flex-col gap-2">
+            <div className="d-flex flex-column gap-2">
 
               <Label htmlFor="install-url">{t.pluginsPage.identifierLabel}</Label>
 
               <Input
-                className="font-mono-ui lowercase"
+                className="font-monospace text-lowercase"
                 id="install-url"
                 placeholder="owner/repo, owner/repo/subdir, or https://..."
                 spellCheck={false}
@@ -834,29 +834,29 @@ export default function PluginsPage() {
             </div>
 
 
-            <div className="flex flex-wrap items-center gap-8">
+            <div className="d-flex flex-wrap align-items-center gap-8">
 
-              <div className="flex items-center gap-3">
+              <div className="d-flex align-items-center gap-3">
 
                 <Switch checked={installForce} onCheckedChange={setInstallForce} />
 
-                <span className="text-xs tracking-[0.06em] text-text-secondary">
+                <span className="fs-6 tracking-[0.06em] text-body-secondary">
                   {t.pluginsPage.forceReinstall}
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="d-flex align-items-center gap-3">
 
                 <Switch checked={installEnable} onCheckedChange={setInstallEnable} />
 
-                <span className="text-xs tracking-[0.06em] text-text-secondary">
+                <span className="fs-6 tracking-[0.06em] text-body-secondary">
                   {t.pluginsPage.enableAfterInstall}
                 </span>
               </div>
             </div>
 
             <Button
-              className="w-fit uppercase"
+              className="fit-content text-uppercase"
               size="sm"
               disabled={installBusy}
               onClick={() => void onInstall()}
@@ -865,23 +865,23 @@ export default function PluginsPage() {
               {t.pluginsPage.installBtn}
             </Button>
 
-            <p className="text-xs tracking-[0.06em] text-text-tertiary">
+            <p className="fs-6 tracking-[0.06em] text-body-tertiary">
               {t.pluginsPage.rescanHint}
             </p>
 
-            <p className="text-xs tracking-[0.06em] text-text-tertiary">
+            <p className="fs-6 tracking-[0.06em] text-body-tertiary">
               {t.pluginsPage.removeHint}
             </p>
           </CardContent>
         </Card>
 
-        <div className="flex flex-col gap-3" data-testid="plugin-catalog-section">
+        <div className="d-flex flex-column gap-3" data-testid="plugin-catalog-section">
 
-          <h3 className="font-mondwest text-display text-xs tracking-[0.12em] text-text-secondary">
+          <h3 className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
             {t.pluginsPage.catalogHeading ?? "Plugin catalog"}
           </h3>
 
-          <p className="text-xs tracking-[0.06em] text-text-tertiary">
+          <p className="fs-6 tracking-[0.06em] text-body-tertiary">
             {t.pluginsPage.catalogHint ??
               "Curated, Nous-reviewed plugins pinned to exact commits."}
           </p>
@@ -895,15 +895,15 @@ export default function PluginsPage() {
           />
 
           {catalogLoading ? (
-            <div className="flex items-center gap-2 py-4 text-xs text-text-tertiary">
+            <div className="d-flex align-items-center gap-2 py-4 fs-6 text-body-tertiary">
               <Spinner />
               <span>{t.common.loading}</span>
             </div>
           ) : catalogEntries.length === 0 ? (
-            <p className="text-xs text-text-tertiary">
+            <p className="fs-6 text-body-tertiary">
               {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{" "}
               <a
-                className="underline"
+                className="text-decoration-underline"
                 href="https://hermes-agent.nousresearch.com/docs/plugins"
                 target="_blank"
                 rel="noreferrer"
@@ -912,7 +912,7 @@ export default function PluginsPage() {
               </a>
             </p>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="d-flex flex-column gap-3">
               {catalogEntries.map((entry) => (
                 <li key={entry.name}>
                   <CatalogEntryCard
@@ -928,25 +928,25 @@ export default function PluginsPage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="d-flex flex-column gap-3">
 
-          <h3 className="font-mondwest text-display text-xs tracking-[0.12em] text-text-secondary">
+          <h3 className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
             {t.pluginsPage.pluginListHeading}
           </h3>
 
           {loading ? (
 
-            <div className="flex items-center gap-2 py-8 text-xs text-text-tertiary">
+            <div className="d-flex align-items-center gap-2 py-8 fs-6 text-body-tertiary">
 
               <Spinner />
               <span>{t.common.loading}</span>
             </div>
           ) : rows.length === 0 ? (
 
-            <p className="text-xs text-text-tertiary">{t.common.noResults}</p>
+            <p className="fs-6 text-body-tertiary">{t.common.noResults}</p>
           ) : (
 
-            <ul className="flex flex-col gap-3">
+            <ul className="d-flex flex-column gap-3">
 
               {rows.map((row: HubAgentPluginRow) => (
 
@@ -966,17 +966,17 @@ export default function PluginsPage() {
         {(hub?.orphan_dashboard_plugins?.length ?? 0) > 0 ? (
 
 
-          <div className="flex flex-col gap-3 opacity-95">
+          <div className="d-flex flex-column gap-3 opacity-95">
 
-            <h3 className="font-mondwest text-display text-xs tracking-[0.12em] text-text-secondary">
+            <h3 className="font-mondwest fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
               {t.pluginsPage.orphanHeading}
             </h3>
 
-            <ul className="flex flex-col gap-2 rounded border border-current/15 p-4">
+            <ul className="d-flex flex-column gap-2 rounded border border-current/15 p-4">
 
               {hub!.orphan_dashboard_plugins.map((m) => (
 
-                <li className="text-xs text-text-secondary" key={m.name}>
+                <li className="fs-6 text-body-secondary" key={m.name}>
 
 
                   {m.label ?? m.name} — {m.description || m.tab?.path}
@@ -985,10 +985,10 @@ export default function PluginsPage() {
                   {!m.tab?.hidden ? (
 
 
-                    <Link className="ml-3 inline-flex items-center gap-1 underline" to={m.tab.path}>
+                    <Link className="ml-3 d-inline-flex align-items-center gap-1 text-decoration-underline" to={m.tab.path}>
 
 
-                      <ExternalLink className="h-3 w-3 opacity-65" />
+                      <ExternalLink className="icon-sm opacity-65" />
 
                       {t.pluginsPage.openTab}
                     </Link>
@@ -1071,14 +1071,14 @@ function PluginRowCard(props: PluginRowCardProps) {
     <Card className={cn(busy ? "opacity-70" : undefined)}>
 
 
-      <CardContent className="flex flex-col gap-4 px-6 py-4">
+      <CardContent className="d-flex flex-column gap-4 px-6 py-4">
 
 
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="d-flex flex-wrap align-items-start justify-content-between gap-4">
 
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+          <div className="d-flex min-w-0 flex-grow-1 flex-wrap align-items-center gap-3">
 
-            <span className="truncate font-semibold">{row.name}</span>
+            <span className="text-truncate fw-semibold">{row.name}</span>
 
             <Badge tone="outline">
               {t.pluginsPage.sourceBadge}: {row.source}
@@ -1099,7 +1099,7 @@ function PluginRowCard(props: PluginRowCardProps) {
             ) : null}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="d-flex flex-wrap align-items-center gap-2 flex-shrink-0">
             {row.runtime_status === "enabled" ? (
               <Button
                 disabled={busy}
@@ -1197,9 +1197,9 @@ function PluginRowCard(props: PluginRowCardProps) {
                 }}
               >
                 {row.user_hidden ? (
-                  <EyeOff className="h-3.5 w-3.5" />
+                  <EyeOff className="icon-sm" />
                 ) : (
-                  <Eye className="h-3.5 w-3.5" />
+                  <Eye className="icon-sm" />
                 )}
                 {row.user_hidden ? t.pluginsPage.showInSidebar : t.pluginsPage.hideFromSidebar}
               </Button>
@@ -1216,27 +1216,27 @@ function PluginRowCard(props: PluginRowCardProps) {
                 onClick={() => setConfirmRemove(true)}
               >
 
-                {busy ? <Spinner /> : <Trash2 className="h-3.5 w-3.5" />}
+                {busy ? <Spinner /> : <Trash2 className="icon-sm" />}
               </Button>
             ) : null}
           </div>
         </div>
 
         {row.description ? (
-          <p className="min-w-0 w-full text-xs tracking-[0.06em] text-text-secondary break-words">
+          <p className="min-w-0 w-100 fs-6 tracking-[0.06em] text-body-secondary text-break">
             {row.description}
           </p>
         ) : null}
 
         {row.removed_reason ? (
-          <p className="border border-destructive/50 px-3 py-2 text-xs text-destructive">
+          <p className="border border-destructive/50 px-3 py-2 fs-6 text-danger">
             {t.pluginsPage.removedFromCatalog ?? "Removed from catalog"}: {row.removed_reason}
           </p>
         ) : null}
 
         {dm?.slots?.length ? (
 
-          <p className="text-xs tracking-[0.05em] text-text-tertiary">
+          <p className="fs-6 tracking-[0.05em] text-body-tertiary">
             {t.pluginsPage.dashboardSlots}: {dm.slots.join(", ")}
           </p>
         ) : null}
@@ -1251,7 +1251,7 @@ function PluginRowCard(props: PluginRowCardProps) {
         {!row.has_dashboard_manifest && !dm ? (
 
 
-          <p className="text-xs italic text-text-disabled">
+          <p className="fs-6 fst-italic text-text-disabled">
             {t.pluginsPage.noDashboardTab}
           </p>
         ) : null}
@@ -1299,10 +1299,10 @@ function CatalogEntryCard(props: CatalogEntryCardProps) {
 
   return (
     <Card className={cn(busy ? "opacity-70" : undefined)}>
-      <CardContent className="flex flex-col gap-3 px-6 py-4">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-            <span className="truncate font-semibold">{entry.name}</span>
+      <CardContent className="d-flex flex-column gap-3 px-6 py-4">
+        <div className="d-flex flex-wrap align-items-start justify-content-between gap-4">
+          <div className="d-flex min-w-0 flex-grow-1 flex-wrap align-items-center gap-3">
+            <span className="text-truncate fw-semibold">{entry.name}</span>
 
             <Badge tone={entry.tier === "official" ? "success" : "secondary"}>
               {entry.tier}
@@ -1319,7 +1319,7 @@ function CatalogEntryCard(props: CatalogEntryCardProps) {
             ) : null}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="d-flex flex-wrap align-items-center gap-2 flex-shrink-0">
             {isRemoved ? null : entry.installed && !entry.update_available ? (
               <Badge tone="success">
                 {t.pluginsPage.catalogInstalledBadge ?? "Installed ✓"}
@@ -1336,7 +1336,7 @@ function CatalogEntryCard(props: CatalogEntryCardProps) {
         </div>
 
         {isRemoved ? (
-          <p className="border border-destructive/50 px-3 py-2 text-xs text-destructive">
+          <p className="border border-destructive/50 px-3 py-2 fs-6 text-danger">
             {t.pluginsPage.removedFromCatalog ?? "Removed from catalog"}
             {removed.reason ? `: ${removed.reason}` : ""}
             {removed.date ? ` (${removed.date})` : ""}
@@ -1344,17 +1344,17 @@ function CatalogEntryCard(props: CatalogEntryCardProps) {
         ) : null}
 
         {entry.description ? (
-          <p className="min-w-0 w-full text-xs tracking-[0.06em] text-text-secondary break-words">
+          <p className="min-w-0 w-100 fs-6 tracking-[0.06em] text-body-secondary text-break">
             {entry.description}
           </p>
         ) : null}
 
         {chips.length ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="d-flex flex-wrap gap-2">
             {chips.map((chip) => (
               <code
                 key={chip}
-                className="border border-border bg-background/40 px-2 py-1 font-mono text-[0.6875rem]"
+                className="border border-secondary bg-background/40 px-2 py-1 font-monospace text-[0.6875rem]"
               >
                 {chip}
               </code>
@@ -1362,28 +1362,28 @@ function CatalogEntryCard(props: CatalogEntryCardProps) {
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-3 text-xs text-text-tertiary">
+        <div className="d-flex flex-wrap align-items-center gap-3 fs-6 text-body-tertiary">
           <span>{entry.maintainer}</span>
 
           <a
-            className="inline-flex items-center gap-1 font-mono underline"
+            className="d-inline-flex align-items-center gap-1 font-monospace text-decoration-underline"
             href={`${entry.repo.replace(/\.git$/, "")}/tree/${entry.sha}`}
             target="_blank"
             rel="noreferrer"
           >
             {entry.sha_short}
-            <ExternalLink className="h-3 w-3 opacity-65" />
+            <ExternalLink className="icon-sm opacity-65" />
           </a>
 
           {entry.docs_url ? (
             <a
-              className="inline-flex items-center gap-1 underline"
+              className="d-inline-flex align-items-center gap-1 text-decoration-underline"
               href={entry.docs_url}
               target="_blank"
               rel="noreferrer"
             >
               docs
-              <ExternalLink className="h-3 w-3 opacity-65" />
+              <ExternalLink className="icon-sm opacity-65" />
             </a>
           ) : null}
 
