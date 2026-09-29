@@ -1,0 +1,92 @@
+/*
+ * Glass surfaces.
+ *
+ * The dashboard's cards are a frost layer over a gradient wash, which is
+ * what makes them read as glass rather than as flat white boxes: a
+ * blurred, semi-transparent surface sitting on something coloured.
+ *
+ * Every colour here is a Bootstrap variable. The wash is built from the
+ * framework's own tints at low alpha, so it follows the colour mode and
+ * introduces nothing the palette does not already have. Alpha is what
+ * makes the effect work — a fully opaque "glass" is just a flat colour.
+ */
+
+/*
+ * The wash behind the dashboard.
+ *
+ * Absolute inside the page, not fixed to the viewport. The main column
+ * carries an opaque `bg-body`, so anything painted behind it is hidden —
+ * the wash has to sit on top of that surface and underneath the cards
+ * for the glass to have anything to refract.
+ */
+.sku-wash {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      42rem 32rem at 12% -8%,
+      color-mix(in srgb, var(--bs-primary) 34%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      38rem 30rem at 88% 4%,
+      color-mix(in srgb, var(--bs-info) 30%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      46rem 34rem at 50% 108%,
+      color-mix(in srgb, var(--bs-success) 26%, transparent),
+      transparent 68%
+    );
+}
+
+/*
+ * The card itself. The heavy part is `backdrop-filter`: the blur is what
+ * frosts whatever is behind it. The saturate is there because a blur
+ * alone desaturates what passes through it, and the tinted blobs behind
+ * go muddy without it.
+ *
+ * `-webkit-` prefixes are not optional here: Safari needs the prefixed
+ * spelling or the card renders fully opaque.
+ */
+.sku-glass {
+  position: relative;
+  background-color: color-mix(in srgb, var(--bs-body-bg) 55%, transparent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: var(--bs-border-width) var(--bs-border-style)
+    color-mix(in srgb, var(--bs-border-color) 70%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--bs-body-color) 8%, transparent);
+}
+
+/*
+ * The specular edge. A one-pixel highlight along the top border is what
+ * a real pane of glass catches from the light source; without it the
+ * card is translucent but still flat.
+ */
+.sku-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, #fff 55%, transparent),
+    transparent 42%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* The wash must not intercept clicks meant for the page beneath it. */
+.sku-glass > * {
+  position: relative;
+  z-index: 1;
+}

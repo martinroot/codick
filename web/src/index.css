@@ -16,6 +16,7 @@
 @layer bootstrap-base, structure;
 @import 'bootstrap/dist/css/bootstrap.min.css' layer(bootstrap-base);
 @import './ui/structure.css' layer(structure);
+@import './ui/glass.css' layer(structure);
 /* Tailwind removed: @import 'tailwindcss'; */
 /* The old design system is gone too. Its stylesheet was the last thing
    carrying the previous look — `@nous-research/ui/styles/globals.css`

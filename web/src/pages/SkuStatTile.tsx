@@ -20,7 +20,7 @@ export function SkuStatTile({
   return (
     <div
       className={cn(
-        "card h-100",
+        "card h-100 sku-glass",
         // The tint lives in the icon and a hairline on the tile's edge,
         // not in a wash behind the whole card: a coloured background on
         // every tile makes the page read as a colour chart rather than as
