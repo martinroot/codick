@@ -1,9 +1,9 @@
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Checkbox } from "@nous-research/ui/ui/components/checkbox";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
+import { Button } from "@/ui";
+import { Checkbox } from "@/ui";
+import { ListItem } from "@/ui";
+import { Spinner } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { GatewayClient } from "@/lib/gatewayClient";
 import type { ModelOptionProvider, ModelOptionsResult } from "@hermes/shared";

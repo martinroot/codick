@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Brain, Eye, Gauge, Lightbulb, Wrench } from "lucide-react";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
+import { Spinner } from "@/ui";
 import { api } from "@/lib/api";
 import type { ModelInfoResponse } from "@/lib/api";
 import { compactNumber } from "@hermes/shared";
@@ -49,7 +49,7 @@ export function ModelInfoCard({
   const hasCaps = caps && Object.keys(caps).length > 0;
 
   return (
-    <div className="border border-border/60 bg-muted/30 px-3 py-2.5 space-y-2">
+    <div className="border border-border/60 bg-muted/30 px-3 py-2.5 stack-2">
       <div className="d-flex align-items-center gap-4 fs-6">
         <div className="d-flex align-items-center gap-2 text-body-secondary">
           <Gauge className="icon-sm" />

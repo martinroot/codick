@@ -7,14 +7,14 @@ import type {
   ToolsetInfo,
   ToolsetProvider,
 } from "@/lib/api";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Switch } from "@nous-research/ui/ui/components/switch";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Toast } from "@nous-research/ui/ui/components/toast";
+import { useToast } from "@/ui";
+import { Button } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
+import { Badge } from "@/ui";
+import { Switch } from "@/ui";
+import { Spinner } from "@/ui";
+import { Toast } from "@/ui";
 import { cn, themedBody } from "@/lib/utils";
 
 interface Props {
@@ -265,7 +265,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
         </header>
 
         {/* Body — provider matrix */}
-        <div className="flex-grow-1 min-h-0 overflow-y-auto p-5 pt-4 space-y-4">
+        <div className="flex-grow-1 min-h-0 overflow-y-auto p-5 pt-4 stack-4">
           {loading ? (
             <div className="d-flex align-items-center justify-content-center py-10">
               <Spinner />
@@ -335,7 +335,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                   {provider.env_vars.length > 0 && (
                     <div className="mt-3 space-y-2.5">
                       {provider.env_vars.map((ev) => (
-                        <div key={ev.key} className="space-y-1">
+                        <div key={ev.key} className="stack-1">
                           <div className="d-flex align-items-center justify-content-between gap-2">
                             <Label
                               htmlFor={`env-${ev.key}`}
@@ -397,7 +397,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                     <div className="mt-3 border-top border-secondary pt-3">
                       <p className="fs-6 text-body-secondary mb-1.5">
                         This backend needs a one-time install
-                        {"    "}
+                        {"        "}
                         <span className="font-monospace">
                           ({provider.post_setup})
                         </span>

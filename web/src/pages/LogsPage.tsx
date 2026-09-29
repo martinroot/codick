@@ -8,13 +8,13 @@ import {
 import { FileText, RefreshCw } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { api } from "@/lib/api";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { FilterGroup, Segmented } from "@nous-research/ui/ui/components/segmented";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Switch } from "@nous-research/ui/ui/components/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
-import { Label } from "@nous-research/ui/ui/components/label";
+import { Badge } from "@/ui";
+import { Button } from "@/ui";
+import { FilterGroup, Segmented } from "@/ui";
+import { Spinner } from "@/ui";
+import { Switch } from "@/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/ui";
+import { Label } from "@/ui";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";
@@ -93,7 +93,7 @@ export default function LogsPage() {
     setAfterTitle(
       <span className="d-flex align-items-center gap-2">
         <Badge tone="secondary" className="fs-6">
-          {formatFilterLabel(file)} · {formatFilterLabel(level)} ·{"    "}
+          {formatFilterLabel(file)} · {formatFilterLabel(level)} ·{"        "}
           {formatFilterLabel(component)}
         </Badge>
         <Button

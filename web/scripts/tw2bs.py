@@ -120,6 +120,21 @@ MAP = {
     "focus-visible:ring-1": "focus-ring-1",
     "focus-visible:outline-none": "",
     "focus-visible:ring-inset": "",
+    # Vertical rhythm between siblings. Bootstrap has no `space-y-*`;
+    # `.stack-N` in ui/structure.css carries it.
+    "space-y-0": "",
+    "space-y-0.5": "stack-1",
+    "space-y-1": "stack-1",
+    "space-y-1.5": "stack-2",
+    "space-y-2": "stack-2",
+    "space-y-3": "stack-3",
+    "space-y-4": "stack-4",
+    "space-y-5": "stack-5",
+    "space-y-6": "stack-5",
+    "space-x-1": "stack-1",
+    "space-x-2": "stack-2",
+    "space-x-3": "stack-3",
+    "space-x-4": "stack-4",
 
     # Spacing.
     #

@@ -27,19 +27,19 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { H2 } from "@nous-research/ui/ui/components/typography/h2";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import { Checkbox } from "@nous-research/ui/ui/components/checkbox";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
-import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { useConfirmDelete } from "@nous-research/ui/hooks/use-confirm-delete";
-import { ConfirmDialog } from "@nous-research/ui/ui/components/confirm-dialog";
+import { Badge } from "@/ui";
+import { Button } from "@/ui";
+import { Spinner } from "@/ui";
+import { H2 } from "@/ui";
+import { Card, CardContent } from "@/ui";
+import { Checkbox } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
+import { Select, SelectOption } from "@/ui";
+import { Toast } from "@/ui";
+import { useToast } from "@/ui";
+import { useConfirmDelete } from "@/ui";
+import { ConfirmDialog } from "@/ui";
 import { useModalBehavior } from "@/hooks/useModalBehavior";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { HermesConsoleModal } from "@/components/HermesConsoleModal";
@@ -1017,7 +1017,7 @@ export default function SystemPage() {
                   !updateInfo.can_apply &&
                   updateInfo.update_available && (
                     <span className="fs-6 text-body-secondary">
-                      Update with{"    "}
+                      Update with{"        "}
                       <span className="font-monospace">{updateInfo.update_command}</span>
                     </span>
                   )}
@@ -1202,7 +1202,7 @@ export default function SystemPage() {
           <CardContent className="d-flex flex-column gap-4 py-4">
             <div className="d-flex flex-wrap align-items-center gap-x-3 gap-y-1 fs-6 text-body-secondary">
               <span>
-                External provider:{"    "}
+                External provider:{"        "}
                 <span className="font-monospace text-body-emphasis">
                   {memory?.active || "built-in only"}
                 </span>
@@ -1216,7 +1216,7 @@ export default function SystemPage() {
                 Change in Plugins →
               </Link>
               <span className="ml-auto">
-                Provider setup:{"    "}
+                Provider setup:{"        "}
                 <Link to="/plugins" className="text-decoration-underline">
                   configure in Plugins
                 </Link>
@@ -1231,8 +1231,8 @@ export default function SystemPage() {
 
             <div className="d-flex flex-wrap align-items-center gap-3 border-top border-secondary pt-3">
               <span className="fs-6 text-body-secondary">
-                Built-in files — MEMORY.md:{"    "}
-                {formatBytes(memory?.builtin_files.memory ?? 0)} · USER.md:{"    "}
+                Built-in files — MEMORY.md:{"        "}
+                {formatBytes(memory?.builtin_files.memory ?? 0)} · USER.md:{"        "}
                 {formatBytes(memory?.builtin_files.user ?? 0)}
               </span>
               <div className="d-flex align-items-center gap-2 ml-auto">
@@ -1512,7 +1512,7 @@ export default function SystemPage() {
                     )}
                     <span className="d-flex align-items-center gap-1 fs-6 text-body-secondary">
                       <Clock className="icon-sm" />
-                      auto-deletes in{"    "}
+                      auto-deletes in{"        "}
                       {Math.round(shareResult.auto_delete_seconds / 3600)}h
                     </span>
                   </div>
@@ -1588,7 +1588,7 @@ export default function SystemPage() {
         <Card>
           <CardContent className="d-flex align-items-center justify-content-between py-4">
             <span className="fs-6 text-body-secondary">
-              {checkpoints?.sessions.length ?? 0} session(s) ·{"    "}
+              {checkpoints?.sessions.length ?? 0} session(s) ·{"        "}
               {formatBytes(checkpoints?.total_bytes ?? 0)}
             </span>
             <Button size="sm" ghost className="text-danger" disabled={!checkpoints?.sessions.length} prefix={<Trash2 className="icon-sm" />} onClick={() => checkpointsPrune.requestDelete("all")}>

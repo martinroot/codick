@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { ActionStatusResponse } from "@/lib/api";
-import { Toast } from "@nous-research/ui/ui/components/toast";
+import { Toast } from "@/ui";
 import { sharedGatewayProfiles, sharedGatewayRestartedMessage } from "@/lib/shared-gateway";
 import { useI18n } from "@/i18n";
 import {

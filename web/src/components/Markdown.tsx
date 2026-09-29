@@ -22,7 +22,7 @@ export function Markdown({
   const caret = streaming ? <StreamingCaret /> : null;
 
   return (
-    <div className="fs-6 text-body-emphasis leading-relaxed space-y-2">
+    <div className="fs-6 text-body-emphasis leading-relaxed stack-2">
       {blocks.map((block, i) => (
         <Block
           key={i}
@@ -205,7 +205,7 @@ function Block({
       const last = block.items.length - 1;
       return (
         <Tag
-          className={`space-y-0.5 ${block.ordered ? "list-decimal" : "list-disc"} pl-5 fs-6`}
+          className={`stack-1 ${block.ordered ? "list-decimal" : "list-disc"} pl-5 fs-6`}
         >
           {block.items.map((item, i) => (
             <li key={i}>

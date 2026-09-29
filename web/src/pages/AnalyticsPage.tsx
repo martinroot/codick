@@ -17,10 +17,10 @@ import type {
   AnalyticsSkillEntry,
 } from "@/lib/api";
 import { timeAgo } from "@/lib/utils";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Stats } from "@nous-research/ui/ui/components/stats";
-import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
+import { Button } from "@/ui";
+import { Spinner } from "@/ui";
+import { Stats } from "@/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/ui";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { useI18n } from "@/i18n";
 import { PluginSlot } from "@/plugins";
@@ -496,7 +496,7 @@ export default function AnalyticsPage() {
               <p>
                 The token, cost, and per-day analytics on this page are a
                 local debug estimate. They only count successful main-agent
-                responses with a usable <span className="font-monospace">usage</span>{"                "}
+                responses with a usable <span className="font-monospace">usage</span>{"                                "}
                 block, and silently exclude auxiliary calls (context
                 compression, title generation, vision, session search, web
                 extract, smart approvals, MCP routing, plugin LLM access)
@@ -512,10 +512,10 @@ export default function AnalyticsPage() {
               <p>
                 Check your provider dashboard (OpenRouter, Anthropic, etc.)
                 for actual usage and billing. To re-enable the local debug
-                estimate anyway, set{"    "}
+                estimate anyway, set{"        "}
                 <span className="font-monospace">
                   dashboard.show_token_analytics: true
-                </span>{"    "}
+                </span>{"        "}
                 in <a href="/config" className="text-decoration-underline">Config</a>.
               </p>
             </div>

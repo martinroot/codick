@@ -19,23 +19,23 @@ import { api } from "@/lib/api";
 import type { EnvVarInfo } from "@/lib/api";
 import { removeDeletedEnvVarFromState } from "@/lib/env-state";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { useConfirmDelete } from "@nous-research/ui/hooks/use-confirm-delete";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
+import { Toast } from "@/ui";
+import { useConfirmDelete } from "@/ui";
+import { useToast } from "@/ui";
 import { OAuthProvidersCard } from "@/components/OAuthProvidersCard";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
+import { Button } from "@/ui";
+import { ListItem } from "@/ui";
+import { Spinner } from "@/ui";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@nous-research/ui/ui/components/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
+} from "@/ui";
+import { Badge } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";
@@ -1077,7 +1077,7 @@ function EnvCategoryCard({
         </div>
 
         <CardDescription>
-          {section.setEntries.length} {t.common.of} {section.totalEntries}{"    "}
+          {section.setEntries.length} {t.common.of} {section.totalEntries}{"        "}
           {t.common.configured}
         </CardDescription>
 

@@ -18,14 +18,12 @@
 @import './ui/bootstrap-theme.css' layer(bootstrap-theme);
 @import './ui/structure.css' layer(structure);
 /* Tailwind removed: @import 'tailwindcss'; */
-/* `fonts.css` must come BEFORE `globals.css`: as of @nous-research/ui 0.14.x,
-   `globals.css` only declares the `--font-*` CSS variables (Collapse, Rules
-   Compressed/Expanded, Mondwest). The `@font-face` registrations live in
-   `fonts.css`, so without this import the DS variables resolve to font
-   families the browser never loads and components fall back to a system
-   stack (Tabs, Segmented, Typography, Buttons, etc. all look unstyled). */
-@import '@nous-research/ui/styles/fonts.css';
-@import '@nous-research/ui/styles/globals.css';
+/* The old design system is gone too. Its stylesheet was the last thing
+   carrying the previous look — `@nous-research/ui/styles/globals.css`
+   re-declared Bootstrap's own variables and restyled its components
+   underneath us, and its `Stats` is where the dotted leader came from.
+   Nothing imports the package any more; 252 import statements across 42
+   files now resolve to `@/ui`, which is implemented on Bootstrap. */
 
 /* ------------------------------------------------------------------ */
 /* JetBrains Mono — bundled for the embedded TUI (/chat tab).          */

@@ -43,23 +43,23 @@ import { useProfileScope } from "@/contexts/useProfileScope";
 import { ToolsetConfigDrawer } from "@/components/ToolsetConfigDrawer";
 import { SkillEditorDialog } from "@/components/SkillEditorDialog";
 import { LoadErrorNotice } from "@/components/LoadErrorNotice";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Switch } from "@nous-research/ui/ui/components/switch";
+import { useToast } from "@/ui";
+import { Toast } from "@/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/ui";
+import { Badge } from "@/ui";
+import { Button } from "@/ui";
+import { ListItem } from "@/ui";
+import { Spinner } from "@/ui";
+import { Switch } from "@/ui";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@nous-research/ui/ui/components/dialog";
+} from "@/ui";
 import { cn } from "@/lib/utils";
-import { Input } from "@nous-research/ui/ui/components/input";
+import { Input } from "@/ui";
 import { useI18n } from "@/i18n";
 import { en } from "@/i18n/en";
 import { usePageHeader } from "@/contexts/usePageHeader";
@@ -1201,7 +1201,7 @@ function ConnectedHubs({
   if (sources.length === 0) {
     return (
       <p className="fs-6 text-body-secondary">
-        Results come from the same sources as{"    "}
+        Results come from the same sources as{"        "}
         <span className="font-monospace">hermes skills search</span>.
       </p>
     );
@@ -1428,7 +1428,7 @@ function SkillDetailDialog({
             )}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Preview the SKILL.md source and run a security scan for {result.name}{"    "}
+            Preview the SKILL.md source and run a security scan for {result.name}{"        "}
             before installing.
           </DialogDescription>
         </DialogHeader>
@@ -1517,9 +1517,9 @@ function SkillDetailDialog({
                 {preview.files.length > 0 && (
                   <div className="fs-6 text-body-tertiary">
                     <span className="tracking-[0.1em] text-uppercase">
-                      Files:{"    "}
+                      Files:{"        "}
                     </span>
-                    <span className="font-monospace">{preview.files.join("                                ")}</span>
+                    <span className="font-monospace">{preview.files.join("                                                                ")}</span>
                   </div>
                 )}
                 <pre className="text-wrap text-break bg-background/50 border border-secondary p-3 fs-6 font-monospace text-body-secondary leading-relaxed">

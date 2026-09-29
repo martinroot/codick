@@ -38,16 +38,16 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { getNestedValue, setNestedValue } from "@/lib/nested";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { Toast } from "@nous-research/ui/ui/components/toast";
+import { useToast } from "@/ui";
+import { Toast } from "@/ui";
 import { AutoField } from "@/components/AutoField";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
-import { ConfirmDialog } from "@nous-research/ui/ui/components/confirm-dialog";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Badge } from "@nous-research/ui/ui/components/badge";
+import { Button } from "@/ui";
+import { ListItem } from "@/ui";
+import { Spinner } from "@/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/ui";
+import { ConfirmDialog } from "@/ui";
+import { Input } from "@/ui";
+import { Badge } from "@/ui";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";
@@ -413,7 +413,7 @@ export default function ConfigPage() {
           {showSection && (
             <div className="d-flex align-items-center gap-2 pt-4 pb-2 first:pt-0">
               <span className="fs-4 fw-semibold fs-6 fw-semibold ls-wide text-body-secondary">
-                {section.replace(/_/g, "    ")}
+                {section.replace(/_/g, "        ")}
               </span>
               <div className="flex-grow-1 border-top border-secondary" />
             </div>
@@ -607,7 +607,7 @@ export default function ConfigPage() {
                       {t.config.searchResults}
                     </CardTitle>
                     <Badge tone="secondary" className="fs-6">
-                      {searchMatchedFields.length}{"    "}
+                      {searchMatchedFields.length}{"        "}
                       {t.config.fields.replace(
                         "{s}",
                         searchMatchedFields.length !== 1 ? "s" : "",
@@ -638,7 +638,7 @@ export default function ConfigPage() {
                       {prettyCategoryName(activeCategory)}
                     </CardTitle>
                     <Badge tone="secondary" className="fs-6">
-                      {activeFields.length}{"    "}
+                      {activeFields.length}{"        "}
                       {t.config.fields.replace(
                         "{s}",
                         activeFields.length !== 1 ? "s" : "",

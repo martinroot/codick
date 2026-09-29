@@ -15,18 +15,18 @@ import type {
   MemoryProviderSetupResult,
   PluginsHubResponse,
 } from "@/lib/api";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
-import { Switch } from "@nous-research/ui/ui/components/switch";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { CommandBlock, CopyButton } from "@nous-research/ui/ui/components/command-block";
-import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
-import { ConfirmDialog } from "@nous-research/ui/ui/components/confirm-dialog";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { Toast } from "@nous-research/ui/ui/components/toast";
+import { Button } from "@/ui";
+import { Badge } from "@/ui";
+import { Select, SelectOption } from "@/ui";
+import { Switch } from "@/ui";
+import { Spinner } from "@/ui";
+import { CommandBlock, CopyButton } from "@/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/ui";
+import { ConfirmDialog } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
+import { useToast } from "@/ui";
+import { Toast } from "@/ui";
 import { useI18n } from "@/i18n";
 import { en } from "@/i18n/en";
 import { PluginSlot } from "@/plugins";
@@ -901,7 +901,7 @@ export default function PluginsPage() {
             </div>
           ) : catalogEntries.length === 0 ? (
             <p className="fs-6 text-body-tertiary">
-              {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{"    "}
+              {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{"        "}
               <a
                 className="text-decoration-underline"
                 href="https://hermes-agent.nousresearch.com/docs/plugins"

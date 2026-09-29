@@ -74,6 +74,40 @@
     height: 2rem;
   }
 
+  /*
+   * Vertical rhythm between sibling elements.
+   *
+   * Bootstrap has no equivalent: `gap` applies to a flex or grid
+   * container, and the old `space-y-*` class was the one place a plain
+   * block of children got even spacing without becoming a flex box. 36
+   * call sites rely on it, and with no rule the children collapse onto
+   * each other — which is how headings ended up butted against their own
+   * subtitles.
+   *
+   * `> * + *` rather than a margin on every child, so the first and last
+   * elements do not pick up leading and trailing space they never asked
+   * for.
+   */
+  .stack-1 > * + * {
+    margin-top: 0.25rem;
+  }
+
+  .stack-2 > * + * {
+    margin-top: 0.5rem;
+  }
+
+  .stack-3 > * + * {
+    margin-top: 1rem;
+  }
+
+  .stack-4 > * + * {
+    margin-top: 1.5rem;
+  }
+
+  .stack-5 > * + * {
+    margin-top: 3rem;
+  }
+
 /*
  * `offcanvas-lg` on the <aside> already splits the two modes for us:
  * below lg Bootstrap treats it as a fixed off-canvas drawer, from lg up

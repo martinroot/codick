@@ -436,7 +436,8 @@ export function TabsTrigger({ active, className, value: _value, ...props }: Tabs
   );
 }
 
-export interface StatsProps extends React.ComponentProps<"div"> {
+export interface StatsProps
+  extends Omit<React.ComponentProps<"dl">, "children"> {
   items: {
     label: string | { key: string; node: React.ReactNode };
     value: string | { key: string; node: React.ReactNode };
@@ -445,19 +446,43 @@ export interface StatsProps extends React.ComponentProps<"div"> {
 }
 
 export function Stats({ className, items, flip, ...props }: StatsProps) {
+  /*
+   * Was `stats`/`stat`/`stat-label`/`stat-value` — classes that lived in
+   * the old theme's component re-skinning and now resolve to nothing, so
+   * the figures collapsed into an unlabelled run of text. Bootstrap's
+   * flex utilities and the definition-list semantics carry it instead:
+   * `flip` swaps the reading order, which is what it meant all along.
+   */
   return (
-    <div className={cn("stats", flip && "stats-flip", className)} {...props}>
+    <dl
+      className={cn(
+        "d-flex flex-wrap mb-0",
+        flip ? "flex-column" : "flex-row",
+        className,
+      )}
+      {...props}
+    >
       {items.map((item, index) => (
-        <div className="stat" key={index}>
-          <span className="stat-label">
+        <div
+          className={cn(
+            "pe-4",
+            flip ? "mb-2" : "me-4 mb-1",
+            "d-flex",
+            flip ? "flex-column" : "flex-row",
+            "align-items-baseline",
+            "gap-2",
+          )}
+          key={index}
+        >
+          <dt className="fs-6 fw-normal text-body-secondary mb-0">
             {typeof item.label === "string" ? item.label : item.label.node}
-          </span>
-          <span className="stat-value">
+          </dt>
+          <dd className="fs-5 fw-semibold mb-0 text-body-emphasis">
             {typeof item.value === "string" ? item.value : item.value.node}
-          </span>
+          </dd>
         </div>
       ))}
-    </div>
+    </dl>
   );
 }
 

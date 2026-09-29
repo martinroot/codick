@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Clock, Wand2 } from "lucide-react";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { Toast } from "@nous-research/ui/ui/components/toast";
+import { Button } from "@/ui";
+import { Select, SelectOption } from "@/ui";
+import { Spinner } from "@/ui";
+import { Card, CardContent } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
+import { Badge } from "@/ui";
+import { useToast } from "@/ui";
+import { Toast } from "@/ui";
 import { api } from "@/lib/api";
 import type { AutomationBlueprint, AutomationBlueprintField } from "@/lib/api";
 import { cn, themedBody } from "@/lib/utils";
@@ -104,7 +104,7 @@ function BlueprintCard({
 
   return (
     <Card className={cn("overflow-hidden", themedBody)}>
-      <CardContent className="space-y-3 p-4">
+      <CardContent className="stack-3 p-4">
         <div className="d-flex align-items-start justify-content-between gap-3">
           <div className="min-w-0">
             <div className="d-flex align-items-center gap-2">
@@ -130,9 +130,9 @@ function BlueprintCard({
         </div>
 
         {open && (
-          <div className="space-y-3 border-top pt-3">
+          <div className="stack-3 border-top pt-3">
             {blueprint.fields.map((f) => (
-              <div key={f.name} className="space-y-1">
+              <div key={f.name} className="stack-1">
                 <Label htmlFor={`${blueprint.key}-${f.name}`}>{f.label}</Label>
                 <FieldInput
                   field={f}

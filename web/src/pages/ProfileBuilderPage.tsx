@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { H2 } from "@nous-research/ui/ui/components/typography/h2";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
-import { Checkbox } from "@nous-research/ui/ui/components/checkbox";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
+import { H2 } from "@/ui";
+import { Card, CardContent } from "@/ui";
+import { Badge } from "@/ui";
+import { Button } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
+import { Checkbox } from "@/ui";
+import { Toast } from "@/ui";
+import { useToast } from "@/ui";
 import { api } from "@/lib/api";
 import type {
   McpHttpAuth,
@@ -281,7 +281,7 @@ export default function ProfileBuilderPage() {
   const canAdvance = step !== "identity" || nameValid;
 
   return (
-    <div className="mx-auto w-100 max-w-3xl space-y-6 p-4">
+    <div className="mx-auto w-100 max-w-3xl stack-5 p-4">
       <div className="d-flex align-items-center justify-content-between">
         <H2>New profile</H2>
         <Button ghost onClick={() => navigate("/profiles")}>
@@ -313,10 +313,10 @@ export default function ProfileBuilderPage() {
       </div>
 
       <Card>
-        <CardContent className="space-y-4 p-5">
+        <CardContent className="stack-4 p-5">
           {step === "identity" && (
-            <div className="space-y-4">
-              <div className="space-y-1.5">
+            <div className="stack-4">
+              <div className="stack-2">
                 <Label htmlFor="pb-name">Profile name</Label>
                 <Input
                   id="pb-name"
@@ -333,7 +333,7 @@ export default function ProfileBuilderPage() {
                   </p>
                 )}
               </div>
-              <div className="space-y-1.5">
+              <div className="stack-2">
                 <Label htmlFor="pb-desc">Description (optional)</Label>
                 <Input
                   id="pb-desc"
@@ -348,7 +348,7 @@ export default function ProfileBuilderPage() {
           )}
 
           {step === "model" && (
-            <div className="space-y-3">
+            <div className="stack-3">
               <p className="fs-6 text-body-secondary">
                 Pick the model+provider for this profile. Skip to use the
                 default.
@@ -363,7 +363,7 @@ export default function ProfileBuilderPage() {
               {modelChoices === null ? (
                 <p className="fs-6 text-body-secondary">Loading models…</p>
               ) : (
-                <div className="max-h-72 space-y-1 overflow-y-auto">
+                <div className="max-h-72 stack-1 overflow-y-auto">
                   <button
                     onClick={() => setModelChoice("")}
                     className={cn(
@@ -396,7 +396,7 @@ export default function ProfileBuilderPage() {
           )}
 
           {step === "skills" && (
-            <div className="space-y-4">
+            <div className="stack-4">
               <label className="d-flex align-items-center gap-2 fs-6">
                 <Checkbox
                   checked={keepAll}
@@ -405,7 +405,7 @@ export default function ProfileBuilderPage() {
                 Start from the full default skill bundle (recommended)
               </label>
               {!keepAll && (
-                <div className="space-y-2">
+                <div className="stack-2">
                   <p className="fs-6 text-body-secondary">
                     Choose which built-in / optional skills to keep active.
                     Unchecked skills are disabled in the new profile.
@@ -422,7 +422,7 @@ export default function ProfileBuilderPage() {
                       Loading skills…
                     </p>
                   ) : (
-                    <div className="max-h-56 space-y-1 overflow-y-auto">
+                    <div className="max-h-56 stack-1 overflow-y-auto">
                       {filteredSkills.map((s) => (
                         <label
                           key={s.name}
@@ -453,7 +453,7 @@ export default function ProfileBuilderPage() {
               )}
 
               {/* Skills hub */}
-              <div className="space-y-2 border-top pt-4">
+              <div className="stack-2 border-top pt-4">
                 <Label>Add from the skills hub</Label>
                 <div className="d-flex gap-2">
                   <Input
@@ -475,7 +475,7 @@ export default function ProfileBuilderPage() {
                   </Button>
                 </div>
                 {hubResults.length > 0 && (
-                  <div className="max-h-48 space-y-1 overflow-y-auto">
+                  <div className="max-h-48 stack-1 overflow-y-auto">
                     {hubResults.map((r) => (
                       <div
                         key={r.identifier}
@@ -520,9 +520,9 @@ export default function ProfileBuilderPage() {
           )}
 
           {step === "mcp" && (
-            <div className="space-y-5">
+            <div className="stack-5">
               <div className="d-flex flex-wrap align-items-start justify-content-between gap-3">
-                <div className="space-y-1">
+                <div className="stack-1">
                   <h3 className="font-expanded fs-6 fw-bold tracking-[0.04em]">
                     MCP servers
                   </h3>
@@ -539,7 +539,7 @@ export default function ProfileBuilderPage() {
                 </span>
               </div>
 
-              <div className="space-y-4 border border-secondary bg-background/20 p-4 md:p-5">
+              <div className="stack-4 border border-secondary bg-background/20 p-4 md:p-5">
                 <h4 className="fw-medium">Add server</h4>
 
                 <div className="d-grid gap-4 md:grid-cols-2">
@@ -713,7 +713,7 @@ export default function ProfileBuilderPage() {
               </div>
 
               {mcpServers.length > 0 && (
-                <div className="space-y-2">
+                <div className="stack-2">
                   {mcpServers.map((s) => (
                     <div
                       key={s.name}
@@ -732,7 +732,7 @@ export default function ProfileBuilderPage() {
                           )}
                         </span>
                         <span className="mt-1 d-block break-all fs-6 text-body-secondary">
-                          {s.url || [s.command, ...(s.args || [])].join("    ")}
+                          {s.url || [s.command, ...(s.args || [])].join("        ")}
                         </span>
                       </span>
                       <Button
@@ -751,7 +751,7 @@ export default function ProfileBuilderPage() {
             </div>
           )}
           {step === "review" && (
-            <div className="space-y-3 fs-6">
+            <div className="stack-3 fs-6">
               <ReviewRow label="Name" value={name.trim() || "—"} />
               <ReviewRow
                 label="Description"

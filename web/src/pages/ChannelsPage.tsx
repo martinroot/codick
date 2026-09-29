@@ -16,15 +16,15 @@ import {
   X,
 } from "lucide-react";
 import * as QRCode from "qrcode";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Switch } from "@nous-research/ui/ui/components/switch";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
+import { Badge } from "@/ui";
+import { Button } from "@/ui";
+import { Card, CardContent } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
+import { Spinner } from "@/ui";
+import { Switch } from "@/ui";
+import { Toast } from "@/ui";
+import { useToast } from "@/ui";
 import { api } from "@/lib/api";
 import type {
   MessagingPlatform,
@@ -344,7 +344,7 @@ export default function ChannelsPage() {
             <WifiOff className="icon-md flex-shrink-0" />
             <span>
               The gateway is not running. Configure channels here, then start the
-              gateway with <code className="font-courier">{gatewayStartCommand}</code>{"                "}
+              gateway with <code className="font-courier">{gatewayStartCommand}</code>{"                                "}
               (or the Restart button above).
             </span>
           </CardContent>
@@ -577,7 +577,7 @@ export default function ChannelsPage() {
                       )}
                       {platform.ingress_url && (
                         <span className="fs-6 text-body-secondary break-all">
-                          Callback URL (shared listener):{"    "}
+                          Callback URL (shared listener):{"        "}
                           <code className="font-monospace">{platform.ingress_url}</code>
                         </span>
                       )}
@@ -985,7 +985,7 @@ function WhatsAppOnboardingPanel({
                         : "WhatsApp device linked"}
                     </div>
                     <div className="mt-1 text-body-secondary">{linkedAccountDetail}</div>
-                    <ol className="mt-3 list-decimal space-y-1 pl-5 text-body-secondary">
+                    <ol className="mt-3 list-decimal stack-1 pl-5 text-body-secondary">
                       <li>Save and restart the gateway.</li>
                       <li>{messageInstruction}</li>
                       <li>{pairingInstruction}</li>

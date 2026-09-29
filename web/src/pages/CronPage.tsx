@@ -4,11 +4,11 @@ import {
   createCronTriggerController,
 } from "@hermes/shared";
 import { Clock, Pause, Pencil, Play, Trash2, X, Zap } from "lucide-react";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { H2 } from "@nous-research/ui/ui/components/typography/h2";
+import { Badge } from "@/ui";
+import { Button } from "@/ui";
+import { Select, SelectOption } from "@/ui";
+import { Spinner } from "@/ui";
+import { H2 } from "@/ui";
 import { api } from "@/lib/api";
 import type {
   CronJob,
@@ -42,19 +42,19 @@ import {
   type ScheduleBuilderState,
   type ScheduleDescribeStrings,
 } from "@/lib/schedule";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { useConfirmDelete } from "@nous-research/ui/hooks/use-confirm-delete";
+import { useToast } from "@/ui";
+import { useConfirmDelete } from "@/ui";
 import { useModalBehavior } from "@/hooks/useModalBehavior";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
+import { Toast } from "@/ui";
+import { Card, CardContent } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
 import { useI18n } from "@/i18n";
 import { en } from "@/i18n/en";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";
 import { LoadErrorNotice } from "@/components/LoadErrorNotice";
-import { Segmented } from "@nous-research/ui/ui/components/segmented";
+import { Segmented } from "@/ui";
 import { AutomationBlueprints } from "@/components/AutomationBlueprints";
 import { cn, themedBody } from "@/lib/utils";
 import { errorMessage } from "@/lib/api-error";
@@ -1220,7 +1220,7 @@ export default function CronPage() {
                   )}
                   {job.last_fire_error?.detail && (
                     <p className="fs-6 text-danger mt-1">
-                      missed scheduled fire ({formatTime(job.last_fire_error.at ?? null)}):{"    "}
+                      missed scheduled fire ({formatTime(job.last_fire_error.at ?? null)}):{"        "}
                       {job.last_fire_error.detail}
                     </p>
                   )}

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ExternalLink, X, Check, Copy } from "lucide-react";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { H2 } from "@nous-research/ui/ui/components/typography/h2";
+import { Button } from "@/ui";
+import { Spinner } from "@/ui";
+import { H2 } from "@/ui";
 import { api, type OAuthProvider, type OAuthStartResponse } from "@/lib/api";
 import { copyTextToClipboard } from "@/lib/clipboard";
-import { Input } from "@nous-research/ui/ui/components/input";
+import { Input } from "@/ui";
 import { useI18n } from "@/i18n";
 import { cn, themedBody } from "@/lib/utils";
 import { errorMessage } from "@/lib/api-error";
@@ -267,7 +267,7 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
 
           {start?.flow === "pkce" && phase === "awaiting_user" && (
             <>
-              <ol className="fs-6 space-y-2 list-decimal list-inside text-body-secondary">
+              <ol className="fs-6 stack-2 list-decimal list-inside text-body-secondary">
                 <li>{t.oauth.pkceStep1}</li>
                 <li>{t.oauth.pkceStep2}</li>
                 <li>{t.oauth.pkceStep3}</li>

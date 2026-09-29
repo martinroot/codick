@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { KeyRound, Package, Power, Server, Trash2, X, Zap } from "lucide-react";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { H2 } from "@nous-research/ui/ui/components/typography/h2";
+import { Badge } from "@/ui";
+import { Button } from "@/ui";
+import { Select, SelectOption } from "@/ui";
+import { Spinner } from "@/ui";
+import { H2 } from "@/ui";
 import { api } from "@/lib/api";
 import type {
   McpCatalogDiagnostic,
@@ -14,13 +14,13 @@ import type {
   McpTestResult,
 } from "@/lib/api";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { useConfirmDelete } from "@nous-research/ui/hooks/use-confirm-delete";
+import { useToast } from "@/ui";
+import { useConfirmDelete } from "@/ui";
 import { useModalBehavior } from "@/hooks/useModalBehavior";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Label } from "@nous-research/ui/ui/components/label";
+import { Toast } from "@/ui";
+import { Card, CardContent } from "@/ui";
+import { Input } from "@/ui";
+import { Label } from "@/ui";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { cn, themedBody } from "@/lib/utils";
 import {
@@ -648,7 +648,7 @@ export default function McpPage() {
                     </Badge>
                     {server.auth && (
                       <Badge tone="outline">
-                        auth:{"    "}
+                        auth:{"        "}
                         {server.auth === "header" ? "bearer" : server.auth}
                       </Badge>
                     )}
@@ -663,7 +663,7 @@ export default function McpPage() {
                       <span className="font-monospace text-truncate">
                         {[server.command, ...(server.args ?? [])]
                           .filter(Boolean)
-                          .join("    ") || "—"}
+                          .join("        ") || "—"}
                       </span>
                     )}
                     {envCount > 0 && (
@@ -821,15 +821,15 @@ export default function McpPage() {
                   {/* Connection detail: what the agent actually talks to. */}
                   {entry.transport === "http" && entry.url && (
                     <p className="mt-1 fs-6 text-body-secondary">
-                      <span className="fw-medium">Endpoint:</span>{"                "}
+                      <span className="fw-medium">Endpoint:</span>{"                                "}
                       <code className="font-monospace">{entry.url}</code>
                     </p>
                   )}
                   {entry.transport === "stdio" && entry.command && (
                     <p className="mt-1 fs-6 text-body-secondary break-all">
-                      <span className="fw-medium">Runs:</span>{"                "}
+                      <span className="fw-medium">Runs:</span>{"                                "}
                       <code className="font-monospace">
-                        {[entry.command, ...entry.args].join("    ")}
+                        {[entry.command, ...entry.args].join("        ")}
                       </code>
                     </p>
                   )}
@@ -837,7 +837,7 @@ export default function McpPage() {
                       before they install (matches the docs trust model). */}
                   {entry.install_url && (
                     <p className="mt-1 fs-6 text-body-secondary break-all">
-                      <span className="fw-medium">Installs from:</span>{"                "}
+                      <span className="fw-medium">Installs from:</span>{"                                "}
                       {isHttpUrl(entry.install_url) ? (
                         <a
                           href={entry.install_url}
@@ -858,7 +858,7 @@ export default function McpPage() {
                       <summary className="cursor-pointer user-select-none">
                         Bootstrap commands ({entry.bootstrap.length})
                       </summary>
-                      <ul className="mt-1 ml-3 list-disc space-y-0.5">
+                      <ul className="mt-1 ml-3 list-disc stack-1">
                         {entry.bootstrap.map((cmd, i) => (
                           <li
                             key={`${entry.name}-bs-${i}`}

@@ -29,12 +29,12 @@ import {
   shouldCloseOuterModalOnEscape,
 } from "@/lib/dashboard-modal-shell";
 import { compactNumber } from "@hermes/shared";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Stats } from "@nous-research/ui/ui/components/stats";
-import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Switch } from "@nous-research/ui/ui/components/switch";
+import { Button } from "@/ui";
+import { Spinner } from "@/ui";
+import { Stats } from "@/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/ui";
+import { Badge } from "@/ui";
+import { Switch } from "@/ui";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useModalBehavior } from "@/hooks/useModalBehavior";
 import { usePageHeader } from "@/contexts/usePageHeader";
@@ -120,27 +120,20 @@ function TokenBar({
   ].filter((s) => s.value > 0);
 
   return (
-    <div className="space-y-1.5">
+    <div className="stack-2">
       {/* Stacked bar — segments fill proportionally to their share of total */}
-      <div className="position-relative d-flex min-h-[1.5rem] w-100 align-items-stretch overflow-hidden">
+      <div className="position-relative d-flex w-100 align-items-stretch overflow-hidden rounded-2"
+        style={{ minHeight: "1.5rem" }}
+      >
         {segments.map((s, i) => (
           <div
             key={i}
-            className="position-relative d-flex align-items-center transition-all duration-300"
+            className="d-flex align-items-center"
             style={{
               backgroundColor: `color-mix(in srgb, ${s.color} 70%, transparent)`,
               width: `${(s.value / total) * 100}%`,
             }}
-          >
-            {/* Stepped fill pattern overlay */}
-            <div
-              className="position-absolute top-0 start-0 w-100 h-100 opacity-30"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(to right, transparent 0 0.4rem, currentColor 0.4rem calc(0.4rem + 1px))",
-              }}
-            />
-          </div>
+          />
         ))}
       </div>
 
@@ -473,7 +466,7 @@ function ModelCard({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 pt-3">
+      <CardContent className="stack-3 pt-3">
         {showTokens && (
           <>
             <TokenBar
@@ -627,7 +620,7 @@ function AuxiliaryTasksModal({
           </p>
         </header>
 
-        <div className="flex-grow-1 overflow-y-auto p-5 space-y-1">
+        <div className="flex-grow-1 overflow-y-auto p-5 stack-1">
           {AUX_TASKS.map((t) => {
             const cur = aux?.tasks.find((a) => a.task === t.key);
             const isAuto =
@@ -825,7 +818,7 @@ function MoaModelsModal({
             Configure Mixture of Agents presets
           </h2>
         </header>
-        <div className="space-y-4 p-5">
+        <div className="stack-4 p-5">
           <p className="fs-6 text-body-secondary">
             Presets appear as models under the Mixture of Agents provider. References produce perspectives; the aggregator is the acting model that answers and calls tools.
           </p>
@@ -853,7 +846,7 @@ function MoaModelsModal({
             Default: <span className="font-monospace">{draft.default_preset}</span>
           </div>
 
-          <div className="space-y-2">
+          <div className="stack-2">
             <div className="fs-4 fw-semibold fs-6 fw-medium ls-wide">Reference models</div>
             {preset.reference_models.map((slot, index) => (
               <div
@@ -882,7 +875,7 @@ function MoaModelsModal({
             <Button size="sm" outlined onClick={() => updateSelectedPreset((prev) => ({ ...prev, reference_models: [...prev.reference_models, { ...prev.aggregator, enabled: true }] }))}>Add reference model</Button>
           </div>
 
-          <div className="space-y-2">
+          <div className="stack-2">
             <div className="fs-4 fw-semibold fs-6 fw-medium ls-wide">Aggregator</div>
             <div className="d-flex align-items-center gap-2 border border-border/50 bg-muted/20 px-3 py-2">
               <div className="min-w-0 flex-grow-1 text-truncate font-monospace fs-6 text-body-secondary">{slotLabel(preset.aggregator)}</div>
@@ -990,7 +983,7 @@ function ModelSettingsPanel({
         </div>
       </CardHeader>
 
-      <CardContent className="min-w-0 space-y-3 pt-3">
+      <CardContent className="min-w-0 stack-3 pt-3">
         {/* Main row */}
         <div className="d-flex min-w-0 flex-column gap-2 bg-muted/20 border border-border/50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-grow-1">
@@ -1302,8 +1295,8 @@ export default function ModelsPage() {
                   Token & cost analytics are hidden because the local counts
                   exclude auxiliary calls (compression, vision, web extract,
                   …) and provider retries, so they diverge from your provider
-                  bill. Enable{"    "}
-                  <span className="font-monospace">dashboard.show_token_analytics</span>{"                "}
+                  bill. Enable{"        "}
+                  <span className="font-monospace">dashboard.show_token_analytics</span>{"                                "}
                   in <a href="/config" className="text-decoration-underline">Config</a> to
                   show the local debug estimate anyway.
                 </p>

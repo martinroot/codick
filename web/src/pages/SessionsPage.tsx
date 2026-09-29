@@ -49,16 +49,16 @@ import type {
 import { timeAgo } from "@/lib/utils";
 import { Markdown } from "@/components/Markdown";
 import { PlatformsCard } from "@/components/PlatformsCard";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Checkbox } from "@nous-research/ui/ui/components/checkbox";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
+import { Toast } from "@/ui";
+import { Button } from "@/ui";
+import { Checkbox } from "@/ui";
+import { ListItem } from "@/ui";
+import { Spinner } from "@/ui";
+import { Badge } from "@/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/ui";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { useConfirmDelete } from "@nous-research/ui/hooks/use-confirm-delete";
-import { Input } from "@nous-research/ui/ui/components/input";
+import { useConfirmDelete } from "@/ui";
+import { Input } from "@/ui";
 import {
   Dialog,
   DialogContent,
@@ -66,9 +66,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@nous-research/ui/ui/components/dialog";
+} from "@/ui";
 import { useSystemActions } from "@/contexts/useSystemActions";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
+import { useToast } from "@/ui";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";
@@ -782,7 +782,7 @@ function SessionsPagination({
     >
       {!compact && (
         <span className="fs-6 text-body-secondary">
-          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{"    "}
+          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{"        "}
           {t.common.of} {total}
         </span>
       )}
@@ -2218,11 +2218,11 @@ export default function SessionsPage() {
                           <>
                             <span className="font-monospace">
                               {s.model.split("/").pop()}
-                            </span>{"    "}
-                            ·{"    "}
+                            </span>{"        "}
+                            ·{"        "}
                           </>
                         )}
-                        {s.message_count} {t.common.msgs} ·{"    "}
+                        {s.message_count} {t.common.msgs} ·{"        "}
                         {timeAgo(s.last_active)}
                       </span>
 

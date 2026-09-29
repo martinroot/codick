@@ -7,18 +7,18 @@ import {
   Terminal,
 } from "lucide-react";
 import { api, type OAuthProvider } from "@/lib/api";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { CopyButton } from "@nous-research/ui/ui/components/command-block";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
+import { Button } from "@/ui";
+import { CopyButton } from "@/ui";
+import { Spinner } from "@/ui";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@nous-research/ui/ui/components/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { ConfirmDialog } from "@nous-research/ui/ui/components/confirm-dialog";
+} from "@/ui";
+import { Badge } from "@/ui";
+import { ConfirmDialog } from "@/ui";
 import { OAuthLoginModal } from "@/components/OAuthLoginModal";
 import { useI18n } from "@/i18n";
 import { errorMessage } from "@/lib/api-error";
@@ -180,7 +180,7 @@ export function OAuthProvidersCard({ onError, onSuccess }: Props) {
                         {p.status.token_preview}
                         {p.status.source_label && (
                           <span className="text-body-tertiary">
-                            {"    "}
+                            {"        "}
                             · {p.status.source_label}
                           </span>
                         )}
