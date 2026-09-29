@@ -18,7 +18,6 @@ import {
   NavLink,
   Navigate,
   useLocation,
-  useNavigate,
 } from "react-router";
 import {
   Activity,
@@ -29,7 +28,6 @@ import {
   Code,
   Cpu,
   Database,
-  Download,
   Eye,
   FolderOpen,
   FileText,
@@ -45,7 +43,6 @@ import {
   Plug,
   Puzzle,
   Radio,
-  RotateCw,
   Settings,
   Shield,
   ShieldCheck,
@@ -62,10 +59,8 @@ import { Button } from "@/ui";
 import { SelectionSwitcher } from "@/ui";
 import { Spinner } from "@/ui";
 import { Typography } from "@/ui";
-import { ConfirmDialog } from "@/ui";
 import { cn } from "@/lib/utils";
-import { SidebarFooter } from "@/components/SidebarFooter";
-import { SidebarStatusStrip, gatewayLine } from "@/components/SidebarStatusStrip";
+import { TopBar } from "@/components/TopBar";
 import { useBelowBreakpoint } from "@/ui";
 import { useSidebarStatus } from "@/hooks/useSidebarStatus";
 import { AuthWidget } from "@/components/AuthWidget";
@@ -76,8 +71,6 @@ import { ProfileSwitcher } from "@/components/ProfileSwitcher";
 import { ProfileScopeBanner } from "@/components/ProfileScopeBanner";
 import { MemoryPressureBanner } from "@/components/MemoryPressureBanner";
 import { MultiplexStandaloneBanner } from "@/components/MultiplexStandaloneBanner";
-import { useSystemActions } from "@/contexts/useSystemActions";
-import type { SystemAction } from "@/contexts/system-actions-context";
 // Route pages are lazy-loaded so the initial dashboard shell does not pay for
 // every admin surface (and heavy deps like xterm) up front.
 const ConfigPage = lazy(() => import("@/pages/ConfigPage"));
@@ -100,8 +93,6 @@ const WebhooksPage = lazy(() => import("@/pages/WebhooksPage"));
 const SystemPage = lazy(() => import("@/pages/SystemPage"));
 const ChatPage = lazy(() => import("@/pages/ChatPage"));
 const KanbanPreviewPage = lazy(() => import("@/pages/KanbanPreviewPage"));
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useI18n } from "@/i18n";
 import type { Translations } from "@/i18n/types";
 import { PluginPage, PluginSlot, usePlugins } from "@/plugins";
@@ -109,9 +100,7 @@ import type { PluginManifest } from "@/plugins";
 import { useTheme } from "@/themes";
 import { isDashboardEmbeddedChatEnabled } from "@/lib/dashboard-flags";
 import { latchChatActivation } from "@/lib/chat-activation";
-import { sharedGatewayProfiles, sharedGatewayRestartDescription } from "@/lib/shared-gateway";
 import { api } from "@/lib/api";
-import type { StatusResponse, UpdateCheckResponse } from "@/lib/api";
 
 function RouteFallback({ label = "Loading…" }: { label?: string }) {
   return (
@@ -854,49 +843,15 @@ export default function App() {
               )}
             </nav>
 
-            <SidebarSystemActions
-              collapsed={isDesktopCollapsed}
-              onNavigate={closeMobile}
-              status={sidebarStatus}
-              tooltipWarmRef={tooltipWarmRef}
-            />
-
-            <div
-              className={cn(
-                "d-flex flex-shrink-0 align-items-center gap-2",
-                "px-3 py-2",
-                "border-top border-current/20",
-                isDesktopCollapsed
-                  ? "lg:flex-col lg:items-start lg:gap-3 lg:py-3"
-                  : "justify-content-between",
-              )}
-            >
-              <div
-                className={cn(
-                  "d-flex min-w-0 align-items-center gap-2",
-                  isDesktopCollapsed && "lg:flex-col lg:items-start",
-                )}
-              >
-                <PluginSlot name="header-right" />
-
-                <SidebarIconWithTooltip
-                  collapsed={isDesktopCollapsed}
-                  label={t.theme?.switchTheme ?? "Switch theme"}
-                  tooltipWarmRef={tooltipWarmRef}
-                >
-                  <ThemeSwitcher collapsed={isDesktopCollapsed} dropUp />
-                </SidebarIconWithTooltip>
-
-                <SidebarIconWithTooltip
-                  collapsed={isDesktopCollapsed}
-                  label={t.language.switchTo}
-                  tooltipWarmRef={tooltipWarmRef}
-                >
-                  <LanguageSwitcher collapsed={isDesktopCollapsed} dropUp />
-                </SidebarIconWithTooltip>
-              </div>
-            </div>
-
+            {/*
+              The System block, the theme and language switchers and the
+              footer all moved to the top strip. They are chrome, not
+              navigation: a status line and a language picker are not
+              destinations, and leaving them in the rail put the app's
+              most global controls at the bottom of a scrolling list.
+              The rail keeps one thing at its foot — the auth widget,
+              which only means anything to a signed-out user.
+            */}
             <div
               className={cn(
                 "d-flex flex-shrink-0 flex-column",
@@ -904,27 +859,28 @@ export default function App() {
               )}
             >
               <AuthWidget />
-              <SidebarFooter status={sidebarStatus} />
             </div>
           </aside>
 
-          <PageHeaderProvider pluginTabs={pluginTabMeta}>
-            {/*
-              The reference template's main column: the page header sits on
-              `bg-body-tertiary` (the same surface as the rail) and the
-              content below sits on the plain `bg-body` canvas, separated by
-              a `border-bottom`. The old version floated both on the same
-              dark background with no such band, which is why the header
-              read as part of the page rather than as chrome.
-            */}
-            <div
-              className={cn(
-                "d-flex flex-column flex-grow-1 min-w-0 min-h-0 position-relative z-2 bg-body",
-                isChatRoute && "pb-0 pt-0",
-                isDocsRoute && "min-h-0 flex-grow-1",
-              )}
-            >
-              <PluginSlot name="pre-main" />
+          {/*
+            The reference template's main column: the strip and the page
+            header sit on `bg-body-tertiary` (the same surface as the rail)
+            and the content below sits on the plain `bg-body` canvas. The
+            column wraps PageHeaderProvider rather than the other way
+            round, so the strip is genuinely the first thing in the column
+            — inside the provider it rendered *below* the page header,
+            because the provider's own header comes first.
+          */}
+          <div
+            className={cn(
+              "d-flex flex-column flex-grow-1 min-w-0 min-h-0 position-relative z-2 bg-body",
+              isChatRoute && "pb-0 pt-0",
+              isDocsRoute && "min-h-0 flex-grow-1",
+            )}
+          >
+            <PluginSlot name="pre-main" />
+            <TopBar status={sidebarStatus} />
+            <PageHeaderProvider pluginTabs={pluginTabMeta}>
               <div
                 className={cn(
                   "w-100 min-w-0",
@@ -985,10 +941,10 @@ export default function App() {
                   ) : isChatRoute ? (
                     <RouteFallback label="Loading chat…" />
                   ) : null)}
-              </div>
               <PluginSlot name="post-main" />
             </div>
-          </PageHeaderProvider>
+            </PageHeaderProvider>
+          </div>
         </div>
       </div>
 
@@ -1197,355 +1153,6 @@ function SidebarNavLink({
   );
 }
 
-function SidebarSystemActions({
-  collapsed,
-  onNavigate,
-  status,
-  tooltipWarmRef,
-}: SidebarSystemActionsProps) {
-  const { t } = useI18n();
-  const navigate = useNavigate();
-  const { activeAction, isBusy, isRunning, pendingAction, runAction } =
-    useSystemActions();
-  const canUpdateHermes = status?.can_update_hermes === true;
-  // Served by the shared multiplexer: a restart blips every bot on this device — say which.
-  const sharedGateway = sharedGatewayProfiles(status);
-  const [restartConfirmOpen, setRestartConfirmOpen] = useState(false);
-  const [updateConfirmOpen, setUpdateConfirmOpen] = useState(false);
-  const [updateConfirmInfo, setUpdateConfirmInfo] =
-    useState<UpdateCheckResponse | null>(null);
-  const [updateConfirmChecking, setUpdateConfirmChecking] = useState(false);
-
-  useEffect(() => {
-    if (!updateConfirmOpen) {
-      setUpdateConfirmInfo(null);
-      return;
-    }
-    let cancelled = false;
-    setUpdateConfirmChecking(true);
-    api
-      .checkHermesUpdate(false)
-      .then((info) => {
-        if (!cancelled) setUpdateConfirmInfo(info);
-      })
-      .catch(() => {
-        if (!cancelled) setUpdateConfirmInfo(null);
-      })
-      .finally(() => {
-        if (!cancelled) setUpdateConfirmChecking(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [updateConfirmOpen]);
-
-  const updateConfirmDescription = useMemo(() => {
-    if (updateConfirmInfo?.behind && updateConfirmInfo.behind > 0) {
-      const cmd = updateConfirmInfo.update_command;
-      const n = updateConfirmInfo.behind;
-      return `This will run 'hermes update' (${cmd}) and pull ${n} new commit${n === 1 ? "" : "s"}. The gateway restarts when the update finishes; the current session keeps its prompt cache until then.`;
-    }
-    const cmd = updateConfirmInfo?.update_command ?? "hermes update";
-    return (
-      t.status.updateHermesConfirmMessage ??
-      `This will run 'hermes update' (${cmd}) and restart the gateway when it finishes.`
-    );
-  }, [t.status.updateHermesConfirmMessage, updateConfirmInfo]);
-
-  const items: SystemActionItem[] = [
-    {
-      action: "restart",
-      icon: RotateCw,
-      label: t.status.restartGateway,
-      runningLabel: t.status.restartingGateway,
-      spin: true,
-    },
-  ];
-  if (canUpdateHermes) {
-    items.push({
-      action: "update",
-      icon: Download,
-      label: t.status.updateHermes,
-      runningLabel: t.status.updatingHermes,
-      spin: false,
-    });
-  }
-
-  const handleClick = (action: SystemAction) => {
-    if (isBusy) return;
-    if (action === "restart") {
-      setRestartConfirmOpen(true);
-      return;
-    }
-    if (action === "update") {
-      setUpdateConfirmOpen(true);
-      return;
-    }
-    void runAction(action);
-    navigate("/sessions");
-    onNavigate();
-  };
-
-  const confirmRestart = () => {
-    setRestartConfirmOpen(false);
-    void runAction("restart");
-    navigate("/sessions");
-    onNavigate();
-  };
-
-  const confirmUpdate = () => {
-    setUpdateConfirmOpen(false);
-    void runAction("update");
-    navigate("/sessions");
-    onNavigate();
-  };
-
-  return (
-    <>
-    <div
-      className={cn(
-        "flex-shrink-0 d-flex flex-column",
-        "border-top border-current/10",
-        "py-1",
-      )}
-    >
-      <span
-        className={cn(
-          "px-5 pt-0.5 pb-0.5",
-          "font-sans fw-semibold fs-6 tracking-[0.12em] text-body-tertiary",
-          collapsed && "lg:hidden",
-        )}
-      >
-        {t.app.system}
-      </span>
-
-      <div className={cn(collapsed && "lg:hidden")}>
-        <SidebarStatusStrip status={status} />
-      </div>
-
-      <GatewayDot collapsed={collapsed} status={status} tooltipWarmRef={tooltipWarmRef} />
-
-      <ul className="d-flex flex-column">
-        {items.map((item) => (
-          <SystemActionButton
-            key={item.action}
-            collapsed={collapsed}
-            disabled={isBusy && !(pendingAction === item.action || (activeAction === item.action && isRunning))}
-            tooltipWarmRef={tooltipWarmRef}
-            isPending={pendingAction === item.action}
-            isRunning={activeAction === item.action && isRunning && pendingAction !== item.action}
-            item={item}
-            onClick={() => handleClick(item.action)}
-          />
-        ))}
-      </ul>
-    </div>
-
-    <ConfirmDialog
-      cancelLabel={t.common.cancel}
-      confirmLabel={sharedGateway ? "Restart all" : t.status.restartGateway}
-      description={
-        sharedGateway
-          ? sharedGatewayRestartDescription(sharedGateway)
-          : (t.status.restartGatewayConfirmMessage ??
-            "This restarts the Hermes gateway process. Connected channels and active sessions will reconnect afterward.")
-      }
-      loading={pendingAction === "restart"}
-      onCancel={() => setRestartConfirmOpen(false)}
-      onConfirm={confirmRestart}
-      open={restartConfirmOpen}
-      title={
-        sharedGateway
-          ? "Restart the shared gateway?"
-          : (t.status.restartGatewayConfirmTitle ?? `${t.status.restartGateway}?`)
-      }
-    />
-
-    <ConfirmDialog
-      cancelLabel={t.common.cancel}
-      confirmLabel={t.status.updateHermesConfirmNow ?? "Update now"}
-      description={
-        updateConfirmChecking ? t.common.loading : updateConfirmDescription
-      }
-      loading={pendingAction === "update" || updateConfirmChecking}
-      onCancel={() => setUpdateConfirmOpen(false)}
-      onConfirm={confirmUpdate}
-      open={updateConfirmOpen}
-      title={t.status.updateHermesConfirmTitle ?? `${t.status.updateHermes}?`}
-    />
-    </>
-  );
-}
-
-function SystemActionButton({
-  collapsed,
-  disabled,
-  isPending,
-  isRunning: isActionRunning,
-  item,
-  onClick,
-  tooltipWarmRef,
-}: SystemActionButtonProps) {
-  const { icon: Icon, label, runningLabel, spin } = item;
-  const [hovered, setHovered] = useState(false);
-  const [tooltipAnchor, setTooltipAnchor] = useState<HTMLElement | null>(null);
-  const busy = isPending || isActionRunning;
-  const displayLabel = isActionRunning ? runningLabel : label;
-  const showTooltip = (event: MouseEvent<HTMLElement> | FocusEvent<HTMLElement>) => {
-    setHovered(true);
-    setTooltipAnchor(event.currentTarget);
-  };
-  const hideTooltip = () => {
-    setHovered(false);
-    setTooltipAnchor(null);
-  };
-
-  return (
-    <li
-      className="nav-item"
-      onMouseEnter={collapsed ? showTooltip : undefined}
-      onMouseLeave={collapsed ? hideTooltip : undefined}
-    >
-      <button
-        onClick={onClick}
-        disabled={disabled}
-        aria-busy={busy}
-        aria-label={collapsed ? displayLabel : undefined}
-        onFocus={collapsed ? showTooltip : undefined}
-        onBlur={collapsed ? hideTooltip : undefined}
-        type="button"
-        className="nav-link d-flex align-items-center gap-2 w-100"
-      >
-        {isPending ? (
-          <Spinner className="flex-shrink-0 text-[0.875rem]" />
-        ) : isActionRunning && spin ? (
-          <Spinner className="flex-shrink-0 text-[0.875rem]" />
-        ) : (
-          <Icon
-            className={cn(
-              "icon-sm flex-shrink-0",
-              isActionRunning && !spin && "animate-pulse",
-            )}
-          />
-        )}
-
-        <span className={cn(
-          "text-truncate transition duration-300",
-          collapsed ? "lg:opacity-0" : "lg:opacity-100",
-        )}>
-          {displayLabel}
-        </span>
-
-        {busy && <Spinner className="flex-shrink-0 ms-auto" />}
-      </button>
-
-      {collapsed && hovered && tooltipAnchor && (
-        <SidebarTooltip anchor={tooltipAnchor} label={displayLabel} warmRef={tooltipWarmRef} />
-      )}
-    </li>
-  );
-}
-
-function SidebarIconWithTooltip({
-  children,
-  collapsed,
-  label,
-  tooltipWarmRef,
-}: SidebarIconWithTooltipProps) {
-  const [hovered, setHovered] = useState(false);
-  const [tooltipAnchor, setTooltipAnchor] = useState<HTMLElement | null>(null);
-  const showTooltip = (event: MouseEvent<HTMLDivElement>) => {
-    setHovered(true);
-    setTooltipAnchor(event.currentTarget);
-  };
-  const hideTooltip = () => {
-    setHovered(false);
-    setTooltipAnchor(null);
-  };
-
-  return (
-    <div
-      className={cn(
-        "position-relative fit-content",
-        collapsed && "group/icon",
-      )}
-      onMouseEnter={collapsed ? showTooltip : undefined}
-      onMouseLeave={collapsed ? hideTooltip : undefined}
-    >
-      {children}
-
-      {collapsed && (
-        <span
-          aria-hidden
-          className="position-absolute inset-y-0 inset-x-[-0.375rem] bg-body-tertiary opacity-0 pointer-events-none transition duration-200 group-hover/icon:opacity-5 d-none lg:block"
-        />
-      )}
-
-      {collapsed && hovered && tooltipAnchor && (
-        <SidebarTooltip anchor={tooltipAnchor} label={label} warmRef={tooltipWarmRef} />
-      )}
-    </div>
-  );
-}
-
-function GatewayDot({ collapsed, status, tooltipWarmRef }: GatewayDotProps) {
-  const { t } = useI18n();
-  const [hovered, setHovered] = useState(false);
-  const [tooltipAnchor, setTooltipAnchor] = useState<HTMLElement | null>(null);
-
-  const toneToColor: Record<string, string> = {
-    "text-success": "bg-success",
-    "text-warning": "bg-warning",
-    "text-danger": "bg-destructive",
-    "text-body-secondary": "bg-muted-foreground",
-  };
-
-  let color: string;
-  let label: string;
-
-  if (!status) {
-    color = "bg-midground/20";
-    label = t.status.gateway;
-  } else {
-    const gw = gatewayLine(status, t);
-    color = toneToColor[gw.tone] ?? "bg-muted-foreground";
-    label = `${t.status.gateway} ${gw.label}`;
-  }
-  const showTooltip = (event: MouseEvent<HTMLDivElement> | FocusEvent<HTMLDivElement>) => {
-    setHovered(true);
-    setTooltipAnchor(event.currentTarget);
-  };
-  const hideTooltip = () => {
-    setHovered(false);
-    setTooltipAnchor(null);
-  };
-
-  return (
-    <div
-      className={cn(
-        "d-none lg:flex py-3 pl-[1.625rem] transition duration-300",
-        collapsed ? "lg:opacity-100" : "lg:opacity-0 lg:h-0 lg:py-0 lg:overflow-hidden",
-      )}
-      role="status"
-      aria-label={label}
-      tabIndex={collapsed ? 0 : -1}
-      onMouseEnter={collapsed ? showTooltip : undefined}
-      onMouseLeave={collapsed ? hideTooltip : undefined}
-      onFocus={collapsed ? showTooltip : undefined}
-      onBlur={collapsed ? hideTooltip : undefined}
-    >
-      <span
-        aria-hidden
-        className={cn("h-1.5 w-1.5 rounded-circle", color)}
-      />
-
-      {hovered && tooltipAnchor && (
-        <SidebarTooltip anchor={tooltipAnchor} label={label} warmRef={tooltipWarmRef} />
-      )}
-    </div>
-  );
-}
-
 function SidebarTooltip({ anchor, label, warmRef }: SidebarTooltipProps) {
   const rect = anchor.getBoundingClientRect();
   const sidebar = document.getElementById("app-sidebar");
@@ -1589,12 +1196,6 @@ function SidebarTooltip({ anchor, label, warmRef }: SidebarTooltipProps) {
 
 type TooltipWarmRef = React.RefObject<number>;
 
-interface GatewayDotProps {
-  collapsed: boolean;
-  status: StatusResponse | null;
-  tooltipWarmRef: TooltipWarmRef;
-}
-
 interface NavItem {
   icon: ComponentType<{ className?: string }>;
   label: string;
@@ -1637,25 +1238,11 @@ interface NavGroup {
   accent: NavAccent;
 }
 
-interface SidebarIconWithTooltipProps {
-  children: ReactNode;
-  collapsed: boolean;
-  label: string;
-  tooltipWarmRef: TooltipWarmRef;
-}
-
 interface SidebarNavLinkProps {
   closeMobile: () => void;
   collapsed: boolean;
   item: NavItem;
   t: Translations;
-  tooltipWarmRef: TooltipWarmRef;
-}
-
-interface SidebarSystemActionsProps {
-  collapsed: boolean;
-  onNavigate: () => void;
-  status: StatusResponse | null;
   tooltipWarmRef: TooltipWarmRef;
 }
 
@@ -1665,20 +1252,3 @@ interface SidebarTooltipProps {
   warmRef?: TooltipWarmRef;
 }
 
-interface SystemActionButtonProps {
-  collapsed: boolean;
-  disabled: boolean;
-  isPending: boolean;
-  isRunning: boolean;
-  item: SystemActionItem;
-  onClick: () => void;
-  tooltipWarmRef: TooltipWarmRef;
-}
-
-interface SystemActionItem {
-  action: SystemAction;
-  icon: ComponentType<{ className?: string }>;
-  label: string;
-  runningLabel: string;
-  spin: boolean;
-}
