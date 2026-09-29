@@ -51,7 +51,7 @@ export const KANBAN_COLUMNS: KanbanStatus[] = [
   "done",
 ];
 
-const COLUMN_TITLES: Record<KanbanStatus, string> = {
+export const COLUMN_TITLES: Record<KanbanStatus, string> = {
   triage: "Triage",
   todo: "To Do",
   scheduled: "Scheduled",

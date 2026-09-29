@@ -30,6 +30,7 @@ import { useSearchParams } from "react-router";
 
 import {
   KanbanBoard,
+  COLUMN_TITLES,
   KANBAN_COLUMNS,
   type KanbanColumn,
   type KanbanStatus,
@@ -173,19 +174,19 @@ export default function KanbanMainPage() {
    */
   const handleCreateCard = React.useCallback(
     async (status: KanbanStatus, title: string): Promise<KanbanTaskCard> => {
-      const { task } = await kanbanApi.createTask({ title, status }, options);
+      const { id } = await kanbanApi.createCardInStatus(status, title, options);
       const payload = await kanbanApi.getBoard(options);
       setColumns(payload.columns);
       const placed = payload.columns
         .flatMap((column) => column.tasks)
-        .find((candidate) => candidate.id === task.id);
-      setNotice({ tone: "success", text: `Added “${task.title}”` });
+        .find((candidate) => candidate.id === id);
+      setNotice({ tone: "success", text: `Added to ${COLUMN_TITLES[status]}` });
       if (!placed) {
         // The task exists but the board does not show it. Say so instead of
         // letting the composer look like it silently swallowed the title.
         setNotice({
           tone: "warning",
-          text: `“${task.title}” was created as ${task.id} but is not on the board. Refresh to see where it went.`,
+          text: `Created as ${id} but it is not on the board. Refresh to see where it went.`,
         });
         throw new Error("created task is missing from the board");
       }

@@ -409,6 +409,13 @@ class CreateTaskBody(BaseModel):
     workspace_path: Optional[str] = None
     parents: list[str] = Field(default_factory=list)
     triage: bool = False
+    # `kanban_db.create_task` has accepted `initial_status` all along, but the
+    # field was missing here, so pydantic dropped it from every request and
+    # every task was filed `ready` regardless of what the client asked for.
+    # Only "blocked" is meaningful: the other entry of
+    # kanban_db.VALID_INITIAL_STATUSES, "running", is a dispatch state a client
+    # must not be able to create into.
+    initial_status: Optional[str] = None
     idempotency_key: Optional[str] = None
     max_runtime_seconds: Optional[int] = None
     skills: Optional[list[str]] = None
@@ -424,7 +431,17 @@ class CreateTaskBody(BaseModel):
 def create_task(payload: CreateTaskBody, board: Optional[str] = Query(None)):
     with _board_conn(board) as (board, conn), _value_error_400():
         # CreateTaskBody field names match create_task's keyword parameters.
-        task_id = kanban_db.create_task(conn, created_by="dashboard", board=board, **payload.model_dump())
+        #
+        # `initial_status` is dropped when unset on purpose. The handler
+        # splats the whole model, so an optional field left at its None
+        # default would be passed explicitly and override the callee's own
+        # default -- and create_task validates the value against
+        # VALID_INITIAL_STATUSES, so every create would 400 with
+        # "initial_status must be one of ['blocked', 'running']".
+        fields = payload.model_dump()
+        if fields.get("initial_status") is None:
+            del fields["initial_status"]
+        task_id = kanban_db.create_task(conn, created_by="dashboard", board=board, **fields)
         task = kanban_db.get_task(conn, task_id)
         body: dict[str, Any] = {"task": _task_dict(
             task, current_run_started_at=kanban_db.current_run_started_ats(conn, [task_id]).get(task_id)

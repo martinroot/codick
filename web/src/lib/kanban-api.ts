@@ -275,7 +275,18 @@ export interface KanbanDiagnosticsResponse {
 
 export interface KanbanCreateTask {
   title: string;
-  status?: KanbanStatus;
+  /**
+   * NOT a free status. `kanban_db.create_task` resolves the initial state
+   * itself: `blocked` if `initialStatus` says so, else `triage` if `triage`
+   * is set, else `todo` when a parent is unfinished, else `ready`. A `status`
+   * field sent to the API is dropped by pydantic without complaint, and the
+   * task lands in `ready` regardless -- which is why the board creates and
+   * then moves rather than pretending otherwise.
+   */
+  /** Forces `triage`. */
+  triage?: boolean;
+  /** `blocked` is the only value `kanban_db` accepts here. */
+  initialStatus?: "blocked";
   assignee?: string | null;
   body?: string | null;
   priority?: number;
@@ -401,11 +412,55 @@ export const kanbanApi = {
    * three derived fields are missing. To render it, re-read the board.
    */
   createTask: (task: KanbanCreateTask, options: KanbanRequestOptions) =>
-    fetchJSON<{ task: KanbanTaskRow }>(kanbanUrl("/tasks", options), {
+    fetchJSON<{ task: KanbanTaskRow; warning?: string }>(kanbanUrl("/tasks", options), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(task),
+      body: JSON.stringify({
+        ...task,
+        // `initialStatus` is the TS-facing name; the REST field is snake_case.
+        ...(task.initialStatus === "blocked" ? { initial_status: "blocked" } : {}),
+      }),
     }),
+
+  /**
+   * Creates a card in a specific column.
+   *
+   * `POST /tasks` cannot be asked for an arbitrary status, so this either
+   * uses the two the create path does honour or creates-then-moves. The
+   * move is not a race: the card is created unassigned, and an unassigned
+   * task cannot be dispatched, so there is no window in which a worker
+   * picks it up before the status it was filed under is applied.
+   */
+  createCardInStatus: async (
+    status: KanbanStatus,
+    title: string,
+    options: KanbanRequestOptions,
+  ): Promise<{ id: string }> => {
+    if (status === "triage") {
+      const { task } = await kanbanApi.createTask({ title, triage: true }, options);
+      return { id: task.id };
+    }
+    if (status === "blocked") {
+      const { task } = await kanbanApi.createTask(
+        { title, initialStatus: "blocked" },
+        options,
+      );
+      return { id: task.id };
+    }
+    const { task } = await kanbanApi.createTask({ title }, options);
+    if (task.status !== status) {
+      // `done` refuses a bare status change with 400: "completion blocked:
+      // no result or summary evidence". A card created straight into Done
+      // has no run behind it, so the evidence is the act of creating it --
+      // stating that, rather than inventing a result, is the honest field.
+      await kanbanApi.patchTask(
+        task.id,
+        status === "done" ? { status, result: "created directly in Done" } : { status },
+        options,
+      );
+    }
+    return { id: task.id };
+  },
 
   /**
    * Partial update, including status transitions.
