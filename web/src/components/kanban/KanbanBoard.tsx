@@ -77,6 +77,41 @@ const COLUMN_TITLES: Record<KanbanStatus, string> = {
 };
 
 /** Accent per column — the dot in the header and the drop-target tint. */
+/*
+ * Trello's label palette. Labels are the loudest thing on a card by design
+ * -- they are the fastest thing to scan across a board -- so they are solid
+ * fills with white text, not tinted chips.
+ *
+ * A label's colour is derived from its name rather than assigned in the data,
+ * so a card that arrives with `["bug", "infra"]` is coloured without the
+ * caller having to know Trello's palette exists. The hash is FNV-1a: stable
+ * across reloads, which a character-code sum is not when the same word appears
+ * with different neighbours.
+ */
+const LABEL_COLORS = [
+  "#61bd4f", // green
+  "#f2d600", // yellow
+  "#ff9f1a", // orange
+  "#eb5a46", // red
+  "#c377e0", // purple
+  "#0079bf", // blue
+  "#00c2e0", // sky
+  "#51e898", // lime
+  "#ff78cb", // pink
+  "#344563", // black
+  "#ff9f1a", // tangerine (alias kept close to orange)
+  "#00b3a4", // teal
+];
+
+function labelColor(name: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < name.length; i += 1) {
+    hash ^= name.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return LABEL_COLORS[hash % LABEL_COLORS.length];
+}
+
 const ACCENTS: Record<KanbanStatus, string> = {
   triage: "#b48ce8",
   todo: "#7c8aa0",
@@ -142,7 +177,18 @@ function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: Kanb
       {task.labels?.length ? (
         <div className="kb-card-labels">
           {task.labels.map((label) => (
-            <span className="kb-label" key={label}>
+            <span
+              className="kb-label"
+              key={label}
+              // Yellow is the one Trello colour that white text fails
+              // against; the chip carries its own ink rather than forcing
+              // every label to look the same.
+              style={
+                labelColor(label) === "#f2d600"
+                  ? { background: labelColor(label), color: "#4c4c4c" }
+                  : { background: labelColor(label) }
+              }
+            >
               {label}
             </span>
           ))}
@@ -290,6 +336,15 @@ function KanbanColumnView({
           ))
         )}
       </div>
+
+      {/* Trello puts the composer at the foot of the list, not in the
+          header -- the header's + is a quick-add and this is the full one. */}
+      <footer className="kb-column-footer">
+        <button className="kb-add-card" type="button">
+          <span aria-hidden>+</span>
+          Add a card
+        </button>
+      </footer>
     </section>
   );
 }
@@ -307,18 +362,6 @@ export interface KanbanBoardProps {
 export function KanbanBoard({ columns, onMove, onOpenTask }: KanbanBoardProps) {
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [dropTarget, setDropTarget] = React.useState<KanbanStatus | null>(null);
-  const [scrolled, setScrolled] = React.useState(false);
-  const railRef = React.useRef<HTMLDivElement | null>(null);
-
-  // The left edge-fade is a lie when the rail is already at the start, so
-  // track it rather than painting it unconditionally.
-  const syncScrolled = React.useCallback(() => {
-    const rail = railRef.current;
-    if (rail) setScrolled(rail.scrollLeft > 2);
-  }, []);
-
-  React.useEffect(syncScrolled, [syncScrolled]);
-
   const handleDragStart = React.useCallback((event: React.DragEvent<HTMLElement>, task: KanbanTask) => {
     setDraggingId(task.id);
     event.dataTransfer.effectAllowed = "move";
@@ -345,8 +388,8 @@ export function KanbanBoard({ columns, onMove, onOpenTask }: KanbanBoardProps) {
   );
 
   return (
-    <div className="kb-board" data-scrolled={scrolled}>
-      <div className="kb-rail" onScroll={syncScrolled} ref={railRef}>
+    <div className="kb-board">
+      <div className="kb-rail">
         {columns.map((column) => (
           <KanbanColumnView
             column={column}

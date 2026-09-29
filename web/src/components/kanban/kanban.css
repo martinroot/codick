@@ -1,78 +1,86 @@
 /**
  * Trello-style kanban board styles.
  *
- * Trello's look comes from three decisions, and this file makes each one
- * a variable so the board can be retuned without touching the component:
+ * The previous version of this file was written against a warm, near-black
+ * theme of the old design system and reached for its variables with fallbacks
+ * -- `--ui-card-bg`, `--ui-ghost-fg`, cream at 4% alpha, teal accents. None of
+ * those exist any more. A fallback like `rgba(255, 230, 203, 0.04)` is not a
+ * colour, it is the absence of one: cream at 4% over a white page is white,
+ * so the cards had no surface and the columns had no fill, and the board read
+ * as loose text on a page rather than as a set of cards.
  *
- *   1. The board is FLAT. Columns are a recessed surface; only cards are
- *      raised. Giving columns a shadow too is what makes most kanban
- *      boards look heavy.
- *   2. Cards are the only thing that moves. A card lifts on hover with a
- *      tight shadow (Trello uses ~2px of lift, not a glow) and dims while
- *      dragged so the drop target stays legible.
- *   3. Density is deliberate. A column is 272px and a card is ~0.5rem of
- *      padding, which fits ~6 cards in a laptop viewport without the
- *      scrollbar appearing mid-list.
+ * Trello's look is built from three surfaces stacked in a fixed order, and
+ * every colour below is one Trello actually uses:
+ *
+ *   board   #f9f9f9 in light, #091e42 navy in dark
+ *   list    #ebecf0 in light -- the recessed lane
+ *   card    #ffffff in light -- the only thing that casts a shadow
+ *
+ * The rule that makes it read as Trello rather than as a generic kanban tool
+ * is that the card is the ONLY elevated surface. A list with a shadow looks
+ * like a card, and a board of things that all float has no depth to read.
  */
+
+/* ------------------------------------------------------------------ */
+/* Surfaces                                                            */
+/* ------------------------------------------------------------------ */
 
 .kb-board {
   --kb-column-width: 272px;
-  --kb-column-gap: 0.75rem;
+  --kb-column-gap: 0.5rem;
   --kb-rail-height: min(72vh, 46rem);
-  --kb-radius: 0.5rem;
+  --kb-list-radius: 0.75rem;
+  --kb-card-radius: 0.5rem;
+
+  /* Trello's own ink colours. These are brand constants, not theme
+     tokens, so they stay put when the colour mode changes. */
+  --kb-ink: #172b4d;
+  --kb-muted: #5e6c84;
+  --kb-list-bg: #ebecf0;
+  --kb-list-add-hover: #c1c4c9;
+  --kb-card-bg: #ffffff;
+  --kb-board-bg: #f9f9f9;
+  --kb-card-shadow: 0 1px 0 rgba(9, 30, 66, 0.25);
+  --kb-card-shadow-hover:
+    0 0 1px 1px rgba(9, 30, 66, 0.25), 0 2px 5px rgba(9, 30, 66, 0.15);
+  --kb-focus: #0052cc;
 
   position: relative;
   width: 100%;
   min-width: 0;
+
+  /* The board colour bleeds past the page's own padding so the rail runs
+     edge to edge, the way a Trello board fills the window behind its lists.
+     It lives here rather than on a wrapper because a wrapper cannot read
+     these variables -- they inherit downwards, not upwards. */
+  background: var(--kb-board-bg);
+  margin: -1rem;
+  padding: 1rem;
 }
 
-/*
- * Scroll affordance. Eight columns do not fit a laptop viewport, and a
- * board that silently clips its last four lanes reads as broken rather
- * than as scrollable. A gradient pinned to the right edge fades the cut
- * column out, which is the same "there is more" signal the column's own
- * half-visible edge gives — just legible instead of accidental.
- */
-.kb-board::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0.5rem;
-  width: 3rem;
-  pointer-events: none;
-  background: linear-gradient(to right, transparent, var(--bs-body-bg) 85%);
-  opacity: 0.9;
+[data-bs-theme="dark"] .kb-board {
+  --kb-ink: #d5e2f3;
+  --kb-muted: #9fadbd;
+  --kb-list-bg: rgba(255, 255, 255, 0.1);
+  --kb-list-add-hover: rgba(255, 255, 255, 0.24);
+  --kb-card-bg: #0e3257;
+  --kb-board-bg: #091e42;
+  --kb-card-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --kb-card-shadow-hover: 0 0 2px 1px rgba(255, 255, 255, 0.16);
+  --kb-focus: #579dff;
 }
 
-/* Same on the left, shown only once the rail has been scrolled. */
-.kb-board::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0.5rem;
-  width: 2rem;
-  pointer-events: none;
-  background: linear-gradient(to right, var(--bs-body-bg) 15%, transparent);
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
+/* ------------------------------------------------------------------ */
+/* Board and rail                                                      */
+/* ------------------------------------------------------------------ */
 
-.kb-board[data-scrolled="true"]::before {
-  opacity: 0.9;
-}
 
-/* The rail scrolls horizontally; the page itself does not, so eight
-   columns never force a body-level horizontal scrollbar. */
+
 .kb-rail {
+  position: relative;
   display: flex;
   align-items: stretch;
   gap: var(--kb-column-gap);
-  /* A definite height is what makes the columns equal: with only
-     `align-items: stretch` and an auto-height parent each column
-     collapses to its own content and the board reads as ragged
-     rather than as a row of equal lanes. */
   height: var(--kb-rail-height);
   overflow-x: auto;
   overflow-y: hidden;
@@ -81,16 +89,12 @@
 }
 
 .kb-rail::-webkit-scrollbar {
-  height: 0.4rem;
+  height: 8px;
 }
 
 .kb-rail::-webkit-scrollbar-thumb {
-  background: rgba(255, 230, 203, 0.22);
-  border-radius: 999px;
-}
-
-.kb-rail::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 230, 203, 0.35);
+  background: var(--kb-list-add-hover);
+  border-radius: 8px;
 }
 
 .kb-rail::-webkit-scrollbar-track {
@@ -98,37 +102,49 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Column                                                              */
+/* List (column)                                                       */
 /* ------------------------------------------------------------------ */
 
 .kb-column {
   flex: 0 0 var(--kb-column-width);
   display: flex;
   flex-direction: column;
-  /* Full height of the rail: Trello's columns are equal-height lanes,
-     and an empty lane still shows its drop target. */
   height: 100%;
   min-height: 0;
   scroll-snap-align: start;
-  background: rgba(255, 230, 203, 0.03);
-  border: 1px solid transparent;
-  border-radius: var(--kb-radius);
-  padding: 0.5rem 0.4rem 0.4rem;
-  transition:
-    background-color 120ms ease,
-    border-color 120ms ease;
+
+  /* The recessed surface. Flat -- no shadow. */
+  background: var(--kb-list-bg);
+  border-radius: var(--kb-list-radius);
+  padding: 0.5rem 0.375rem 0.375rem;
+  transition: background-color 120ms ease;
 }
 
 .kb-column-drop {
-  background: rgba(45, 212, 191, 0.08);
-  border-color: rgba(45, 212, 191, 0.4);
+  background: var(--kb-list-add-hover);
 }
 
 .kb-column-header {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.15rem 0.2rem 0.5rem;
+  padding: 0.125rem 0.25rem 0.5rem;
+}
+
+/*
+ * Trello's list title is plain ink at 14px/600, not an uppercase colour
+ * signal. The status dot carries the colour instead, so the heading stays
+ * quiet enough for a row of them to be scanned.
+ */
+.kb-column-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--kb-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kb-dot {
@@ -138,31 +154,25 @@
   flex-shrink: 0;
 }
 
-.kb-column-title {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ui-ghost-fg, #ffe6cb);
-  white-space: nowrap;
-}
-
 .kb-count {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--bs-secondary-color, rgba(255, 230, 203, 0.72));
-  background: rgba(255, 230, 203, 0.08);
+  color: var(--kb-muted);
+  background: rgba(9, 30, 66, 0.08);
   border-radius: 999px;
-  padding: 0.05rem 0.4rem;
+  padding: 0 0.4rem;
 }
 
-/* WIP overflow: the count turns amber so a column nobody drains is
-   visible without reading the number. */
+[data-bs-theme="dark"] .kb-count {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* WIP overflow: the count turns red so a column nobody drains is visible
+   without reading the number. */
 .kb-count-over {
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.16);
+  color: #ffffff;
+  background: #d0021b;
 }
 
 .kb-column-add {
@@ -170,12 +180,12 @@
   appearance: none;
   border: 0;
   background: transparent;
-  color: var(--bs-secondary-color, rgba(255, 230, 203, 0.72));
-  font-size: 1.05rem;
+  color: var(--kb-muted);
+  font-size: 1.25rem;
   line-height: 1;
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: var(--bs-border-radius-sm, 0.375rem);
+  border-radius: 0.5rem;
   cursor: pointer;
   transition:
     background-color 120ms ease,
@@ -183,82 +193,103 @@
 }
 
 .kb-column-add:hover {
-  background: rgba(255, 230, 203, 0.1);
-  color: var(--ui-ghost-fg, #ffe6cb);
+  background: var(--kb-list-add-hover);
+  color: var(--kb-ink);
 }
 
 .kb-column-body {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 0.1rem;
+  padding: 0.0625rem;
 }
 
 .kb-column-body::-webkit-scrollbar {
-  width: 0.3rem;
+  width: 6px;
 }
 
 .kb-column-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 230, 203, 0.15);
-  border-radius: 999px;
+  background: var(--kb-list-add-hover);
+  border-radius: 6px;
+}
+
+/* Trello's "Add a card" lives at the foot of the list, not in the header. */
+.kb-column-footer {
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.kb-add-card {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  appearance: none;
+  border: 0;
+  text-align: start;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--kb-muted);
+  background: transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.kb-add-card:hover {
+  background: var(--kb-list-add-hover);
+  color: var(--kb-ink);
 }
 
 .kb-empty {
   margin: 0;
-  padding: 1.25rem 0.5rem;
-  text-align: center;
-  font-size: 0.72rem;
-  color: var(--bs-secondary-color, rgba(255, 230, 203, 0.72));
-  border: 1px dashed rgba(255, 230, 203, 0.14);
-  border-radius: var(--bs-border-radius-sm, 0.375rem);
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--kb-muted);
 }
 
 /* ------------------------------------------------------------------ */
 /* Card                                                                */
 /* ------------------------------------------------------------------ */
 
+/*
+ * The one elevated surface on the board. White fill, tight dark shadow,
+ * 8px radius -- Trello's card exactly.
+ */
 .kb-card {
-  background: var(--ui-card-bg, rgba(255, 230, 203, 0.04));
-  border: 1px solid var(--ui-card-border, rgba(255, 230, 203, 0.12));
-  border-radius: var(--kb-radius);
-  padding: 0.5rem 0.6rem;
+  background: var(--kb-card-bg);
+  color: var(--kb-ink);
+  border-radius: var(--kb-card-radius);
+  box-shadow: var(--kb-card-shadow);
+  padding: 0.5rem 0.5rem 0.375rem;
   cursor: grab;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  /* Trello's signature: a tight, dark shadow rather than a glow. */
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
-  transition:
-    transform 120ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 120ms ease,
-    border-color 120ms ease,
-    opacity 120ms ease;
+  gap: 0.375rem;
+  transition: box-shadow 120ms ease;
 }
 
 .kb-card:hover {
-  border-color: rgba(255, 230, 203, 0.26);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
-  transform: translateY(-1px);
+  box-shadow: var(--kb-card-shadow-hover);
 }
 
 .kb-card:active {
   cursor: grabbing;
-  transform: translateY(0);
 }
 
 .kb-card:focus-visible {
-  outline: 2px solid var(--bs-primary, #2dd4bf);
+  outline: 2px solid var(--kb-focus);
   outline-offset: 2px;
 }
 
 /* While dragging, the source card stays in place as a dimmed slot so the
    column does not reflow under the pointer. */
 .kb-card-dragging {
-  opacity: 0.4;
-  border-style: dashed;
+  opacity: 0.5;
   box-shadow: none;
   transform: none;
 }
@@ -269,32 +300,37 @@
   gap: 0.25rem;
 }
 
+/*
+ * Trello labels are solid colour chips with white text and no border --
+ * they are the loudest thing on a card, which is the point: they are the
+ * fastest thing to scan. The colour comes from the element, so any label
+ * name can be given any colour without a class per label.
+ */
 .kb-label {
-  font-size: 0.62rem;
+  font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.1rem 0.4rem;
+  line-height: 1.5;
+  padding: 0.0625rem 0.5rem;
   border-radius: 0.25rem;
-  color: var(--ui-ghost-fg, #ffe6cb);
-  background: rgba(45, 212, 191, 0.18);
-  border: 1px solid rgba(45, 212, 191, 0.3);
+  color: #ffffff;
+  background: var(--kb-label-color, #344563);
+  text-decoration: none;
 }
 
 .kb-card-title {
   margin: 0;
-  font-size: 0.83rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
   line-height: 1.35;
-  color: var(--ui-ghost-fg, #ffe6cb);
+  color: var(--kb-ink);
   overflow-wrap: anywhere;
 }
 
 .kb-card-summary {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1.4;
-  color: var(--bs-secondary-color, rgba(255, 230, 203, 0.72));
+  color: var(--kb-muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -303,12 +339,11 @@
 
 .kb-card-blocked {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1.4;
-  color: #ffb4b4;
-  background: rgba(224, 82, 82, 0.14);
-  border-left: 2px solid rgba(224, 82, 82, 0.7);
-  border-radius: 0 0.25rem 0.25rem 0;
+  color: #d0021b;
+  background: rgba(208, 2, 27, 0.08);
+  border-radius: 0.25rem;
   padding: 0.25rem 0.4rem;
 }
 
@@ -316,8 +351,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.05rem;
+  gap: 0.4rem;
 }
 
 /* Pushes the age/avatar pair to the trailing edge regardless of how many
@@ -331,57 +365,50 @@
   display: inline-flex;
   align-items: center;
   gap: 0.15rem;
-  font-size: 0.66rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--bs-secondary-color, rgba(255, 230, 203, 0.72));
-  background: rgba(255, 230, 203, 0.07);
-  border-radius: 0.25rem;
-  padding: 0.08rem 0.3rem;
+  color: var(--kb-muted);
 }
 
 .kb-chip-done {
-  color: #4ade80;
-  background: rgba(74, 222, 128, 0.14);
+  color: #00875a;
 }
 
 .kb-chip-priority {
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.14);
+  color: #d9822b;
 }
 
 .kb-chip-overdue {
-  color: #ffb4b4;
-  background: rgba(224, 82, 82, 0.18);
+  color: #d0021b;
 }
 
 .kb-age {
-  font-size: 0.66rem;
-  color: var(--bs-secondary-color, rgba(255, 230, 203, 0.72));
+  font-size: 0.6875rem;
+  color: var(--kb-muted);
   font-variant-numeric: tabular-nums;
 }
 
-/* Trello shows a member avatar rather than a name — the board is scanned,
+/* Trello shows a member avatar rather than a name -- the board is scanned,
    not read. */
 .kb-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 1.375rem;
+  height: 1.375rem;
   border-radius: 999px;
-  font-size: 0.6rem;
+  font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--bs-body-bg);
-  background: var(--bs-primary, #2dd4bf);
+  color: #ffffff;
+  background: #6b7c93;
   flex-shrink: 0;
 }
 
 .kb-avatar-empty {
-  color: var(--bs-secondary-color, rgba(255, 230, 203, 0.72));
+  color: var(--kb-muted);
   background: transparent;
-  border: 1px dashed var(--ui-card-border, rgba(255, 230, 203, 0.12));
+  border: 1px dashed var(--kb-list-add-hover);
 }
 
 /* ------------------------------------------------------------------ */
@@ -398,11 +425,8 @@
 @media (prefers-reduced-motion: reduce) {
   .kb-card,
   .kb-column,
-  .kb-column-add {
+  .kb-column-add,
+  .kb-add-card {
     transition: none;
-  }
-
-  .kb-card:hover {
-    transform: none;
   }
 }
