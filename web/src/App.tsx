@@ -882,14 +882,17 @@ export default function App() {
                 className={cn(
                   "w-100 min-w-0",
                   /*
-                   * The inset the reference has. It is also load-bearing:
-                   * a Bootstrap `row` pulls itself 0.75rem outside its
-                   * container with negative margins to make room for its
-                   * gutters, so a container with no horizontal padding lets
-                   * the row hang past the viewport edge.
+                   * The inset the reference has. The horizontal part is
+                   * load-bearing: a Bootstrap `row` pulls itself 0.75rem
+                   * outside its container with negative margins to make
+                   * room for its gutters, so a container with no horizontal
+                   * padding lets the row hang past the viewport edge.
+                   *
+                   * The top is the same value for a different reason — it
+                   * was simply missing, which left the first row of every
+                   * page flush against the header bar above it.
                    */
-                  !isChatRoute && "px-3",
-                  !isChatRoute && "pb-4",
+                  !isChatRoute && "px-3 pt-3 pb-4",
                   (isDocsRoute || isChatRoute) &&
                     "min-h-0 d-flex flex-grow-1 flex-column",
                 )}
