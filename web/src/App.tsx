@@ -664,10 +664,10 @@ export default function App() {
             <ProfileSwitcher collapsed={isDesktopCollapsed} />
 
             <nav
-              className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden border-t border-current/10 py-2"
+              className="nav flex-column gap-1 min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden border-top border-current/10 px-3 py-3"
               aria-label={t.app.navigation}
             >
-              <ul className="flex flex-col">
+              <ul className="nav flex-column gap-1">
                 {sidebarNav.coreItems.map((item) => (
                   <SidebarNavLink
                     closeMobile={closeMobile}
@@ -897,14 +897,11 @@ function SidebarNavLink({
         onBlur={collapsed ? hideTooltip : undefined}
         className={({ isActive }) =>
           cn(
-            "group/nav relative flex items-center gap-3",
-            "px-5 py-2.5",
-            "font-sans text-display uppercase text-sm tracking-[0.12em]",
-            "whitespace-nowrap transition-colors cursor-pointer",
-            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground",
-            isActive
-              ? "text-midground"
-              : "text-text-secondary hover:text-midground",
+            // Bootstrap dashboard sidebar item: a nav-pill, sentence case.
+            "nav-link d-flex align-items-center gap-2 rounded-3 px-3 py-2",
+            "text-truncate text-body-secondary fw-semibold",
+            "hover:text-body-emphasis",
+            isActive && "active text-body-emphasis",
           )
         }
         style={{
@@ -913,7 +910,7 @@ function SidebarNavLink({
       >
         {({ isActive }) => (
           <>
-            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <Icon className="shrink-0 h-4 w-4" />
 
             <span
               className={cn(
@@ -924,15 +921,10 @@ function SidebarNavLink({
               {navLabel}
             </span>
 
-            <span
-              aria-hidden
-              className="absolute inset-y-0.5 left-1.5 right-1.5 bg-midground opacity-0 pointer-events-none transition-opacity duration-200 group-hover/nav:opacity-5"
-            />
-
             {isActive && (
               <span
                 aria-hidden
-                className="absolute left-0 top-0 bottom-0 w-px bg-midground"
+                className="visually-hidden"
               />
             )}
           </>
