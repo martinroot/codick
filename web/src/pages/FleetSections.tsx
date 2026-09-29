@@ -15,7 +15,7 @@ export function KanbanFleetDashboardPage() {
       api="/api/status, /api/analytics"
       intent="Fleet-wide view: what the agents are doing right now across every profile and server, and what needs a human."
       section="Kanban Desk"
-      title="Dashboard флота"
+      title="Fleet Dashboard"
     />
   );
 }
@@ -25,7 +25,7 @@ export function KanbanTemplateBuilderPage() {
     <SectionPage
       intent="Compose the card templates the desk offers when a task is created — fields, defaults, which column a new card lands in."
       section="Kanban Desk"
-      title="Конструктор шаблонов"
+      title="Template Builder"
     />
   );
 }
@@ -46,7 +46,7 @@ export function ServerWakePage() {
     <SectionPage
       intent="Bring an offline server back: wake-on-LAN, or a queued SSH that retries until the host answers."
       section="Servers"
-      title="WakeUp new"
+      title="Wake Up"
     />
   );
 }
@@ -77,7 +77,7 @@ export function MarketplaceViewPage() {
     <SectionPage
       intent="Browse what is installable — the curated catalogue, with who publishes each entry and what it pulls in."
       section="Marketplace"
-      title="Marketplace — view"
+      title="Marketplace — View"
     />
   );
 }

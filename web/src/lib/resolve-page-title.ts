@@ -30,13 +30,13 @@ const BUILTIN_LITERAL: Record<string, string> = {
   // together, and "Kanban/fleet" derived from the path is neither.
   "/kanban": "Main",
   "/kanban-preview": "Main",
-  "/kanban/fleet": "Dashboard флота",
-  "/kanban/templates": "Конструктор шаблонов",
+  "/kanban/fleet": "Fleet Dashboard",
+  "/kanban/templates": "Template Builder",
   "/servers": "List",
-  "/servers/wakeup": "WakeUp new",
+  "/servers/wakeup": "Wake Up",
   "/servers/logs": "Logs",
   "/servers/doctor": "Doctor",
-  "/marketplace": "view",
+  "/marketplace": "View",
   "/marketplace/setup": "Setup",
 };
 

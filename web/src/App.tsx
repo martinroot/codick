@@ -262,7 +262,7 @@ const NAV_GROUPS: NavGroup[] = [
 const BUILTIN_NAV_REST: NavItem[] = [
   {
     path: "/kanban/fleet",
-    label: "Dashboard флота",
+    label: "Fleet Dashboard",
     icon: Gauge,
     group: "desk",
     accent: "primary",
@@ -276,7 +276,7 @@ const BUILTIN_NAV_REST: NavItem[] = [
   },
   {
     path: "/kanban/templates",
-    label: "Конструктор шаблонов",
+    label: "Template Builder",
     icon: LayoutTemplate,
     group: "desk",
     accent: "primary",
@@ -290,7 +290,7 @@ const BUILTIN_NAV_REST: NavItem[] = [
   },
   {
     path: "/servers/wakeup",
-    label: "WakeUp new",
+    label: "Wake Up",
     icon: Moon,
     group: "servers",
     accent: "info",
@@ -311,7 +311,7 @@ const BUILTIN_NAV_REST: NavItem[] = [
   },
   {
     path: "/marketplace",
-    label: "view",
+    label: "View",
     icon: Store,
     group: "marketplace",
     accent: "success",
