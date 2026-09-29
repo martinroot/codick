@@ -838,7 +838,7 @@ from hermes_cli.web_server_gateway import _ACTION_LOG_FILES, _terminate_desktop_
 from hermes_cli.web_server_sessions import _auto_archive_ticker_loop  # noqa: E402
 from hermes_cli.web_server_chat import PTY_REGISTRY  # noqa: E402
 from hermes_cli.web_server_dashboard import (  # noqa: E402
-    _discover_dashboard_plugins, _mount_plugin_api_routes, mount_spa,
+    _discover_dashboard_plugins, _mount_kanban_api_routes, _mount_plugin_api_routes, mount_spa,
 )
 
 
@@ -1040,6 +1040,7 @@ app.include_router(_dashboard_ui_routes.router)
 # Plugin API routes and the dashboard auth routes (/login, /auth/*, /api/auth/*)
 # mount before the SPA catch-all so /{full_path:path} doesn't swallow them. Auth
 # routes are always mounted — the gate middleware decides enforcement.
+_mount_kanban_api_routes()
 _mount_plugin_api_routes()
 from hermes_cli.dashboard_auth.routes import router as _dashboard_auth_router  # noqa: E402
 

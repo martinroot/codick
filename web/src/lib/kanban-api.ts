@@ -3,7 +3,7 @@
  *
  * ## Why this is a separate module
  *
- * The surface is 40+ endpoints under `/api/plugins/kanban`. Adding them as
+ * The surface is 40+ endpoints under `/api/kanban`. Adding them as
  * flat `api.*` methods would bury them among the dashboard's own calls and
  * make "is the kanban client done?" unanswerable. This module is the
  * boundary the React board is written against, and it is deliberately
@@ -353,7 +353,7 @@ export interface KanbanRequestOptions {
   profile?: string;
 }
 
-const BASE_PATH = "/api/plugins/kanban";
+const BASE_PATH = "/api/kanban";
 
 /**
  * Builds `?board=...` first, always, then the optional filters.

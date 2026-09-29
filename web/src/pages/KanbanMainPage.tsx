@@ -144,10 +144,18 @@ export default function KanbanMainPage() {
 
       kanbanApi
         .patchTask(taskId, { status: to }, options)
-        .then(() => setNotice({ tone: "info", text: `${card.title} → ${to}` }))
+        .then(async () => {
+          // Re-read even on success. The optimistic position is a guess, and
+          // the server is the authority: it can refuse a transition it
+          // accepted at the HTTP layer, and it can move a task again within
+          // the same instant a dispatcher picks it up. Without this the
+          // screen shows where the card *was* dragged until something else
+          // forces a reload.
+          const payload = await kanbanApi.getBoard(options);
+          setColumns(payload.columns);
+          setNotice({ tone: "info", text: `Moved to ${COLUMN_TITLES[to]}` });
+        })
         .catch((err: unknown) => {
-          // The server is the authority on where a card belongs, so undo by
-          // re-reading rather than by trying to reverse our own arithmetic.
           // A 409 names the blocking parents, and that sentence is the useful
           // thing to show -- "move failed" would not say why it snapped back.
           reload();

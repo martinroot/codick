@@ -272,7 +272,7 @@ export interface KanbanColumnProps {
   onDragStart: (event: React.DragEvent<HTMLElement>, task: KanbanTask) => void;
   onDragEnd: () => void;
   onDragOverColumn: (status: KanbanStatus) => void;
-  onDropColumn: (status: KanbanStatus) => void;
+  onDropColumn: (status: KanbanStatus, dataTransfer: DataTransfer | null) => void;
   onOpenTask?: (task: KanbanTask) => void;
   /**
    * Creates a card in this column. Returns the server's card so the board
@@ -345,7 +345,7 @@ function KanbanColumnView({
       }}
       onDrop={(event) => {
         event.preventDefault();
-        onDropColumn(column.name);
+        onDropColumn(column.name, event.dataTransfer);
       }}
     >
       <header className="kb-column-header">
@@ -473,9 +473,19 @@ export function KanbanBoard({ columns, onMove, onOpenTask, onCreateCard }: Kanba
     setDropTarget(status);
   }, []);
 
+  /**
+   * The dragged id comes from the event, not from state.
+   *
+   * `dragstart` writes it to `dataTransfer` — it has to, or Firefox refuses
+   * to start the drag at all — and reading it back from there is the only
+   * source that is correct at drop time. React state is not: a drop that
+   * lands before the `dragstart` re-render, or after any re-render resets
+   * it, sees `null` and the card silently stays where it was. That is what
+   * "it only moves after I reload" looked like — nothing was ever sent.
+   */
   const handleDropColumn = React.useCallback(
-    (status: KanbanStatus) => {
-      const taskId = draggingId;
+    (status: KanbanStatus, dataTransfer: DataTransfer | null) => {
+      const taskId = dataTransfer?.getData("text/plain") || draggingId;
       handleDragEnd();
       if (taskId) onMove?.(taskId, status);
     },

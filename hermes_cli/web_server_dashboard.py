@@ -883,3 +883,44 @@ def _mount_plugin_api_routes():
             _log.info("Mounted plugin API routes: /api/plugins/%s/", plugin["name"])
         except Exception as exc:
             _log.warning("Failed to load plugin %s API routes: %s", plugin["name"], exc)
+
+
+# The board is product, not a plug-in. A route under ``/api/plugins/`` is
+# disableable: the runtime gate answers 404 for a plugin that is switched off,
+# and the user-plugin allow-list refuses to import it at all unless it is
+# enabled. A product that can be switched off is not a product, and the
+# template automation and pipeline work both build on these endpoints.
+#
+# The code never needed the plugin to work. Every import in it is
+# ``hermes_cli.*``; it lived in the plugin directory only to be reached by
+# ``_mount_plugin_api_routes``. The multi-profile secret scope travels with
+# it because that is a hosting concern, not a plugin one -- without it,
+# ``get_secret`` and ``resolve_runtime_provider`` fail closed under
+# multi-profile hosting.
+KANBAN_API_PREFIX = "/api/kanban"
+KANBAN_API_DEPRECATED_PREFIX = "/api/plugins/kanban"
+
+
+def _mount_kanban_api_routes():
+    """Mount the Kanban board API in core, plus a deprecated alias.
+
+    The alias is not politeness. The reference bundle hardcodes
+    ``API = "/api/plugins/kanban"``, so removing that prefix in the same
+    commit that introduces the new one would break ``/kanban-reference``
+    without ever offering a deprecation window. The alias answers exactly as
+    the old path did, and callers on it should migrate.
+    """
+    from hermes_cli.web_server import app
+    try:
+        from hermes_cli.kanban_api import router
+    except Exception as exc:
+        _log.warning("Failed to load the Kanban API: %s", exc)
+        return
+    for prefix in (KANBAN_API_PREFIX, KANBAN_API_DEPRECATED_PREFIX):
+        app.include_router(
+            router,
+            prefix=prefix,
+            dependencies=[Depends(_plugin_route_secret_scope)],
+        )
+    _log.info("Mounted Kanban API routes: %s/ (+ deprecated %s/)",
+              KANBAN_API_PREFIX, KANBAN_API_DEPRECATED_PREFIX)
