@@ -31,6 +31,7 @@ import {
   Eye,
   FolderOpen,
   FileText,
+  Gauge,
   Globe,
   Heart,
   Kanban,
@@ -92,6 +93,7 @@ const PairingPage = lazy(() => import("@/pages/PairingPage"));
 const ChannelsPage = lazy(() => import("@/pages/ChannelsPage"));
 const WebhooksPage = lazy(() => import("@/pages/WebhooksPage"));
 const SystemPage = lazy(() => import("@/pages/SystemPage"));
+const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const ChatPage = lazy(() => import("@/pages/ChatPage"));
 const KanbanPreviewPage = lazy(() => import("@/pages/KanbanPreviewPage"));
 import { useI18n } from "@/i18n";
@@ -118,9 +120,6 @@ function RouteFallback({ label = "Loading…" }: { label?: string }) {
   );
 }
 
-function RootRedirect() {
-  return <Navigate to="/sessions" replace />;
-}
 
 function UnknownRouteFallback({ pluginsLoading }: { pluginsLoading: boolean }) {
   if (pluginsLoading) {
@@ -151,7 +150,7 @@ const CHAT_NAV_ITEM: NavItem = {
  * keep working.
  */
 const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
-  "/": RootRedirect,
+  "/": DashboardPage,
   "/sessions": SessionsPage,
   "/files": FilesPage,
   "/analytics": AnalyticsPage,
@@ -214,6 +213,13 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 const BUILTIN_NAV_REST: NavItem[] = [
+  {
+    path: "/",
+    label: "Dashboard",
+    icon: Gauge,
+    group: "workspace",
+    accent: "primary",
+  },
   {
     path: "/sessions",
     labelKey: "sessions",
