@@ -44,17 +44,17 @@ export function TopBar({ status }: TopBarProps) {
           <img
             alt="CoDick"
             className="codick-logo"
-            height={26}
+            height={34}
             src="/codick-logo.png"
-            width={106}
+            width={139}
           />
           <img
             alt="CoDick"
             aria-hidden
             className="codick-logo codick-logo-invert"
-            height={26}
+            height={34}
             src="/codick-logo-light.png"
-            width={106}
+            width={139}
           />
         </Link>
 

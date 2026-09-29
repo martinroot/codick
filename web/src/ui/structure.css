@@ -287,9 +287,21 @@
  * CSS rather than JavaScript, so the image cannot be one render behind the
  * colour it is meant for.
  */
+/*
+ * Width only, height derived.
+ *
+ * Pinning both and hoping they agree is how a logo ends up subtly squashed:
+ * the artwork is 4.079:1, and any pair of numbers typed by hand is a
+ * rounding error away from a different ratio. Letting the height come from
+ * the file means the proportions hold whatever the width is set to.
+ *
+ * The `width`/`height` attributes stay on the element — they give the
+ * browser an intrinsic size before the file arrives, so the header does not
+ * reflow when the logo lands. CSS overrides the height, not the aspect.
+ */
 .codick-logo {
-  height: 26px;
-  width: auto;
+  width: 139px;
+  height: auto;
 }
 
 [data-bs-theme="dark"] .codick-logo:not(.codick-logo-invert) {
