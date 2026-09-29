@@ -30,6 +30,7 @@ import * as React from "react";
 import { useSearchParams } from "react-router";
 
 import { AttentionStrip } from "@/components/kanban/AttentionStrip";
+import { ConfirmDialog } from "@/components/kanban/ConfirmDialog";
 import {
   BulkActionBar,
   type BulkAction,
@@ -57,6 +58,39 @@ type LoadState =
   | { phase: "loading" }
   | { phase: "ready" }
   | { phase: "error"; message: string };
+
+/**
+ * What a move to `done` must carry to satisfy `kanban_db.complete_task`.
+ *
+ * A single string, not a bag of options: the server treats `result` and
+ * `summary` interchangeably as evidence, so making the caller decide which to
+ * send would be inventing a distinction it does not make.
+ */
+interface CompletionEvidence {
+  summary: string;
+}
+
+/**
+ * Whether a card can be completed without asking for a summary.
+ *
+ * Mirrors `kanban_db.complete_task`: a stored result or an existing summary is
+ * evidence. Anything already recorded counts, because re-typing what the card
+ * already says is the failure mode this is meant to avoid.
+ *
+ * `review` counts as evidenced. Measured against the live server: a `done`
+ * transition out of `review` is **not** refused, because approving a card is
+ * the human being the record. Asking for a summary there would be inventing a
+ * requirement the backend deliberately does not have.
+ *
+ * Note this is a *pre-filter*, not the contract. The server is still the one
+ * that decides — it also knows about `created_cards`, which this side cannot
+ * see, and its refusal sentence is the one worth showing. The pre-filter
+ * exists so the common case never opens a dialog it does not need.
+ */
+function hasCompletionEvidence(card: KanbanTaskCard): boolean {
+  if (card.status === "review") return true;
+  return Boolean(card.result?.trim() || card.latest_summary?.trim());
+}
 
 export default function KanbanMainPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -198,7 +232,7 @@ export default function KanbanMainPage() {
   });
 
   const handleMove = React.useCallback(
-    (taskId: string, to: KanbanStatus) => {
+    async (taskId: string, to: KanbanStatus, evidence?: CompletionEvidence) => {
       // Find the card before touching state, so the optimistic update is a
       // single pure transform rather than a search repeated inside a setter.
       const card = columns
@@ -207,6 +241,11 @@ export default function KanbanMainPage() {
       if (!card) return;
 
       if (card.status === to) return;
+
+      if (to === "done" && !hasCompletionEvidence(card)) {
+        setCompletionAsk({ task: card, to });
+        return;
+      }
       setColumns((previous) =>
         previous.map((column) => {
           const holds = column.tasks.some((task) => task.id === taskId);
@@ -218,8 +257,18 @@ export default function KanbanMainPage() {
         }),
       );
 
-      kanbanApi
-        .patchTask(taskId, { status: to }, options)
+      await kanbanApi
+        .patchTask(
+          taskId,
+          // `summary` is sent as `result` too. The server treats either as
+          // evidence, but the board reads `latest_summary` for its summary
+          // column, so writing only one leaves the card looking unfinished
+          // after it is done.
+          evidence?.summary
+            ? { status: to, result: evidence.summary, summary: evidence.summary }
+            : { status: to },
+          options,
+        )
         .then(async () => {
           // Re-read even on success. The optimistic position is a guess, and
           // the server is the authority: it can refuse a transition it
@@ -229,16 +278,17 @@ export default function KanbanMainPage() {
           // forces a reload.
           const payload = await kanbanApi.getBoard(options);
           setColumns(payload.columns);
-      setServerNow(payload.now ?? null);
           setServerNow(payload.now ?? null);
-        setServerNow(payload.now ?? null);
           setNotice({ tone: "info", text: `Moved to ${COLUMN_TITLES[to]}` });
         })
         .catch((err: unknown) => {
-          // A 409 names the blocking parents, and that sentence is the useful
-          // thing to show -- "move failed" would not say why it snapped back.
+          // A 409 names the blocking parents, and a 400 on `done` names the
+          // missing evidence. That sentence is the useful thing to show --
+          // "move failed" would not say why it snapped back.
           reload();
-          setNotice({ tone: "danger", text: errorMessage(err) });
+          const message = errorMessage(err);
+          setNotice({ tone: "danger", text: message });
+          throw err;
         });
     },
     [columns, options, reload],
@@ -288,6 +338,30 @@ export default function KanbanMainPage() {
   // the row would only risk showing board data in a pane that is meant to be
   // the detail.
   const [openTaskId, setOpenTaskId] = React.useState<string | null>(null);
+
+  // --- Completion contract --------------------------------------------
+  //
+  // A move to `done` without evidence becomes a question rather than a
+  // request. Held here rather than inside the board so that a drag, a bulk
+  // "Complete" and any future entry point all meet the same gate.
+  const [completionAsk, setCompletionAsk] = React.useState<{
+    task: KanbanTaskCard;
+    to: KanbanStatus;
+  } | null>(null);
+  const [completionSummary, setCompletionSummary] = React.useState("");
+  const [completionBusy, setCompletionBusy] = React.useState(false);
+  const [completionError, setCompletionError] = React.useState<string | null>(null);
+
+  // The bulk variant of the same question. `ids` is the whole selection and
+  // `bare` the subset with no evidence — both are needed, because the summary
+  // is written to all of them while only some actually required one.
+  const [bulkCompletion, setBulkCompletion] = React.useState<{
+    pending: BulkAction;
+    ids: string[];
+    bare: KanbanTaskCard[];
+    /** The card's title, when the selection is a single card worth naming. */
+    label: string | null;
+  } | null>(null);
   /** Set by a diagnostic's `comment` action to open the drawer on Comments. */
   const [commentFocus, setCommentFocus] = React.useState<{
     taskId: string;
@@ -338,15 +412,52 @@ export default function KanbanMainPage() {
   );
 
   const handleBulk = React.useCallback(
-    async (action: BulkAction) => {
+    async (action: BulkAction, evidence?: CompletionEvidence) => {
       const ids = [...selection.selected];
       if (!ids.length || bulkBusy) return;
+
+      // The same contract, on the path that bypasses `handleMove`. A bulk
+      // "Complete" over cards with no evidence must ask for a summary, and one
+      // summary covers the batch — asking per card would be a dialog storm,
+      // and asking not at all is how cards get completed with nothing recorded.
+      // `!evidence` is load-bearing. Without it the dialog's own confirm
+      // re-enters this function, the gate fires a second time on the very
+      // summary it just collected, the dialog reopens, and the call returns
+      // having sent nothing — a completion that silently does not happen.
+      if (action.kind === "status" && action.status === "done" && !evidence) {
+        const selected = columns
+          .flatMap((column) => column.tasks)
+          .filter((task) => selection.selected.has(task.id));
+        const bare = selected.filter((task) => !hasCompletionEvidence(task));
+        if (bare.length) {
+          setBulkCompletion({
+          pending: action,
+          ids,
+          bare,
+          // A confirmation that does not say what it is confirming is a
+          // confirmation nobody should click.
+          label:
+            ids.length === 1
+              ? (bare[0]?.title ??
+                columns.flatMap((c) => c.tasks).find((t) => t.id === ids[0])?.title ??
+                null)
+              : null,
+        });
+          return;
+        }
+      }
       setBulkBusy(true);
       setBulkOutcome(null);
       try {
         const body =
           action.kind === "status"
-            ? { ids, status: action.status }
+            ? evidence?.summary
+              ? // The bulk body takes one `result`/`summary` for the whole
+                // batch, so a single written summary is spread across every
+                // selected card. The alternative — a per-card dialog — is a
+                // dialog storm, and leaving them unevidenced is the bug.
+                { ids, status: action.status, result: evidence.summary, summary: evidence.summary }
+              : { ids, status: action.status }
             : action.kind === "priority"
               ? { ids, priority: action.priority }
               : { ids, archive: true };
@@ -391,6 +502,56 @@ export default function KanbanMainPage() {
   const handleOpenTask = React.useCallback((task: KanbanTaskCard) => {
     setOpenTaskId(task.id);
   }, []);
+
+  const closeBulkCompletion = React.useCallback(() => {
+    setBulkCompletion(null);
+    setCompletionSummary("");
+    setCompletionError(null);
+    setCompletionBusy(false);
+  }, []);
+
+  const confirmBulkCompletion = React.useCallback(async () => {
+    if (!bulkCompletion) return;
+    const summary = completionSummary.trim();
+    if (!summary) return;
+    setCompletionBusy(true);
+    setCompletionError(null);
+    try {
+      await handleBulk(bulkCompletion.pending, { summary });
+      closeBulkCompletion();
+    } catch (error) {
+      setCompletionError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setCompletionBusy(false);
+    }
+  }, [bulkCompletion, closeBulkCompletion, completionSummary, handleBulk]);
+
+  const closeCompletion = React.useCallback(() => {
+    setCompletionAsk(null);
+    setCompletionSummary("");
+    setCompletionError(null);
+    setCompletionBusy(false);
+  }, []);
+
+  const confirmCompletion = React.useCallback(async () => {
+    if (!completionAsk) return;
+    const summary = completionSummary.trim();
+    if (!summary) return;
+    setCompletionBusy(true);
+    setCompletionError(null);
+    const { task, to } = completionAsk;
+    try {
+      await handleMove(task.id, to, { summary });
+      closeCompletion();
+    } catch (error) {
+      // Deliberately not closing. The text the operator wrote is the thing
+      // they will not want to retype, and the server's sentence is the reason
+      // it did not land.
+      setCompletionError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setCompletionBusy(false);
+    }
+  }, [closeCompletion, completionAsk, completionSummary, handleMove]);
 
   const total = columns.reduce((sum, column) => sum + column.tasks.length, 0);
   const active = boards.find((b) => b.slug === board);
@@ -473,6 +634,52 @@ export default function KanbanMainPage() {
         pushing the columns down -- a selection bar that reflows the board
         makes the cards you are about to act on move under the cursor.
       */}
+      <ConfirmDialog
+        body={
+          bulkCompletion ? (
+            bulkCompletion.label ? (
+              <>
+                This card has no result recorded. The summary is stored as its result and
+                its history.
+              </>
+            ) : (
+              <>
+                {bulkCompletion.bare.length} of {bulkCompletion.ids.length} selected cards
+                have no result recorded. One summary is written to all{" "}
+                {bulkCompletion.ids.length} — the ones that already have evidence keep it.
+              </>
+            )
+          ) : completionAsk ? (
+            <>
+              <strong>{completionAsk.task.title}</strong> will be marked{" "}
+              <strong>Done</strong>. Nothing recorded here can be recovered from the card
+              afterwards.
+            </>
+          ) : null
+        }
+        busy={completionBusy}
+        confirmLabel="Complete"
+        error={completionError}
+        onCancel={bulkCompletion ? closeBulkCompletion : closeCompletion}
+        onConfirm={() =>
+          void (bulkCompletion ? confirmBulkCompletion() : confirmCompletion())
+        }
+        open={completionAsk !== null || bulkCompletion !== null}
+        requireText={{
+          label: "Completion summary",
+          onChange: setCompletionSummary,
+          placeholder: "What did this actually do?",
+          value: completionSummary,
+        }}
+        title={
+          bulkCompletion
+            ? bulkCompletion.label
+              ? `Complete "${bulkCompletion.label}"`
+              : `Complete ${bulkCompletion.ids.length} tasks`
+            : "Complete this task"
+        }
+      />
+
       <AttentionStrip
         onBoardChanged={() => kanbanApi.getBoard(options).then((payload) => {
           setColumns(payload.columns);
@@ -506,7 +713,13 @@ export default function KanbanMainPage() {
         columns={columns}
         now={serverNow}
         onCreateCard={handleCreateCard}
-        onMove={handleMove}
+        onMove={(taskId, to) => {
+          // Fire-and-forget: the board does not await, and `handleMove`
+          // rethrows so the completion dialog can show the server's sentence.
+          // A promise with no catch here would surface as an unhandled
+          // rejection and take the console down with an unrelated stack.
+          void handleMove(taskId, to).catch(() => {});
+        }}
         onOpenTask={handleOpenTask}
         onSelectMany={(ids) => {
           selection.setSelected(ids);

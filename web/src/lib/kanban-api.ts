@@ -44,6 +44,14 @@ export interface KanbanBulkBody {
   priority?: number;
   assignee?: string;
   archive?: boolean;
+  /**
+   * Completion evidence, one value for the whole batch. `result` and
+   * `summary` are both sent because the server accepts either as evidence but
+   * the board reads `latest_summary` — writing only one leaves a completed
+   * card looking empty.
+   */
+  result?: string;
+  summary?: string;
 }
 
 export interface KanbanBulkResult {
