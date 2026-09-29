@@ -28,19 +28,34 @@ export function TopBar({ status }: TopBarProps) {
           the README and the favicon carry, and a header that names the
           product differently from every other place it appears is the one
           that looks borrowed.
+
+          Two files, because the artwork is drawn for a light ground: its
+          lettering is near-black, and near-black on a dark header is not a
+          dark-mode logo, it is no logo. The light variant is the same
+          image with the navy lifted to near-white and the crimson raised
+          to hold against a dark surface. They are swapped in CSS on
+          `data-bs-theme`, so the switch costs no render and needs no
+          JavaScript to stay in step with the mode.
         */}
         <Link
-          className="d-inline-flex align-items-center gap-2 text-decoration-none"
+          className="d-inline-flex align-items-center text-decoration-none"
           to="/"
         >
           <img
-            alt=""
-            className="codick-mark"
-            height={30}
-            src="/codick-mark.png"
-            width={30}
+            alt="CoDick"
+            className="codick-logo"
+            height={26}
+            src="/codick-logo.png"
+            width={106}
           />
-          <span className="hermes-wordmark fw-bold">CoDick</span>
+          <img
+            alt="CoDick"
+            aria-hidden
+            className="codick-logo codick-logo-invert"
+            height={26}
+            src="/codick-logo-light.png"
+            width={106}
+          />
         </Link>
 
         <div className="ms-auto d-flex align-items-center gap-2">

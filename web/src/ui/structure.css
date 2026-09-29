@@ -278,3 +278,28 @@
   width: 100%;
 }
 }
+
+/*
+ * The header logo.
+ *
+ * Both files are in the DOM: the light-ground artwork by default, the
+ * dark-ground one shown instead when the document carries the dark theme.
+ * CSS rather than JavaScript, so the image cannot be one render behind the
+ * colour it is meant for.
+ */
+.codick-logo {
+  height: 26px;
+  width: auto;
+}
+
+[data-bs-theme="dark"] .codick-logo:not(.codick-logo-invert) {
+  display: none;
+}
+
+.codick-logo-invert {
+  display: none;
+}
+
+[data-bs-theme="dark"] .codick-logo-invert {
+  display: block;
+}
