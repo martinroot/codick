@@ -1,9 +1,10 @@
 /**
  * The kanban desk's main board — `Kanban Desk → Main`.
  *
- * Reads the live `/api/plugins/kanban/board` payload. The board component
- * itself is unchanged from the prototype: it renders whatever columns it is
- * given, which is why the wiring could happen without touching it.
+ * Reads the live `/api/kanban/board` payload and keeps it current from
+ * the board's event stream. The board component itself is unchanged from the
+ * prototype: it renders whatever columns it is given, which is why the wiring
+ * could happen without touching it.
  *
  * ## The board slug
  *
@@ -28,6 +29,7 @@
 import * as React from "react";
 import { useSearchParams } from "react-router";
 
+import { useKanbanEvents } from "@/components/kanban/useKanbanEvents";
 import {
   KanbanBoard,
   COLUMN_TITLES,
@@ -109,6 +111,12 @@ export default function KanbanMainPage() {
     };
   }, [requestedBoard]);
 
+  // Resume cursor for the event stream. Seeded from the board payload, so a
+  // first load connects from "now" and a reconnect resumes from the last event
+  // this page actually saw -- without it, a tab closed for an hour comes back
+  // silently missing everything that happened.
+  const [eventCursor, setEventCursor] = React.useState<number | null>(null);
+
   const reload = React.useCallback(() => {
     if (!board) return;
     setLoad({ phase: "loading" });
@@ -116,10 +124,58 @@ export default function KanbanMainPage() {
       .getBoard(options)
       .then((payload) => {
         setColumns(payload.columns);
+        setEventCursor(payload.latest_event_id);
         setLoad({ phase: "ready" });
       })
       .catch((err: unknown) => setLoad({ phase: "error", message: errorMessage(err) }));
   }, [board, options]);
+
+  /**
+   * Re-read the board without touching the loading phase.
+   *
+   * `reload` blanks the board, which is right for a user-initiated refresh
+   * and wrong here: live updates arrive constantly, and a screen that drops
+   * to a spinner between every event is worse than one that is a beat
+   * behind. A failure here is also not worth a full-page error -- the next
+   * event will try again, and blanking the board because a poll failed once
+   * throws away state the user was looking at.
+   */
+  const refreshQuietly = React.useCallback(() => {
+    if (!board) return;
+    kanbanApi
+      .getBoard(options)
+      .then((payload) => {
+        setColumns(payload.columns);
+        setEventCursor(payload.latest_event_id);
+      })
+      .catch(() => {});
+  }, [board, options]);
+
+  // Live updates. Events are the signal, not the payload: the board is
+  // re-read rather than patched, so a new event kind needs no frontend work
+  // and a missed one cannot leave the screen quietly wrong. The debounce is
+  // what keeps a burst -- a dispatcher moving five cards -- to one fetch.
+  const liveRefresh = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleLiveRefresh = React.useCallback(() => {
+    if (liveRefresh.current) return;
+    liveRefresh.current = setTimeout(() => {
+      liveRefresh.current = null;
+      refreshQuietly();
+    }, 250);
+  }, [refreshQuietly]);
+  React.useEffect(
+    () => () => {
+      if (liveRefresh.current) clearTimeout(liveRefresh.current);
+    },
+    [],
+  );
+
+  useKanbanEvents({
+    board: board ?? "",
+    since: eventCursor,
+    onEvents: scheduleLiveRefresh,
+    enabled: Boolean(board) && load.phase === "ready",
+  });
 
   const handleMove = React.useCallback(
     (taskId: string, to: KanbanStatus) => {

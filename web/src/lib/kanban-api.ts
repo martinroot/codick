@@ -355,6 +355,9 @@ export interface KanbanRequestOptions {
 
 const BASE_PATH = "/api/kanban";
 
+/** The board's event stream, served off the same prefix. */
+export const KANBAN_EVENTS_PATH = `${BASE_PATH}/events`;
+
 /**
  * Builds `?board=...` first, always, then the optional filters.
  *
