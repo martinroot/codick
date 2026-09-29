@@ -18,40 +18,25 @@
  */
 
 import * as React from "react";
+
+import type { KanbanStatus, KanbanTaskCard } from "@/lib/kanban-api";
 import { cn } from "@/lib/utils";
 import "./kanban.css";
 
-export type KanbanStatus =
-  | "triage"
-  | "todo"
-  | "scheduled"
-  | "ready"
-  | "running"
-  | "blocked"
-  | "review"
-  | "done";
+export type { KanbanStatus } from "@/lib/kanban-api";
 
-export interface KanbanTask {
-  id: string;
-  title: string;
-  status: KanbanStatus;
-  assignee?: string;
-  labels?: string[];
-  commentCount?: number;
-  attachmentCount?: number;
-  checklistDone?: number;
-  checklistTotal?: number;
-  priority?: number;
-  /** Epoch seconds; rendered as an age badge. */
-  updatedAt?: number;
-  dueAt?: number;
-  blockedReason?: string;
-  runSummary?: string;
-}
+// The board renders the server's card, not a board-shaped summary of it.
+// A local type invented for the prototype carried `dueAt`, `attachmentCount`,
+// `labels`, `checklist*`, `updatedAt`, `blockedReason` and `runSummary`:
+// the first two exist nowhere in the API, so the chips that read them could
+// never have been driven by real data. Renaming to the real fields makes
+// that impossible — a field the server does not send is a type error now
+// rather than an empty chip at runtime.
+type KanbanTask = KanbanTaskCard;
 
 export interface KanbanColumn {
   name: KanbanStatus;
-  tasks: KanbanTask[];
+  tasks: KanbanTaskCard[];
 }
 
 export const KANBAN_COLUMNS: KanbanStatus[] = [
@@ -127,22 +112,14 @@ const ACCENTS: Record<KanbanStatus, string> = {
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-function timeAgo(epochSeconds: number): string {
-  const delta = Math.max(0, Math.floor(Date.now() / 1000) - epochSeconds);
-  if (delta < 60) return `${delta}s`;
-  if (delta < 3600) return `${Math.floor(delta / 60)}m`;
-  if (delta < 86400) return `${Math.floor(delta / 3600)}h`;
-  return `${Math.floor(delta / 86400)}d`;
+/** Formats a duration in seconds. Not an epoch — see the card for why. */
+function duration(seconds: number): string {
+  if (seconds < 60) return `${Math.floor(seconds)}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 86400)}d`;
 }
 
-function dueLabel(epochSeconds: number): { text: string; overdue: boolean } {
-  const delta = epochSeconds * 1000 - Date.now();
-  const days = Math.ceil(delta / 86_400_000);
-  if (days < 0) return { text: `${Math.abs(days)}d late`, overdue: true };
-  if (days === 0) return { text: "today", overdue: false };
-  if (days === 1) return { text: "tomorrow", overdue: false };
-  return { text: `${days}d`, overdue: false };
-}
 
 /* ------------------------------------------------------------------ */
 /* Card                                                                */
@@ -157,7 +134,23 @@ export interface KanbanCardProps {
 }
 
 function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: KanbanCardProps) {
-  const due = task.dueAt ? dueLabel(task.dueAt) : null;
+  // `skills` is the only list of strings the card carries, and it is what the
+  // prototype's invented `labels` was standing in for.
+  const labels = task.skills ?? [];
+  // Progress is a child-task rollup, not a checklist: null when the task has
+  // no children, and there is nothing to show in that case.
+  const progress = task.progress;
+  // A card's age is a *duration*, not an epoch. The server sends no update
+  // time, so this comes from `age.created_age_seconds` — passing it to an
+  // epoch formatter is off by ~56 years and renders as "20725d".
+  const age = task.age?.created_age_seconds ?? null;
+  // Blocked is a server diagnosis, not free text on the card. Prefer the
+  // worst diagnostic; fall back to the failure that produced it.
+  const blocked =
+    task.diagnostics?.find((d) => d.severity !== "warning")?.title ??
+    task.diagnostics?.[0]?.title ??
+    task.last_failure_error ??
+    null;
 
   return (
     <article
@@ -174,9 +167,9 @@ function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: Kanb
         }
       }}
     >
-      {task.labels?.length ? (
+      {labels.length ? (
         <div className="kb-card-labels">
-          {task.labels.map((label) => (
+          {labels.map((label) => (
             <span
               className="kb-label"
               key={label}
@@ -197,53 +190,59 @@ function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: Kanb
 
       <h3 className="kb-card-title">{task.title}</h3>
 
-      {task.runSummary ? <p className="kb-card-summary">{task.runSummary}</p> : null}
+      {task.latest_summary ? (
+        <p className="kb-card-summary">{task.latest_summary}</p>
+      ) : null}
 
-      {task.blockedReason ? (
+      {blocked ? (
         <p className="kb-card-blocked" role="note">
-          {task.blockedReason}
+          {blocked}
         </p>
       ) : null}
 
       <div className="kb-card-meta">
-        {task.checklistTotal ? (
+        {progress ? (
           <span
-            className={cn(
-              "kb-chip",
-              task.checklistDone === task.checklistTotal && "kb-chip-done",
-            )}
+            className={cn("kb-chip", progress.done === progress.total && "kb-chip-done")}
+            title={`${progress.done} of ${progress.total} subtasks done`}
           >
             <span aria-hidden>☑</span>
-            {task.checklistDone}/{task.checklistTotal}
+            {progress.done}/{progress.total}
           </span>
         ) : null}
 
-        {task.commentCount ? (
+        {task.comment_count ? (
           <span className="kb-chip">
             <span aria-hidden>💬</span>
-            {task.commentCount}
+            {task.comment_count}
           </span>
         ) : null}
 
-        {task.attachmentCount ? (
-          <span className="kb-chip">
-            <span aria-hidden>📎</span>
-            {task.attachmentCount}
+        {task.link_counts.children ? (
+          <span className="kb-chip" title={`${task.link_counts.children} subtasks`}>
+            <span aria-hidden>⑂</span>
+            {task.link_counts.children}
           </span>
         ) : null}
 
         {task.priority ? <span className="kb-chip kb-chip-priority">P{task.priority}</span> : null}
 
-        {due ? (
-          <span className={cn("kb-chip", due.overdue && "kb-chip-overdue")}>
-            <span aria-hidden>🕐</span>
-            {due.text}
+        {task.diagnostics?.length ? (
+          <span
+            className={cn(
+              "kb-chip",
+              task.diagnostics.some((d) => d.severity !== "warning") && "kb-chip-overdue",
+            )}
+            title={task.diagnostics.map((d) => d.title).join("; ")}
+          >
+            <span aria-hidden>⚠</span>
+            {task.diagnostics.length}
           </span>
         ) : null}
 
         <span className="kb-card-spacer" />
 
-        {task.updatedAt ? <span className="kb-age">{timeAgo(task.updatedAt)}</span> : null}
+        {age !== null ? <span className="kb-age">{duration(age)}</span> : null}
 
         {task.assignee ? (
           <span className="kb-avatar" title={task.assignee}>
@@ -413,176 +412,216 @@ export function KanbanBoard({ columns, onMove, onOpenTask }: KanbanBoardProps) {
 /* ------------------------------------------------------------------ */
 
 const now = Math.floor(Date.now() / 1000);
-const day = 86_400;
+
+/**
+ * Mock cards for `/kanban-next`, in the server's own shape.
+ *
+ * Replaced in #4 by the real `GET /board`. Until then the board has to
+ * compile against a type the server actually honours, otherwise the port
+ * would be developed against a fiction and every field would have to be
+ * re-checked at the moment the data is wired up.
+ *
+ * `mockCard` fills all 44 fields so a card only declares what it varies —
+ * and so that adding a field to `KanbanTaskCard` breaks this factory rather
+ * than quietly producing cards that miss it.
+ */
+function mockCard(
+  id: string,
+  status: KanbanStatus,
+  title: string,
+  extra: Partial<KanbanTaskCard> & { ageSeconds?: number } = {},
+): KanbanTaskCard {
+  const { ageSeconds = 3_600, ...rest } = extra;
+  return {
+    id,
+    title,
+    body: null,
+    status,
+    assignee: null,
+    created_by: "dashboard",
+    tenant: null,
+    project_id: null,
+    priority: 0,
+    created_at: now - ageSeconds,
+    started_at: status === "running" ? now - ageSeconds : null,
+    completed_at: status === "done" ? now - 60 : null,
+    claim_lock: null,
+    claim_expires: null,
+    workspace_kind: "scratch",
+    workspace_path: null,
+    skills: null,
+    model_override: null,
+    provider_override: null,
+    reasoning_effort: null,
+    max_runtime_seconds: null,
+    max_retries: null,
+    goal_mode: false,
+    goal_max_turns: null,
+    worker_pid: null,
+    last_heartbeat_at: null,
+    current_run_id: null,
+    session_id: null,
+    branch_name: null,
+    workflow_template_id: null,
+    current_step_key: null,
+    completion_contract: "",
+    consecutive_failures: 0,
+    last_failure_error: null,
+    block_kind: null,
+    block_recurrences: 0,
+    result: null,
+    idempotency_key: null,
+    age: {
+      created_age_seconds: ageSeconds,
+      started_age_seconds: status === "running" ? ageSeconds : null,
+      time_to_complete_seconds: status === "done" ? ageSeconds : null,
+    },
+    latest_summary: null,
+    current_run_started_at: null,
+    link_counts: { parents: 0, children: 0 },
+    comment_count: 0,
+    progress: null,
+    ...rest,
+  };
+}
 
 export const MOCK_COLUMNS: KanbanColumn[] = [
   {
     name: "triage",
     tasks: [
-      {
-        id: "T-1041",
-        title: "Investigate 502s on /api/plugins/kanban/board",
-        status: "triage",
+      mockCard("T-1041", "triage", "Investigate 502s on /api/plugins/kanban/board", {
         assignee: "grokwin",
-        labels: ["bug", "backend"],
-        commentCount: 3,
+        skills: ["bug", "backend"],
+        comment_count: 3,
         priority: 3,
-        updatedAt: now - 1_200,
-      },
-      {
-        id: "T-1042",
-        title: "User report: kanban board empty after restart",
-        status: "triage",
-        labels: ["bug"],
-        commentCount: 1,
-        updatedAt: now - 3_600,
-      },
+        ageSeconds: 1_200,
+      }),
+      mockCard("T-1042", "triage", "User report: kanban board empty after restart", {
+        skills: ["bug"],
+        comment_count: 1,
+        ageSeconds: 3_600,
+      }),
     ],
   },
   {
     name: "todo",
     tasks: [
-      {
-        id: "T-1035",
-        title: "Port kanban board to TSX in web/src",
-        status: "todo",
+      mockCard("T-1035", "todo", "Port kanban board to TSX in web/src", {
         assignee: "grokwin",
-        labels: ["frontend", "refactor"],
-        checklistDone: 2,
-        checklistTotal: 5,
-        commentCount: 5,
-        attachmentCount: 1,
+        skills: ["frontend", "refactor"],
+        progress: { done: 2, total: 5 },
+        comment_count: 5,
         priority: 1,
-        dueAt: now + 2 * day,
-        updatedAt: now - 7_200,
-      },
-      {
-        id: "T-1036",
-        title: "Migrate remaining dashboard pages to Bootstrap 5",
-        status: "todo",
+        ageSeconds: 7_200,
+      }),
+      mockCard("T-1036", "todo", "Migrate remaining dashboard pages to Bootstrap 5", {
         assignee: "imoney",
-        labels: ["frontend"],
-        checklistDone: 1,
-        checklistTotal: 23,
-        commentCount: 2,
+        skills: ["frontend"],
+        progress: { done: 1, total: 23 },
+        comment_count: 2,
         priority: 2,
-        updatedAt: now - 86_400,
-      },
-      {
-        id: "T-1037",
-        title: "Add WIP limits per column",
-        status: "todo",
-        labels: ["ux"],
-        updatedAt: now - 172_800,
-      },
+        ageSeconds: 86_400,
+      }),
+      mockCard("T-1037", "todo", "Add WIP limits per column", {
+        skills: ["ux"],
+        ageSeconds: 172_800,
+      }),
     ],
   },
   {
     name: "ready",
     tasks: [
-      {
-        id: "T-1030",
-        title: "Trello-style card shadows and hover states",
-        status: "ready",
+      mockCard("T-1030", "ready", "Trello-style card shadows and hover states", {
         assignee: "grokwin",
-        labels: ["design"],
-        checklistDone: 3,
-        checklistTotal: 4,
-        commentCount: 4,
-        dueAt: now + day,
-        updatedAt: now - 900,
-      },
+        skills: ["design"],
+        progress: { done: 3, total: 4 },
+        comment_count: 4,
+        ageSeconds: 900,
+      }),
     ],
   },
   {
     name: "running",
     tasks: [
-      {
-        id: "T-1028",
-        title: "Bootstrap theme: dark palette on --bs-* tokens",
-        status: "running",
+      mockCard("T-1028", "running", "Bootstrap theme: dark palette on --bs-* tokens", {
         assignee: "grokwin",
-        labels: ["design", "frontend"],
-        runSummary: "Tokens applied; verifying focus ring contrast against the teal primary.",
-        checklistDone: 5,
-        checklistTotal: 6,
-        commentCount: 7,
-        updatedAt: now - 60,
-      },
-      {
-        id: "T-1029",
-        title: "Modal focus trap without Radix",
-        status: "running",
+        skills: ["design", "frontend"],
+        latest_summary:
+          "Tokens applied; verifying focus ring contrast against the teal primary.",
+        progress: { done: 5, total: 6 },
+        comment_count: 7,
+        ageSeconds: 60,
+      }),
+      mockCard("T-1029", "running", "Modal focus trap without Radix", {
         assignee: "grokwin",
-        labels: ["frontend", "a11y"],
-        runSummary: "Escape, scroll lock and focus return implemented; Tab trap under test.",
-        commentCount: 2,
-        updatedAt: now - 240,
-      },
-      {
-        id: "T-1024",
-        title: "Session token forwarding for preview build",
-        status: "running",
+        skills: ["frontend", "a11y"],
+        latest_summary:
+          "Escape, scroll lock and focus return implemented; Tab trap under test.",
+        comment_count: 2,
+        ageSeconds: 240,
+      }),
+      mockCard("T-1024", "running", "Session token forwarding for preview build", {
         assignee: "imoney",
-        labels: ["infra"],
-        runSummary: "Preview proxy added; 9119 login blocks protected endpoints.",
-        updatedAt: now - 400,
-      },
+        skills: ["infra"],
+        latest_summary: "Preview proxy added; 9119 login blocks protected endpoints.",
+        ageSeconds: 400,
+      }),
     ],
   },
   {
     name: "blocked",
     tasks: [
-      {
-        id: "T-1015",
-        title: "Expose preview to the public without auth",
-        status: "blocked",
+      mockCard("T-1015", "blocked", "Expose preview to the public without auth", {
         assignee: "martin",
-        labels: ["infra", "security"],
-        blockedReason: "Needs a dashboard session token or a dedicated read-only account.",
-        commentCount: 6,
+        skills: ["infra", "security"],
+        // A blocked card is a server diagnosis, not free text the board
+        // invents. On the real payload this arrives as `diagnostics`.
+        diagnostics: [
+          {
+            kind: "auth_required",
+            severity: "error",
+            title: "Needs a dashboard session token or a dedicated read-only account.",
+            detail: "The preview proxy rejects unauthenticated requests.",
+            actions: [],
+            first_seen_at: now - 5_400,
+            last_seen_at: now - 5_400,
+            count: 1,
+            run_id: null,
+            data: {},
+          },
+        ],
+        comment_count: 6,
         priority: 1,
-        updatedAt: now - 5_400,
-      },
+        ageSeconds: 5_400,
+      }),
     ],
   },
   {
     name: "review",
     tasks: [
-      {
-        id: "T-1010",
-        title: "FilesPage migration to Bootstrap layer",
-        status: "review",
+      mockCard("T-1010", "review", "FilesPage migration to Bootstrap layer", {
         assignee: "grokwin",
-        labels: ["frontend"],
-        runSummary: "Ten DS imports collapsed to one @/ui import; tsc and vite build green.",
-        checklistDone: 4,
-        checklistTotal: 4,
-        commentCount: 3,
-        updatedAt: now - 800,
-      },
+        skills: ["frontend"],
+        latest_summary: "Ten DS imports collapsed to one @/ui import; tsc and vite build green.",
+        progress: { done: 4, total: 4 },
+        comment_count: 3,
+        ageSeconds: 800,
+      }),
     ],
   },
   {
     name: "done",
     tasks: [
-      {
-        id: "T-1005",
-        title: "Add Bootstrap 5.3.8 as the UI foundation",
-        status: "done",
+      mockCard("T-1005", "done", "Add Bootstrap 5.3.8 as the UI foundation", {
         assignee: "grokwin",
-        labels: ["build"],
-        checklistDone: 1,
-        checklistTotal: 1,
-        updatedAt: now - 2 * day,
-      },
-      {
-        id: "T-1006",
-        title: "Clone repo and audit the dashboard architecture",
-        status: "done",
+        skills: ["build"],
+        progress: { done: 1, total: 1 },
+        ageSeconds: 2 * 86_400,
+      }),
+      mockCard("T-1006", "done", "Clone repo and audit the dashboard architecture", {
         assignee: "grokwin",
-        updatedAt: now - 3 * day,
-      },
+        ageSeconds: 3 * 86_400,
+      }),
     ],
   },
 ];

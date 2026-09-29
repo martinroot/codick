@@ -15,8 +15,8 @@ import {
   MOCK_COLUMNS,
   type KanbanColumn,
   type KanbanStatus,
-  type KanbanTask,
 } from "@/components/kanban/KanbanBoard";
+import type { KanbanTaskCard } from "@/lib/kanban-api";
 import { Button } from "@/ui";
 
 export default function KanbanMainPage() {
@@ -28,7 +28,7 @@ export default function KanbanMainPage() {
   // and roll back on failure.
   const handleMove = React.useCallback((taskId: string, to: KanbanStatus) => {
     setColumns((previous) => {
-      let moved: KanbanTask | undefined;
+      let moved: KanbanTaskCard | undefined;
       const stripped = previous.map((column) => {
         const found = column.tasks.find((task) => task.id === taskId);
         if (!found) return column;
@@ -46,7 +46,7 @@ export default function KanbanMainPage() {
     window.setTimeout(() => setLastMove(null), 2000);
   }, []);
 
-  const handleOpenTask = React.useCallback((task: KanbanTask) => {
+  const handleOpenTask = React.useCallback((task: KanbanTaskCard) => {
     // The drawer is the next piece; the click target is wired so the
     // affordance is testable now.
     setLastMove(`open ${task.id}`);
