@@ -1,4 +1,10 @@
-## What does this PR do?
+<!-- Describe the change clearly. What problem does it solve? Why is this approach the right one? -->
+
+> **Scope.** This repository is CoDick — the web interface for Hermes Agent. The
+> agent itself is upstream's and unmodified, so a PR that changes the CLI, the
+> gateway, the TUI or the tools belongs in
+> [NousResearch/hermes-agent](https://github.com/martinroot/codick) instead.
+> Most PRs here should touch `web/`.
 
 <!-- Describe the change clearly. What problem does it solve? Why is this approach the right one? -->
 

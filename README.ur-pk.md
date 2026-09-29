@@ -1,5 +1,10 @@
 <div dir="rtl">
 
+> **This is an upstream translation of the agent's README.**
+> The web interface in this repository is CoDick, an independent project — see
+> the [main README](README.md) first, including the notice on what is and is
+> not an official Nous Research product.
+
 <p align="center">
   <img src="assets/banner.png" alt="Hermes Agent" width="100%">
 </p>

@@ -1,0 +1,42 @@
+name: Where does this belong?
+about: Triage the report before filing it.
+title: ''
+labels: ''
+assignees: ''
+body: |
+  ## Before you file this
+
+  This repository is **CoDick** — the web interface for
+  [Hermes Agent](https://github.com/NousResearch/hermes-agent). The agent
+  itself (CLI, gateway, TUI, tools, providers, channels) is Nous Research's and
+  is **unmodified** here.
+
+  | What you found | Where it goes |
+  |---|---|
+  | Dashboard, shell, navigation, charts, styling, anything in `web/` | **Here** |
+  | A `hermes` CLI command, a messaging channel, a provider, the TUI, a skill | [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent/issues) |
+  | Unsure | File here and say which part you were using |
+
+  Filing an agent bug here means it will not be read by the people who can fix
+  it. You are not being difficult — the bug is simply not ours to fix.
+
+  ---
+
+  ## Your report
+
+  **What you were doing:**
+
+  **What happened instead:**
+
+  **Steps to reproduce:**
+  1.
+  2.
+  3.
+
+  **What you expected:**
+
+  **Environment:**
+  - CoDick commit:
+  - OS:
+  - Browser:
+  - Hermes version (`hermes --version`):
