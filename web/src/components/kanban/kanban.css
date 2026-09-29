@@ -25,7 +25,14 @@
 /* Surfaces                                                            */
 /* ------------------------------------------------------------------ */
 
-.kb-board {
+/*
+ * The design tokens are scoped to the board element -- and the drawer, a
+ * *sibling* of the board rather than a descendant, inherited nothing and so
+ * rendered with a transparent background, with the board visible through it.
+ * Both surfaces declare the tokens.
+ */
+.kb-board,
+.kb-drawer {
   --kb-column-width: 272px;
   --kb-column-gap: 0.5rem;
   --kb-rail-height: min(72vh, 46rem);
@@ -62,7 +69,8 @@
   padding: 1rem;
 }
 
-[data-bs-theme="dark"] .kb-board {
+[data-bs-theme="dark"] .kb-board,
+[data-bs-theme="dark"] .kb-drawer {
   --kb-ink: #d5e2f3;
   --kb-muted: #9fadbd;
   --kb-list-bg: rgba(255, 255, 255, 0.1);
@@ -479,6 +487,238 @@
 
 .kb-chip-warning {
   color: var(--kb-stale-amber);
+}
+
+/* --- Drawer (#7) -------------------------------------------------------
+   A side panel, not a modal. The board stays visible and keeps live-updating
+   behind it, which is the point: you open a card to read it *while* watching
+   what the agents do, and a centred dialog would hide the thing you opened
+   it from. */
+
+.kb-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 30, 66, 0.44);
+  z-index: 1040;
+}
+
+.kb-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(46rem, 100vw);
+  display: flex;
+  flex-direction: column;
+  /* The fallback is deliberate, not belt-and-braces. A panel whose colour
+     token fails to resolve becomes fully transparent, and a transparent
+     panel over a board is not a small glitch -- it is unreadable and it does
+     not look broken, it looks like a rendering fault. An explicit value here
+     means the failure mode is "slightly the wrong grey" instead. */
+  background: var(--kb-card-bg, #ffffff);
+  color: var(--kb-ink, #172b4d);
+  box-shadow: -4px 0 16px rgba(9, 30, 66, 0.28);
+  z-index: 1045;
+}
+
+.kb-drawer-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid rgba(9, 30, 66, 0.12);
+}
+
+[data-bs-theme="dark"] .kb-drawer-head {
+  border-bottom-color: rgba(255, 255, 255, 0.16);
+}
+
+.kb-drawer-head-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.kb-drawer-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.kb-drawer-sub {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--kb-muted);
+  margin: 0;
+}
+
+/* The app styles bare <code> as a syntax highlight -- magenta. That is right
+   in a log and wrong for an id sitting in a metadata row, where it reads as
+   an error. Scoped to the drawer so the log keeps its highlighting. */
+.kb-drawer-sub code {
+  color: var(--kb-muted);
+  background: none;
+  padding: 0;
+}
+
+.kb-drawer-tabs {
+  display: flex;
+  gap: 0.125rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid rgba(9, 30, 66, 0.12);
+  overflow-x: auto;
+}
+
+[data-bs-theme="dark"] .kb-drawer-tabs {
+  border-bottom-color: rgba(255, 255, 255, 0.16);
+}
+
+.kb-drawer-tab {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--kb-muted);
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.625rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.kb-drawer-tab.is-active {
+  color: var(--kb-ink);
+  border-bottom-color: var(--kb-focus);
+  font-weight: 600;
+}
+
+.kb-drawer-count {
+  background: rgba(9, 30, 66, 0.12);
+  border-radius: 0.5rem;
+  font-size: 0.6875rem;
+  padding: 0 0.3rem;
+  margin-left: 0.25rem;
+}
+
+.kb-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 2rem;
+}
+
+.kb-drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.kb-drawer-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.kb-drawer-h3 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--kb-muted);
+  margin: 0;
+}
+
+.kb-drawer-fields {
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) 1fr;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.kb-drawer-fields dt {
+  color: var(--kb-muted);
+}
+
+.kb-drawer-fields dd {
+  margin: 0;
+}
+
+.kb-drawer-item {
+  border: 1px solid rgba(9, 30, 66, 0.12);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+[data-bs-theme="dark"] .kb-drawer-item {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.kb-drawer-item-head {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.75rem;
+  margin: 0 0 0.25rem;
+}
+
+.kb-drawer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+}
+
+.kb-drawer-file {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kb-drawer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  text-transform: capitalize;
+}
+
+.kb-drawer-muted {
+  color: var(--kb-muted);
+  font-size: 0.8125rem;
+}
+
+.kb-drawer-error {
+  color: #d0021b;
+  font-size: 0.8125rem;
+}
+
+[data-bs-theme="dark"] .kb-drawer-error {
+  color: #ff6b6b;
+}
+
+.kb-drawer-log pre,
+.kb-drawer-block pre {
+  background: rgba(9, 30, 66, 0.06);
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  max-height: 32rem;
+  overflow: auto;
+  padding: 0.625rem 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+[data-bs-theme="dark"] .kb-drawer-log pre,
+[data-bs-theme="dark"] .kb-drawer-block pre {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.kb-drawer-foot {
+  border-top: 1px solid rgba(9, 30, 66, 0.12);
+  padding: 0.5rem 1.25rem;
 }
 
 .kb-card-ident {

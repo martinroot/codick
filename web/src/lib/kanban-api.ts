@@ -32,7 +32,71 @@
  * one diagnostic).
  */
 
-import { fetchJSON } from "./api";
+import { authedFetch, fetchJSON } from "./api";
+
+// -------------------------------------------------------------------------
+// Task detail (the drawer)
+// -------------------------------------------------------------------------
+
+/**
+ * `GET /tasks/{id}` — everything the board card cannot carry.
+ *
+ * The card is a 44-field row; this is the task plus its comment thread, its
+ * event history, its attachments, both link directions, its children's
+ * results and its run history. `task.latest_summary` here is the **full**
+ * text, where the board truncates to 200 characters.
+ */
+export interface KanbanTaskDetail {
+  task: KanbanTaskCard;
+  comments: KanbanComment[];
+  events: KanbanEventRecord[];
+  attachments: KanbanAttachment[];
+  links: { parents: string[]; children: string[] };
+  link_tasks: { parents: KanbanTaskCard[]; children: KanbanTaskCard[] };
+  child_results: {
+    id: string;
+    title: string;
+    status: KanbanStatus;
+    latest_summary: string | null;
+    result: string | null;
+  }[];
+  runs: KanbanRunRecord[];
+}
+
+export interface KanbanComment {
+  id: number | string;
+  task_id?: string;
+  author: string | null;
+  body: string;
+  created_at: number;
+}
+
+export interface KanbanEventRecord {
+  id: number;
+  kind: string;
+  payload?: unknown;
+  run_id?: number | null;
+  created_at: number;
+}
+
+export interface KanbanAttachment {
+  id: number;
+  filename: string;
+  size: number;
+  content_type?: string | null;
+  created_at?: number;
+}
+
+export interface KanbanRunRecord {
+  id: number;
+  status: string;
+  outcome?: string | null;
+  started_at?: number | null;
+  ended_at?: number | null;
+  summary?: string | null;
+  error?: string | null;
+  attempt?: number | null;
+}
 
 // -------------------------------------------------------------------------
 // Column status
@@ -384,6 +448,55 @@ export const kanbanApi = {
    */
   getBoard: (options: KanbanRequestOptions) =>
     fetchJSON<KanbanBoardPayload>(kanbanUrl("/board", options)),
+
+  /**
+   * The drawer's payload: the task plus comments, events, attachments, both
+   * link directions, children's results and run history.
+   */
+  getTask: (taskId: string, options: KanbanRequestOptions) =>
+    fetchJSON<KanbanTaskDetail>(kanbanUrl(`/tasks/${encodeURIComponent(taskId)}`, options)),
+
+  /**
+   * The worker's log, tail-first.
+   *
+   * Optional on the call and deliberately not fetched with the drawer: it can
+   * be 100 KB, and nobody opens a card to read it. The drawer asks for it
+   * when the tab is actually shown.
+   */
+  getTaskLog: (taskId: string, options: KanbanRequestOptions, tail?: number) => {
+    const search = new URLSearchParams();
+    search.set("board", options.board);
+    if (tail) search.set("tail", String(tail));
+    return fetchJSON<{ log: string; truncated?: boolean }>(
+      `${BASE_PATH}/tasks/${encodeURIComponent(taskId)}/log?${search.toString()}`,
+    );
+  },
+
+  /**
+   * Download an attachment as a blob.
+   *
+   * Not an `<a href>`, and that is the whole point: a link carries no
+   * `Authorization` header, so in a gated deployment every download would be
+   * a 401. The caller turns the blob into a synthetic anchor and clicks it.
+   */
+  downloadAttachment: async (
+    attachmentId: number,
+    options: KanbanRequestOptions,
+  ): Promise<{ blob: Blob; filename: string }> => {
+    const search = new URLSearchParams();
+    search.set("board", options.board);
+    const res = await authedFetch(
+      `${BASE_PATH}/attachments/${encodeURIComponent(String(attachmentId))}?${search.toString()}`,
+    );
+    if (!res.ok) {
+      throw new Error(`attachment download failed: ${res.status}`);
+    }
+    // Prefer the server's filename; fall back to the id so a download is
+    // never nameless, which some browsers reject.
+    const disposition = res.headers.get("content-disposition") ?? "";
+    const match = /filename="?([^";]+)"?/i.exec(disposition);
+    return { blob: await res.blob(), filename: match?.[1] ?? `attachment-${attachmentId}` };
+  },
 
   /** Every board, with counts. Unscoped — `/boards` is not board-scoped. */
   listBoards: (profile?: string) => {

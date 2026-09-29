@@ -98,7 +98,13 @@ function labelColor(name: string): string {
   return LABEL_COLORS[hash % LABEL_COLORS.length];
 }
 
-const ACCENTS: Record<KanbanStatus, string> = {
+/**
+ * The one accent per status. Exported so the drawer colours a status pill
+ * with the same value the column header's dot uses -- otherwise the same
+ * status wears two different colours depending on which surface it is on,
+ * which is the kind of inconsistency that makes a board unreadable.
+ */
+export const ACCENTS: Record<KanbanStatus, string> = {
   triage: "#b48ce8",
   todo: "#7c8aa0",
   scheduled: "#5b9bd5",

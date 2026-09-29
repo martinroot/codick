@@ -29,6 +29,7 @@
 import * as React from "react";
 import { useSearchParams } from "react-router";
 
+import { TaskDrawer } from "@/components/kanban/TaskDrawer";
 import { useKanbanEvents } from "@/components/kanban/useKanbanEvents";
 import {
   KanbanBoard,
@@ -276,8 +277,13 @@ export default function KanbanMainPage() {
     [options],
   );
 
+  // The drawer. Its id rather than the whole card, because the card is a
+  // 44-field board row and the drawer re-reads the full task anyway -- holding
+  // the row would only risk showing board data in a pane that is meant to be
+  // the detail.
+  const [openTaskId, setOpenTaskId] = React.useState<string | null>(null);
   const handleOpenTask = React.useCallback((task: KanbanTaskCard) => {
-    setNotice({ tone: "info", text: `open ${task.id}` });
+    setOpenTaskId(task.id);
   }, []);
 
   const total = columns.reduce((sum, column) => sum + column.tasks.length, 0);
@@ -348,6 +354,12 @@ export default function KanbanMainPage() {
           you are looking at the right board.
         </p>
       ) : null}
+
+      <TaskDrawer
+        onClose={() => setOpenTaskId(null)}
+        options={options}
+        taskId={openTaskId}
+      />
 
       <KanbanBoard
         columns={columns}
