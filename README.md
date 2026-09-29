@@ -8,15 +8,13 @@
 > unchanged, as the licence requires. This repository's own modifications are
 > authored separately and are described in the commit history.
 >
-> **This repository stays here, and its web interface is modified as it stands.**
-> The entire work in this fork is the web layer: `web/` has been rebuilt on
-> Bootstrap 5, and the shell, dashboard and navigation changed accordingly.
-> Nothing outside `web/` was touched. The agent, the CLI and the backend are
-> upstream's, unmodified.
+> **The work in this repository is the web layer.** `web/` has been rebuilt on
+> Bootstrap 5 — the shell, the dashboard and the navigation changed
+> accordingly. The agent, the CLI and the backend are upstream's, unmodified.
 >
-> The continuing project lives at
-> **[github.com/martinroot/codick](https://github.com/martinroot/codick)** →
-> <a href="https://github.com/martinroot/codick"><img src="https://img.shields.io/badge/CoDick-martinroot%2Fcodick-crimson?style=for-the-badge" alt="Continue at martinroot/codick"></a>
+> The Bootstrap migration that produced this was carried out on a fork, which
+> remains public so the progression of that work stays visible:
+> [martinroot/hermes-multiserver-web-bootstrap](https://github.com/martinroot/hermes-multiserver-web-bootstrap).
 >
 > Issues, security reports and support requests for the underlying agent belong
 > upstream, not here. What lives here is the web dashboard: a Bootstrap rebuild of
@@ -35,6 +33,22 @@
 of [Nous Research](https://nousresearch.com) and is documented below as shipped;
 this project rebuilds its web interface on Bootstrap 5 and adds a system
 dashboard. Not an official Nous Research product.
+
+<img src="assets/codick-dashboard.png" alt="The CoDick dashboard" width="100%">
+
+### What this project changes
+
+The web interface, and only the web interface:
+
+- **Bootstrap 5 throughout.** Tailwind and the previous component library are
+  gone — not reconfigured, removed. Every surface, control and colour comes
+  from Bootstrap's own palette, and the light mode is the base.
+- **A dashboard at `/`.** Health at a glance: gateway state, sessions, models,
+  tokens, spend, per-minute activity and token composition.
+- **A shell that is only navigation.** Grouped, collapsible sections; the
+  identity, status and settings live in one strip across the top.
+- **Charts drawn in SVG**, reading Bootstrap's variables, so they follow the
+  colour mode instead of bringing their own.
 <p align="center">
   <a href="https://hermes-agent.nousresearch.com/">Hermes Agent</a> | <a href="https://hermes-agent.nousresearch.com/">Hermes Desktop</a>
 </p>
