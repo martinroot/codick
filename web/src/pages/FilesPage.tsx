@@ -16,21 +16,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Card, CardContent } from "@nous-research/ui/ui/components/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@nous-research/ui/ui/components/dialog";
-import { Input } from "@nous-research/ui/ui/components/input";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Toast } from "@nous-research/ui/ui/components/toast";
-import { useToast } from "@nous-research/ui/hooks/use-toast";
+import { Badge, Button, Card, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Spinner, Toast, useToast } from "@/ui";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { api } from "@/lib/api";
@@ -126,12 +112,12 @@ export default function FilesPage() {
 
   useEffect(() => {
     setAfterTitle(
-      <Badge tone="outline" className="max-w-[22rem] truncate text-xs" title={headerPath}>
+      <Badge tone="outline" className="text-truncate files-path-badge" title={headerPath}>
         {headerPath}
       </Badge>,
     );
     setEnd(
-      <div className="flex items-center gap-2">
+      <div className="d-flex align-items-center gap-2">
         <Button
           ghost
           size="icon"
@@ -262,21 +248,21 @@ export default function FilesPage() {
   };
 
   return (
-    <div className="flex min-w-0 max-w-full flex-col gap-4">
+    <div className="d-flex flex-column gap-4 overflow-hidden">
       <Toast toast={toast} />
       <PluginSlot name="files:top" />
       <input
         ref={fileInputRef}
         type="file"
         multiple
-        className="hidden"
+        className="d-none"
         onChange={(event) => void uploadFiles(event.currentTarget.files)}
       />
 
-      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+      <div className="d-flex flex-column flex-xl-row flex-xl-wrap align-items-xl-center justify-content-between gap-3">
         {canChangePath ? (
           <form
-            className="flex min-w-0 flex-1 items-center gap-2"
+            className="d-flex flex-grow-1 align-items-center gap-2"
             onSubmit={(event) => {
               event.preventDefault();
               void goToPath();
@@ -287,25 +273,24 @@ export default function FilesPage() {
               onChange={(event) => setPathInput(event.target.value)}
               aria-label="Path"
               placeholder="Path"
-              className="h-9 min-w-0 flex-1 font-mono"
+              className="flex-grow-1 font-monospace"
             />
-            <Button type="submit" size="sm" outlined className="uppercase">
+            <Button type="submit" size="sm" outlined>
               Go
             </Button>
           </form>
         ) : (
-          <div className="min-w-0 truncate font-mono text-sm text-text-secondary" title={activePath}>
+          <div className="text-body-secondary font-monospace text-truncate files-path-readout" title={activePath}>
             {activePath}
           </div>
         )}
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <div className="d-flex flex-wrap align-items-center gap-2">
           <Button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={!canUpload}
             size="sm"
             outlined
-            className="uppercase"
             prefix={uploading ? <Spinner /> : <Upload />}
           >
             Upload
@@ -316,7 +301,6 @@ export default function FilesPage() {
             disabled={!activePath}
             size="sm"
             outlined
-            className="uppercase"
             prefix={<FolderPlus />}
           >
             Create
@@ -333,39 +317,35 @@ export default function FilesPage() {
         onDrop={handleDrop}
         disabled={!canUpload}
         aria-label="Upload files"
-        className={`flex min-h-20 w-full min-w-0 items-center justify-between gap-4 border border-dashed px-4 py-3 text-left transition ${
-          draggingFiles
-            ? "border-primary bg-primary/10 text-foreground"
-            : "border-border bg-background/20 text-text-secondary hover:border-text-tertiary hover:bg-background/35"
-        } disabled:cursor-not-allowed disabled:opacity-60`}
+        className={`dropzone w-100 d-flex align-items-center justify-content-between gap-3 p-3${
+          draggingFiles ? " dropzone-active" : ""
+        }`}
       >
-        <span className="flex min-w-0 items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-border bg-background/45 text-text-tertiary">
-            {uploading ? <Spinner /> : <Upload className="h-4 w-4" />}
+        <span className="d-flex align-items-center gap-3 min-w-0">
+          <span className="dropzone-icon d-flex align-items-center justify-content-center">
+            {uploading ? <Spinner /> : <Upload className="files-icon" />}
           </span>
           <span className="min-w-0">
-            <span className="block text-sm font-semibold uppercase tracking-[0.08em] text-foreground">
+            <span className="dropzone-title d-block">
               {uploading ? "Uploading" : draggingFiles ? "Release to upload" : "Drop files here"}
             </span>
-            <span className="block truncate font-mono text-xs text-text-secondary" title={activePath}>
+            <span className="d-block text-body-secondary font-monospace small text-truncate" title={activePath}>
               {activePath || "Loading"}
             </span>
           </span>
         </span>
-        <span className="hidden shrink-0 text-xs font-semibold uppercase tracking-[0.08em] text-text-tertiary sm:block">
-          Choose files
-        </span>
+        <span className="dropzone-hint d-none d-sm-block">Choose files</span>
       </button>
 
-      <Card className="min-w-0 max-w-full overflow-hidden">
+      <Card className="overflow-hidden">
         <CardContent className="overflow-x-auto p-0">
           {error && (
-            <div className="border-b border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="alert alert-danger rounded-0 border-0 border-bottom mb-0 py-2 px-3 small" role="alert">
               {error}
             </div>
           )}
 
-          <div className="grid min-w-[42rem] grid-cols-[minmax(12rem,1fr)_7rem_10rem_5.5rem] items-center gap-3 border-b border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-text-tertiary">
+          <div className="files-row files-row-head">
             <span>Name</span>
             <span>Size</span>
             <span>Modified</span>
@@ -376,10 +356,10 @@ export default function FilesPage() {
             <button
               type="button"
               onClick={() => setCurrentPath(listing.parent ?? undefined)}
-              className="grid w-full min-w-[42rem] grid-cols-[minmax(12rem,1fr)_7rem_10rem_5.5rem] items-center gap-3 border-b border-border/60 px-4 py-2 text-left text-sm transition hover:bg-background/40"
+              className="files-row files-row-button w-100 text-start"
             >
-              <span className="flex min-w-0 items-center gap-2 font-mono text-text-secondary">
-                <ArrowUp className="h-4 w-4 shrink-0 text-text-tertiary" />
+              <span className="d-flex align-items-center gap-2 font-monospace text-body-secondary min-w-0">
+                <ArrowUp className="files-icon" />
                 ..
               </span>
               <span />
@@ -389,35 +369,35 @@ export default function FilesPage() {
           )}
 
           {loading && !listing ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+            <div className="d-flex align-items-center justify-content-center gap-2 py-5 text-body-secondary">
               <Spinner />
               Loading files...
             </div>
           ) : listing && listing.entries.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">No files</div>
+            <div className="py-5 text-center text-body-secondary">No files</div>
           ) : (
             listing?.entries.map((entry) => (
               <div
                 key={entry.path}
-                className="grid min-w-[42rem] grid-cols-[minmax(12rem,1fr)_7rem_10rem_5.5rem] items-center gap-3 border-b border-border/60 px-4 py-2 text-sm last:border-b-0 hover:bg-background/35"
+                className="files-row"
               >
                 <button
                   type="button"
                   onClick={() => (entry.is_directory ? openDirectory(entry) : void downloadFile(entry))}
-                  className="flex min-w-0 items-center gap-2 text-left font-mono text-foreground"
+                  className="d-flex align-items-center gap-2 text-start font-monospace text-body min-w-0"
                 >
                   {entry.is_directory ? (
-                    <Folder className="h-4 w-4 shrink-0 text-warning" />
+                    <Folder className="files-icon text-warning" />
                   ) : (
-                    <FileIcon className="h-4 w-4 shrink-0 text-text-tertiary" />
+                    <FileIcon className="files-icon" />
                   )}
-                  <span className="truncate">{entry.name}</span>
+                  <span className="text-truncate">{entry.name}</span>
                 </button>
-                <span className="text-xs tabular-nums text-text-secondary">{formatBytes(entry.size)}</span>
-                <span className="truncate text-xs text-text-secondary">
+                <span className="small text-body-secondary">{formatBytes(entry.size)}</span>
+                <span className="small text-body-secondary text-truncate">
                   {Number.isFinite(entry.mtime) ? DATE_FORMAT.format(entry.mtime * 1000) : "-"}
                 </span>
-                <span className="flex justify-end gap-1">
+                <span className="d-flex justify-content-end gap-1">
                   {entry.is_directory ? (
                     <Button
                       ghost
@@ -445,7 +425,7 @@ export default function FilesPage() {
                     type="button"
                     onClick={() => setPendingDelete(entry)}
                     aria-label={`Delete ${entry.name}`}
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger"
                   >
                     <Trash2 />
                   </Button>
@@ -473,7 +453,7 @@ export default function FilesPage() {
               Target: {activePath || "Loading"}
             </DialogDescription>
           </DialogHeader>
-          <div className="p-4">
+          <div className="modal-body">
             <Input
               autoFocus
               value={folderName}
