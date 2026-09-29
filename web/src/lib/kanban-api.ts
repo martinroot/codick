@@ -35,6 +35,23 @@
 import { authedFetch, fetchJSON } from "./api";
 
 // -------------------------------------------------------------------------
+// Bulk
+// -------------------------------------------------------------------------
+
+export interface KanbanBulkBody {
+  ids: string[];
+  status?: KanbanStatus;
+  priority?: number;
+  assignee?: string;
+  archive?: boolean;
+}
+
+export interface KanbanBulkResult {
+  /** One entry per requested id, in request order. Not a single verdict. */
+  results: { id: string; ok: boolean; error?: string }[];
+}
+
+// -------------------------------------------------------------------------
 // Task detail (the drawer)
 // -------------------------------------------------------------------------
 
@@ -497,6 +514,27 @@ export const kanbanApi = {
     const match = /filename="?([^";]+)"?/i.exec(disposition);
     return { blob: await res.blob(), filename: match?.[1] ?? `attachment-${attachmentId}` };
   },
+
+  /**
+   * Apply one change to many tasks.
+   *
+   * **This is not atomic.** The server walks the ids and applies each,
+   * returning `{id, ok, error?}` per card — one refusal does not stop the
+   * rest. The return type says so at the call site, because the tempting
+   * assumption here is a single verdict, and a caller that takes one would
+   * report success for a batch that was half refused.
+   */
+  bulkUpdate: (body: KanbanBulkBody, options: KanbanRequestOptions) =>
+    fetchJSON<KanbanBulkResult>(kanbanUrl("/tasks/bulk", options), {
+      method: "POST",
+      // Required, and the omission is quiet: without it FastAPI hands the
+      // body to Pydantic as a *string*, so every request 422s with
+      // "Input should be a valid dictionary or object to extract fields
+      // from" — an error that describes the server's parsing, not anything
+      // the caller did wrong.
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
 
   /** Every board, with counts. Unscoped — `/boards` is not board-scoped. */
   listBoards: (profile?: string) => {

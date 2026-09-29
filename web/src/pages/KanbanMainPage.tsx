@@ -29,7 +29,13 @@
 import * as React from "react";
 import { useSearchParams } from "react-router";
 
+import {
+  BulkActionBar,
+  type BulkAction,
+  type BulkOutcome,
+} from "@/components/kanban/BulkActionBar";
 import { TaskDrawer } from "@/components/kanban/TaskDrawer";
+import { readingOrder, useCardSelection } from "@/components/kanban/useCardSelection";
 import { useKanbanEvents } from "@/components/kanban/useKanbanEvents";
 import {
   KanbanBoard,
@@ -134,7 +140,6 @@ export default function KanbanMainPage() {
       .getBoard(options)
       .then((payload) => {
         setColumns(payload.columns);
-      setServerNow(payload.now ?? null);
         setServerNow(payload.now ?? null);
         setEventCursor(payload.latest_event_id);
         setLoad({ phase: "ready" });
@@ -282,6 +287,101 @@ export default function KanbanMainPage() {
   // the row would only risk showing board data in a pane that is meant to be
   // the detail.
   const [openTaskId, setOpenTaskId] = React.useState<string | null>(null);
+  // ------------------------------------------------------------- selection
+
+  const selection = useCardSelection();
+  const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [bulkOutcome, setBulkOutcome] = React.useState<BulkOutcome | null>(null);
+
+  /**
+   * Reading order is taken from the same array the board renders, or a
+   * shift-range would be measured against a different list than the one the
+   * user clicked in. Recomputed per render and passed down with the index.
+   */
+  const order = React.useMemo(
+    () => readingOrder(columns),
+    [columns],
+  );
+
+  /**
+   * A card that leaves the board must not stay selected: the action bar would
+   * then keep offering to act on ids the server no longer has, and the bulk
+   * call would spend its errors on "not found".
+   */
+  React.useEffect(() => {
+    const present = new Set(order);
+    if (![...selection.selected].some((id) => !present.has(id))) return;
+    const next = new Set([...selection.selected].filter((id) => present.has(id)));
+    if (next.size !== selection.selected.size) selection.setSelected(next);
+  }, [order, selection]);
+
+  const handleSelectTask = React.useCallback(
+    (
+      task: KanbanTaskCard,
+      modifiers: { toggle: boolean; range: boolean },
+      index: number,
+    ) => {
+      setBulkOutcome(null);
+      if (modifiers.range) selection.extendTo(order, index);
+      else if (modifiers.toggle) selection.toggle(task.id, index);
+      // A plain click falls through to the drawer, which the board calls
+      // directly -- selecting on every click would make opening a card
+      // impossible.
+    },
+    [order, selection],
+  );
+
+  const handleBulk = React.useCallback(
+    async (action: BulkAction) => {
+      const ids = [...selection.selected];
+      if (!ids.length || bulkBusy) return;
+      setBulkBusy(true);
+      setBulkOutcome(null);
+      try {
+        const body =
+          action.kind === "status"
+            ? { ids, status: action.status }
+            : action.kind === "priority"
+              ? { ids, priority: action.priority }
+              : { ids, archive: true };
+        const data = await kanbanApi.bulkUpdate(body, options);
+        // Per card, never as one verdict. The server stops at nothing, so a
+        // single "updated N cards" would report success over a batch that was
+        // partly refused -- and the refusals are the interesting part.
+        const results = data?.results ?? [];
+        const failures = results
+          .filter((entry) => !entry.ok)
+          .map((entry) => ({ id: entry.id, error: entry.error ?? "refused" }));
+        setBulkOutcome({
+          requested: ids.length,
+          succeeded: results.filter((entry) => entry.ok).length,
+          failures,
+        });
+        // Anything the server did not mention at all did not happen, and those
+        // cards stay selected so the next attempt is not guesswork.
+        const reported = new Set(results.map((entry) => entry.id));
+        const succeeded = results.filter((entry) => entry.ok).map((entry) => entry.id);
+        selection.setSelected(succeeded.concat([...selection.selected].filter((id) => !reported.has(id))));
+        // A quiet read: `reload` would flip the board into its loading phase
+        // between the write and the cards repainting, which reads as a
+        // flicker. This is the same re-read handleCreateCard uses.
+        const payload = await kanbanApi.getBoard(options);
+        setColumns(payload.columns);
+        setServerNow(payload.now ?? null);
+        setEventCursor(payload.latest_event_id);
+      } catch (error) {
+        setBulkOutcome({
+          requested: ids.length,
+          succeeded: 0,
+          failures: ids.map((id) => ({ id, error: errorMessage(error) })),
+        });
+      } finally {
+        setBulkBusy(false);
+      }
+    },
+    [bulkBusy, options, selection],
+  );
+
   const handleOpenTask = React.useCallback((task: KanbanTaskCard) => {
     setOpenTaskId(task.id);
   }, []);
@@ -361,12 +461,35 @@ export default function KanbanMainPage() {
         taskId={openTaskId}
       />
 
+      {/*
+        The bar is inside the board frame so it covers the rail rather than
+        pushing the columns down -- a selection bar that reflows the board
+        makes the cards you are about to act on move under the cursor.
+      */}
+      <BulkActionBar
+        busy={bulkBusy}
+        count={selection.selected.size}
+        onClear={() => {
+          selection.clear();
+          setBulkOutcome(null);
+        }}
+        onDismissFailures={() => setBulkOutcome(null)}
+        onRun={handleBulk}
+        outcome={bulkOutcome}
+      />
+
       <KanbanBoard
         columns={columns}
         now={serverNow}
         onCreateCard={handleCreateCard}
         onMove={handleMove}
         onOpenTask={handleOpenTask}
+        onSelectMany={(ids) => {
+          selection.setSelected(ids);
+          setBulkOutcome(null);
+        }}
+        onSelectTask={handleSelectTask}
+        selectedIds={selection.selected}
       />
     </div>
   );

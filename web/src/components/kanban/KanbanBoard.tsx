@@ -190,6 +190,15 @@ function staleness(task: KanbanTask, now: number | null): StaleTier {
 export interface KanbanCardProps {
   task: KanbanTask;
   dragging: boolean;
+  selected?: boolean;
+  /**
+   * Reported for a plain click, a modifier-click, and a shift-click. The
+   * board decides what each means; the card does not know about ranges.
+   */
+  onSelect?: (
+    task: KanbanTask,
+    modifiers: { toggle: boolean; range: boolean },
+  ) => void;
   /**
    * The board payload's `now`, in the server's clock. Staleness is measured
    * against it rather than the browser's, so a card whose age the server
@@ -202,7 +211,22 @@ export interface KanbanCardProps {
   onOpen?: (task: KanbanTask) => void;
 }
 
-function KanbanCardImpl({ task, dragging, now, onDragStart, onDragEnd, onOpen }: KanbanCardProps) {
+function KanbanCardImpl({
+  task,
+  dragging,
+  now,
+  selected = false,
+  onDragStart,
+  onDragEnd,
+  onOpen,
+  onSelect,
+}: KanbanCardProps) {
+  // A drag ends with the mouse released over the card, and the browser fires
+  // `click` for that too. Without this guard every drag would also open the
+  // drawer or toggle the selection, which looks like the board choosing to do
+  // two things at once.
+  const pressedAt = React.useRef<{ x: number; y: number } | null>(null);
+  const suppressClick = React.useRef(false);
   // `skills` is the only list of strings the card carries, and it is what the
   // prototype's invented `labels` was standing in for.
   const labels = task.skills ?? [];
@@ -230,23 +254,80 @@ function KanbanCardImpl({ task, dragging, now, onDragStart, onDragEnd, onOpen }:
 
   return (
     <article
+      aria-selected={selected}
       className={cn(
         "kb-card",
         dragging && "kb-card-dragging",
+        selected && "kb-card-selected",
         tier && `kb-card-stale-${tier}`,
       )}
       draggable
       onDragEnd={onDragEnd}
       onDragStart={(event) => onDragStart(event, task)}
-      onClick={() => onOpen?.(task)}
+      onMouseDown={(event) => {
+        pressedAt.current = { x: event.clientX, y: event.clientY };
+        suppressClick.current = false;
+      }}
+      onDragStartCapture={() => {
+        // A real drag, not a click that has not started yet.
+        suppressClick.current = true;
+      }}
+      onClick={(event) => {
+        if (suppressClick.current) {
+          suppressClick.current = false;
+          return;
+        }
+        // A long press-and-hold on a trackpad can end as a click without ever
+        // dragging; the movement check catches that case too.
+        if (pressedAt.current) {
+          const moved = Math.hypot(
+            event.clientX - pressedAt.current.x,
+            event.clientY - pressedAt.current.y,
+          );
+          if (moved > 5) return;
+        }
+        if (event.metaKey || event.ctrlKey || event.shiftKey) {
+          event.preventDefault();
+          onSelect?.(task, {
+            toggle: event.metaKey || event.ctrlKey,
+            range: event.shiftKey,
+          });
+          return;
+        }
+        onOpen?.(task);
+      }}
       tabIndex={0}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
+        if (event.key === " ") {
+          // Space selects. It is the conventional binding for this and it
+          // is the binding that was broken by a 32-space literal, so it is
+          // also the one most likely to be expected to work.
+          event.preventDefault();
+          onSelect?.(task, { toggle: true, range: event.shiftKey });
+        } else if (event.key === "Enter") {
           event.preventDefault();
           onOpen?.(task);
         }
       }}
     >
+      {/*
+        The checkbox is always present rather than revealed on hover. A
+        control that appears only under the cursor is not discoverable on a
+        touch screen at all, and this board is used one-handed.
+      */}
+      <label
+        className="kb-card-pick"
+        onClick={(event) => event.stopPropagation()}
+        title="Select for bulk actions"
+      >
+        <input
+          checked={selected}
+          onChange={() => onSelect?.(task, { toggle: true, range: false })}
+          type="checkbox"
+        />
+        <span aria-hidden>✓</span>
+      </label>
+
       {labels.length ? (
         <div className="kb-card-labels">
           {labels.map((label) => (
@@ -438,6 +519,11 @@ function KanbanCardImpl({ task, dragging, now, onDragStart, onDragEnd, onOpen }:
 
 export const KanbanCard = React.memo(KanbanCardImpl);
 
+/** Stable identities for the read-only defaults, so a missing handler does
+ *  not make every card a new props object on every render. */
+const EMPTY_SET: ReadonlySet<string> = new Set();
+function noopSelect() {}
+
 /* ------------------------------------------------------------------ */
 /* Column                                                              */
 /* ------------------------------------------------------------------ */
@@ -458,11 +544,21 @@ export interface KanbanColumnProps {
    * is not always the one that was asked for.
    */
   onCreateCard?: (status: KanbanStatus, title: string) => Promise<KanbanTaskCard>;
+  selectedIds: ReadonlySet<string>;
+  onSelectTask: NonNullable<KanbanBoardProps["onSelectTask"]>;
+  /** Select exactly these ids. Replaces the selection, it does not add to it. */
+  onSelectColumn: (ids: string[], column: string) => void;
+  /** This column's first index in reading order. */
+  orderOffset: number;
 }
 
 function KanbanColumnView({
   column,
   now,
+  selectedIds,
+  onSelectTask,
+  onSelectColumn,
+  orderOffset,
   draggingId,
   dropTarget,
   onDragStart,
@@ -531,6 +627,16 @@ function KanbanColumnView({
         <span className="kb-dot" style={{ background: ACCENTS[column.name] }} aria-hidden />
         <h2 className="kb-column-title">{COLUMN_TITLES[column.name]}</h2>
         <span className={cn("kb-count", wipExceeded && "kb-count-over")}>{column.tasks.length}</span>
+        {column.tasks.length ? (
+          <button
+            className="kb-column-selectall"
+            onClick={() => onSelectColumn(column.tasks.map((t) => t.id), column.name)}
+            title={`Select all ${column.tasks.length} in ${COLUMN_TITLES[column.name]}`}
+            type="button"
+          >
+            ⌗
+          </button>
+        ) : null}
         {/* Absent rather than disabled in `running`: a control that cannot
             ever succeed is noise, and the column header should say what the
             column is for, not that a task is in flight there. */}
@@ -550,11 +656,13 @@ function KanbanColumnView({
         {column.tasks.length === 0 ? (
           <p className="kb-empty">Drop cards here</p>
         ) : (
-          column.tasks.map((task) => (
+          column.tasks.map((task, indexInColumn) => (
             <KanbanCard
               dragging={draggingId === task.id}
               key={task.id}
               now={now}
+              onSelect={(t, mods) => onSelectTask(t, mods, orderOffset + indexInColumn)}
+              selected={selectedIds.has(task.id)}
               onDragEnd={onDragEnd}
               onDragStart={onDragStart}
               onOpen={onOpenTask}
@@ -634,11 +742,38 @@ export interface KanbanBoardProps {
    * when a board is loaded and writable.
    */
   onCreateCard?: (status: KanbanStatus, title: string) => Promise<KanbanTaskCard>;
+  /** Ids currently selected for bulk actions. */
+  selectedIds?: ReadonlySet<string>;
+  /**
+   * Selection changed. `index` is the card's position in reading order
+   * (column by column), which is what a shift-range is measured in.
+   */
+  onSelectTask?: (
+    task: KanbanTask,
+    modifiers: { toggle: boolean; range: boolean },
+    index: number,
+  ) => void;
+  /** Replace the selection outright — select-all, clear, per-column. */
+  onSelectMany?: (ids: string[]) => void;
 }
 
-export function KanbanBoard({ columns, now = null, onMove, onOpenTask, onCreateCard }: KanbanBoardProps) {
+export function KanbanBoard({
+  columns,
+  now = null,
+  onMove,
+  onOpenTask,
+  onCreateCard,
+  selectedIds,
+  onSelectTask,
+  onSelectMany,
+}: KanbanBoardProps) {
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [dropTarget, setDropTarget] = React.useState<KanbanStatus | null>(null);
+  const totalCards = React.useMemo(
+    () => columns.reduce((sum, column) => sum + column.tasks.length, 0),
+    [columns],
+  );
+
   const handleDragStart = React.useCallback((event: React.DragEvent<HTMLElement>, task: KanbanTask) => {
     setDraggingId(task.id);
     event.dataTransfer.effectAllowed = "move";
@@ -676,10 +811,40 @@ export function KanbanBoard({ columns, now = null, onMove, onOpenTask, onCreateC
 
   return (
     <div className="kb-board">
+      <div className="kb-selectall">
+        <button
+          className="btn btn-sm btn-link"
+          disabled={!totalCards}
+          onClick={() => onSelectMany?.(columns.flatMap((c) => c.tasks.map((t) => t.id)))}
+          type="button"
+        >
+          Select all {totalCards}
+        </button>
+        <button
+          className="btn btn-sm btn-link"
+          disabled={!totalCards}
+          onClick={() => onSelectMany?.([])}
+          type="button"
+        >
+          Clear
+        </button>
+      </div>
+
       <div className="kb-rail">
-        {columns.map((column) => (
+        {columns.map((column, columnIndex) => {
+          // Reading order is column-major, so a column's first card's index is
+          // the total of every card before it. Computed here rather than
+          // passed in, so it cannot drift out of step with the render.
+          const orderOffset = columns
+            .slice(0, columnIndex)
+            .reduce((sum, c) => sum + c.tasks.length, 0);
+          return (
           <KanbanColumnView
             column={column}
+            onSelectColumn={(ids) => onSelectMany?.(ids)}
+            orderOffset={orderOffset}
+            selectedIds={selectedIds ?? EMPTY_SET}
+            onSelectTask={onSelectTask ?? noopSelect}
             draggingId={draggingId}
             dropTarget={dropTarget}
             key={column.name}
@@ -691,7 +856,8 @@ export function KanbanBoard({ columns, now = null, onMove, onOpenTask, onCreateC
             onOpenTask={onOpenTask}
             onCreateCard={onCreateCard}
           />
-        ))}
+          );
+        })}
       </div>
     </div>
   );
