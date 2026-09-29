@@ -121,7 +121,9 @@
  * intrinsic size.
  */
 .app-rail {
-  --app-rail-w: 17rem;
+  /* 19.5rem, up from 17rem. At 17rem the group headings and the longer
+     labels ("Automation", "Gateway Status") wrapped onto two lines. */
+  --app-rail-w: 19.5rem;
   --bs-offcanvas-width: var(--app-rail-w);
 }
 
@@ -163,6 +165,38 @@
  * `min-width: 0` at each level lets the chain actually shrink, and the
  * `text-truncate` labels then ellipsise inside the rail instead.
  */
+/*
+ * Rail navigation.
+ *
+ * Bootstrap's `nav-link` inherits the document link colour, so every
+ * item rendered blue — a wall of links, where only the active one is
+ * meant to stand out. Items take the body colour instead, and the
+ * active pill keeps Bootstrap's own active treatment. Both come from
+ * Bootstrap's variables, so this follows the colour mode rather than
+ * fixing a value.
+ */
+.app-rail .nav-link {
+  color: var(--bs-body-color);
+}
+
+.app-rail .nav-link:hover,
+.app-rail .nav-link:focus-visible {
+  color: var(--bs-body-emphasis);
+}
+
+.app-rail .nav-link.active {
+  color: var(--bs-nav-pills-link-active-color);
+}
+
+/* Section headings between the groups. */
+.app-rail .nav-section-heading {
+  color: var(--bs-secondary-color);
+  font-size: var(--bs-font-size-sm);
+  font-weight: var(--bs-font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .app-rail nav,
 .app-rail > *,
 .app-rail nav > *,

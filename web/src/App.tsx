@@ -24,6 +24,7 @@ import {
   Activity,
   BarChart3,
   BookOpen,
+  ChevronDown,
   Clock,
   Code,
   Cpu,
@@ -144,6 +145,8 @@ const CHAT_NAV_ITEM: NavItem = {
   labelKey: "chat",
   label: "Chat",
   icon: Terminal,
+  group: "workspace",
+  accent: "primary",
 };
 
 /**
@@ -190,48 +193,151 @@ function ChatRouteSink() {
   return null;
 }
 
+/**
+ * The rail's sections, in the order they appear.
+ *
+ * Grouping is what makes a fifteen-item rail scannable: "where do
+ * automations live" should not mean reading every label to find out.
+ */
+const NAV_GROUPS: NavGroup[] = [
+  { id: "workspace", label: "Workspace", accent: "primary" },
+  { id: "models", label: "Models & Data", accent: "info" },
+  { id: "automation", label: "Automation", accent: "success" },
+  { id: "extensions", label: "Extensions", accent: "warning" },
+  { id: "system", label: "System", accent: "secondary" },
+];
+
 const BUILTIN_NAV_REST: NavItem[] = [
   {
     path: "/sessions",
     labelKey: "sessions",
     label: "Sessions",
     icon: MessageSquare,
+    group: "workspace",
+    accent: "primary",
   },
-  { path: "/files", label: "Files", icon: FolderOpen },
   {
-    path: "/analytics",
-    labelKey: "analytics",
-    label: "Analytics",
-    icon: BarChart3,
+    path: "/files",
+    label: "Files",
+    icon: FolderOpen,
+    group: "workspace",
+    accent: "primary",
+  },
+  {
+    path: "/logs",
+    labelKey: "logs",
+    label: "Logs",
+    icon: FileText,
+    group: "workspace",
+    accent: "primary",
   },
   {
     path: "/models",
     labelKey: "models",
     label: "Models",
     icon: Cpu,
+    group: "models",
+    accent: "info",
   },
-  { path: "/logs", labelKey: "logs", label: "Logs", icon: FileText },
-  { path: "/cron", labelKey: "cron", label: "Cron", icon: Clock },
-  { path: "/skills", labelKey: "skills", label: "Skills", icon: Package },
-  { path: "/plugins", labelKey: "plugins", label: "Plugins", icon: Puzzle },
-  { path: "/mcp", label: "MCP", icon: Plug },
-  { path: "/channels", label: "Channels", icon: Radio },
-  { path: "/webhooks", label: "Webhooks", icon: Webhook },
-  { path: "/pairing", label: "Pairing", icon: ShieldCheck },
-  { path: "/profiles", labelKey: "profiles", label: "Profiles", icon: Users },
-  { path: "/config", labelKey: "config", label: "Config", icon: Settings },
-  { path: "/env", labelKey: "keys", label: "Keys", icon: KeyRound },
-  { path: "/system", label: "System", icon: Wrench },
+  {
+    path: "/analytics",
+    labelKey: "analytics",
+    label: "Analytics",
+    icon: BarChart3,
+    group: "models",
+    accent: "info",
+  },
+  {
+    path: "/cron",
+    labelKey: "cron",
+    label: "Cron",
+    icon: Clock,
+    group: "automation",
+    accent: "success",
+  },
+  {
+    path: "/channels",
+    label: "Channels",
+    icon: Radio,
+    group: "automation",
+    accent: "success",
+  },
+  {
+    path: "/webhooks",
+    label: "Webhooks",
+    icon: Webhook,
+    group: "automation",
+    accent: "success",
+  },
+  {
+    path: "/plugins",
+    labelKey: "plugins",
+    label: "Plugins",
+    icon: Puzzle,
+    group: "extensions",
+    accent: "warning",
+  },
+  {
+    path: "/skills",
+    labelKey: "skills",
+    label: "Skills",
+    icon: Package,
+    group: "extensions",
+    accent: "warning",
+  },
+  { path: "/mcp", label: "MCP", icon: Plug, group: "extensions", accent: "warning" },
   {
     path: "/kanban-preview",
     label: "Kanban",
     icon: Kanban,
+    group: "extensions",
+    accent: "warning",
+  },
+  {
+    path: "/profiles",
+    labelKey: "profiles",
+    label: "Profiles",
+    icon: Users,
+    group: "system",
+    accent: "secondary",
+  },
+  {
+    path: "/pairing",
+    label: "Pairing",
+    icon: ShieldCheck,
+    group: "system",
+    accent: "secondary",
+  },
+  {
+    path: "/config",
+    labelKey: "config",
+    label: "Config",
+    icon: Settings,
+    group: "system",
+    accent: "secondary",
+  },
+  {
+    path: "/env",
+    labelKey: "keys",
+    label: "Keys",
+    icon: KeyRound,
+    group: "system",
+    accent: "secondary",
+  },
+  {
+    path: "/system",
+    label: "System",
+    icon: Wrench,
+    group: "system",
+    accent: "secondary",
   },
   {
     path: "/docs",
     labelKey: "documentation",
     label: "Documentation",
     icon: BookOpen,
+    group: "system",
+    accent: "secondary",
   },
 ];
 
@@ -280,6 +386,12 @@ function buildNavItems(
       path: manifest.tab.path,
       label: manifest.label,
       icon: resolveIcon(manifest.icon),
+      // Plugin tabs have no group of their own — they are rendered in
+      // their own section at the foot of the rail — but they still need
+      // an icon tint, and the accent of the section they are shown in
+      // is the one that reads correctly next to it.
+      group: "extensions",
+      accent: "warning",
     };
 
     const pos = manifest.tab.position ?? "end";
@@ -679,26 +791,35 @@ export default function App() {
 
             <ProfileSwitcher collapsed={isDesktopCollapsed} />
 
-            {/* The reference template's nav is `nav nav-pills flex-column gap-2`
-                on a scrolling track. The `px-3 py-3` that used to live here is
-                dropped: the rail already carries `p-3`, and keeping both
-                indented the links twice. */}
             <nav
-              className="nav nav-pills flex-column gap-1 flex-grow-1 min-h-0 overflow-y-auto overflow-x-hidden pb-2 mb-2 border-bottom"
+              /*
+               * `flex-nowrap` is load-bearing, not tidiness. Bootstrap's
+               * `.nav` sets `flex-wrap: wrap`, and with
+               * `flex-direction: column` that wraps items into *sideways
+               * tracks* rather than down the list — so the sections laid
+               * themselves out in two columns and the second one ran off
+               * the rail.
+               */
+              className="nav flex-column flex-nowrap flex-grow-1 min-h-0 overflow-y-auto overflow-x-hidden pb-2"
               aria-label={t.app.navigation}
             >
-              <ul className="nav nav-pills flex-column gap-1">
-                {sidebarNav.coreItems.map((item) => (
-                  <SidebarNavLink
+              {NAV_GROUPS.map((group) => {
+                const items = sidebarNav.coreItems.filter(
+                  (item) => item.group === group.id,
+                );
+                if (items.length === 0) return null;
+                return (
+                  <SidebarNavGroup
                     closeMobile={closeMobile}
                     collapsed={isDesktopCollapsed}
-                    item={item}
-                    key={item.path}
+                    group={group}
+                    items={items}
+                    key={group.id}
                     t={t}
                     tooltipWarmRef={tooltipWarmRef}
                   />
-                ))}
-              </ul>
+                );
+              })}
 
               {sidebarNav.pluginItems.length > 0 && (
                 <div
@@ -892,6 +1013,114 @@ function ProfileKeyedRoutes({ children }: { children: ReactNode }) {
   return <div key={profile || "__own__"} className="contents">{children}</div>;
 }
 
+/**
+ * One collapsible section of the rail.
+ *
+ * The heading is a real button with `aria-expanded` and a caret that
+ * rotates, rather than a heading with a click handler — a section that
+ * folds has to be operable from the keyboard and announce its state.
+ *
+ * A section containing the current page always starts open, and refuses
+ * to close while the user is inside it. Folding the section you are
+ * navigating in would hide the page you are on.
+ */
+function SidebarNavGroup({
+  closeMobile,
+  collapsed,
+  group,
+  items,
+  tooltipWarmRef,
+  t,
+}: SidebarNavGroupProps) {
+  const { label, accent } = group;
+  const [open, setOpen] = useState(true);
+  const regionId = `hermes-rail-group-${group.id}`;
+  const headingId = `${regionId}-heading`;
+
+  // `useLocation` rather than a prop: the rail is the thing that has to
+  // know which page is showing, and it already lives inside the router.
+  const { pathname } = useLocation();
+  const holdsCurrentPage = items.some(
+    (item) =>
+      pathname === item.path ||
+      (item.path !== "/" && pathname.startsWith(`${item.path}/`)),
+  );
+
+  if (collapsed) {
+    // Collapsed, there is no room for a heading, and a collapsed section
+    // would hide every icon behind a toggle nobody can read. Flat list.
+    return (
+      <ul className="nav nav-pills flex-column gap-1 mb-2">
+        {items.map((item) => (
+          <SidebarNavLink
+            closeMobile={closeMobile}
+            collapsed={collapsed}
+            item={item}
+            key={item.path}
+            t={t}
+            tooltipWarmRef={tooltipWarmRef}
+          />
+        ))}
+      </ul>
+    );
+  }
+
+  const expanded = open || holdsCurrentPage;
+
+  return (
+    <div className="mb-2">
+      <button
+        aria-controls={regionId}
+        aria-expanded={expanded}
+        className={cn(
+          "btn btn-toggle w-100 d-flex align-items-center gap-2 px-2 py-1",
+          "nav-section-heading border-0 bg-transparent text-start",
+        )}
+        id={headingId}
+        onClick={() => setOpen((prev) => !prev)}
+        type="button"
+      >
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            "icon-sm flex-shrink-0",
+            `text-${accent}`,
+            expanded ? "rotate-180" : "",
+          )}
+          style={{ transition: "transform 0.15s ease-in-out" }}
+        />
+        <span className="flex-grow-1 text-truncate">{label}</span>
+      </button>
+
+      <div aria-labelledby={headingId} id={regionId}>
+        {expanded && (
+          <ul className="nav nav-pills flex-column gap-1 mt-1">
+            {items.map((item) => (
+              <SidebarNavLink
+                closeMobile={closeMobile}
+                collapsed={collapsed}
+                item={item}
+                key={item.path}
+                t={t}
+                tooltipWarmRef={tooltipWarmRef}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface SidebarNavGroupProps {
+  closeMobile: () => void;
+  collapsed: boolean;
+  group: NavGroup;
+  items: NavItem[];
+  t: Translations;
+  tooltipWarmRef: TooltipWarmRef;
+}
+
 function SidebarNavLink({
   closeMobile,
   collapsed,
@@ -899,7 +1128,7 @@ function SidebarNavLink({
   tooltipWarmRef,
   t,
 }: SidebarNavLinkProps) {
-  const { path, label, labelKey, icon: Icon } = item;
+  const { path, label, labelKey, icon: Icon, accent } = item;
   const [hovered, setHovered] = useState(false);
   const [tooltipAnchor, setTooltipAnchor] = useState<HTMLElement | null>(null);
 
@@ -936,9 +1165,18 @@ function SidebarNavLink({
           `nav-link d-flex align-items-center gap-2${isActive ? " active" : ""}`
         }
       >
-        {() => (
+        {({ isActive }) => (
           <>
-            <Icon className="flex-shrink-0 icon-md" />
+            <Icon
+              className={cn(
+                "flex-shrink-0 icon-md",
+                // The item's tint, so a section's icons read as a family.
+                // On the active page the pill behind it is already the
+                // accent, so the icon takes the pill's own foreground
+                // rather than competing with it.
+                isActive ? undefined : `text-${accent}`,
+              )}
+            />
 
             <span
               className={cn(
@@ -1362,6 +1600,41 @@ interface NavItem {
   label: string;
   labelKey?: string;
   path: string;
+  /**
+   * Section this item is filed under, and the icon's tint. Both come
+   * from Bootstrap's own utility palette, so they follow the colour
+   * mode rather than carrying hex values of their own.
+   */
+  group: NavGroupId;
+  accent: NavAccent;
+}
+
+/** The rail's sections, in order. */
+type NavGroupId =
+  | "workspace"
+  | "models"
+  | "automation"
+  | "extensions"
+  | "system";
+
+/** Bootstrap utility tint applied to a nav item's icon. */
+type NavAccent =
+  | "primary"
+  | "success"
+  | "info"
+  | "warning"
+  | "danger"
+  | "secondary";
+
+interface NavGroup {
+  id: NavGroupId;
+  label: string;
+  /**
+   * The icon beside the heading, and each member's icon tint. A section
+   * reads as a unit when its items share a colour, which is why this is
+   * a property of the group rather than of every item.
+   */
+  accent: NavAccent;
 }
 
 interface SidebarIconWithTooltipProps {
