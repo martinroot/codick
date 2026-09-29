@@ -300,11 +300,14 @@ VARIANTS = {
 def esc(tok: str) -> str:
     """CSS-escape a Tailwind class name.
 
-    The `%` matters: lightningcss rejects a bare delim in a selector, so
-    `w-[80%]` has to be written `w-\[80\%\]` rather than `w-\[80%\]`.
+    Two characters matter beyond the usual suspects. `%` is rejected
+    outright by lightningcss as a bare delim, so `w-[80%]` must be
+    written `w-\\[80\\%\\]`. And `#` opens an ID selector, so an
+    arbitrary value like `shadow-[0_0_0_1px_#00000080,...]` has to
+    escape it or the rule is parsed as an ID and dropped.
     """
     out = tok
-    for ch in "[]()/,.:":
+    for ch in "[]()/,.:#":
         out = out.replace(ch, "\\" + ch)
     out = out.replace("%", "\\%")
     return out
@@ -702,6 +705,37 @@ def resolve(tok: str):
     if tok == "text-display":
         return ["font-family: var(--theme-font-display, var(--theme-font-sans))"]
 
+    # --- added by the fourth pass: app-shell utilities ---
+
+    # Dynamic viewport units — the shell pins itself to the full height.
+    m = re.fullmatch(r"(min-|max-)?([wh])-(dvh|svh|lvh|dvw|svw|lvw)", tok)
+    if m:
+        pre, axis, unit = m.groups()
+        prop = {"w": "width", "h": "height"}[axis]
+        val = {"dvh": "100dvh", "svh": "100svh", "lvh": "100lvh",
+               "dvw": "100dvw", "svw": "100svw", "lvw": "100lvw"}[unit]
+        return [f"{pre or ''}{prop}: {val}"]
+
+    # `translate-x-full` / `-translate-x-full` slide by the element's own size.
+    m = re.fullmatch(r"(-?)translate-([xy])-full", tok)
+    if m:
+        sign, axis = m.groups()
+        val = "-100%" if sign == "-" else "100%"
+        return [f"transform: translate({axis}, {val})"]
+
+    # Named group variants: `group-hover/action:opacity-5`. Handled in
+    # main(), which owns selector construction, not here.
+
+    # `inset-x-0.5` / `inset-y-0.5`.
+    if tok in ("inset-x-0.5", "inset-y-0.5"):
+        axis, val = tok.split("-")[1], SPACING["0.5"]
+        a, b = (["left", "right"] if axis == "x" else ["top", "bottom"])
+        return [f"{a}: {val}", f"{b}: {val}"]
+
+    # Larger shadows the shell uses for dialogs and popovers.
+    if tok in ("shadow-2xl", "shadow-xl"):
+        return [f"box-shadow: var(--ui-shadow-lg, 0 12px 32px rgba(0,0,0,0.45))"]
+
     return None
 
 
@@ -723,6 +757,18 @@ def main():
             # ignore arbitrary-property syntax and pseudo-elements
             if head in VARIANTS and not head.startswith("group-") and rest:
                 variant, base = head, rest
+
+        # Named group: `group-hover/action:opacity-5` → the parent carries
+        # `group/action`, so the selector is `.group\/action:hover .<prop>`.
+        # The `/` must be escaped or lightningcss reads it as a delim.
+        named = re.fullmatch(r"group-([a-z-]+)/([\w-]+):(.+)", tok)
+        if named:
+            inner, name, prop = named.groups()
+            decls_n = resolve(prop)
+            if decls_n:
+                sel = f".group\\/{name}:{inner} ." + f"\\{esc(prop)}"
+                media["__pseudo__"][sel].append((tok, "; ".join(decls_n) + ";"))
+            continue
 
         if base in ("", "kb-board", "kb-rail") or base.startswith("kb-"):
             continue  # kanban's own stylesheet owns these
