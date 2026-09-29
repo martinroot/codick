@@ -1715,39 +1715,41 @@ export default function SessionsPage() {
       </Dialog>
 
       {stats && (
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border border-border bg-background-base/40 px-4 py-3">
-          <div className="flex flex-col">
-            <span className="text-lg font-semibold tabular-nums leading-none">
-              {stats.total}
-            </span>
-            <span className="text-xs text-muted-foreground">Total</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-semibold tabular-nums leading-none text-success">
-              {stats.active_store}
-            </span>
-            <span className="text-xs text-muted-foreground">Active in store</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-semibold tabular-nums leading-none">
-              {stats.archived}
-            </span>
-            <span className="text-xs text-muted-foreground">Archived</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-semibold tabular-nums leading-none">
-              {stats.messages}
-            </span>
-            <span className="text-xs text-muted-foreground">Messages</span>
-          </div>
-          {Object.keys(stats.by_source).length > 0 && (
-            <div className="flex flex-col">
-              <span className="text-lg font-semibold tabular-nums leading-none">
-                {Object.keys(stats.by_source).length}
+        <div className="card">
+          <div className="card-body d-flex flex-wrap align-items-center gap-4">
+            <div className="d-flex flex-column">
+              <span className="fs-4 fw-semibold lh-1 tabular-nums">
+                {stats.total}
               </span>
-              <span className="text-xs text-muted-foreground">Sources</span>
+              <span className="small text-body-secondary">Total</span>
             </div>
-          )}
+            <div className="d-flex flex-column">
+              <span className="fs-4 fw-semibold lh-1 tabular-nums text-success">
+                {stats.active_store}
+              </span>
+              <span className="small text-body-secondary">Active in store</span>
+            </div>
+            <div className="d-flex flex-column">
+              <span className="fs-4 fw-semibold lh-1 tabular-nums">
+                {stats.archived}
+              </span>
+              <span className="small text-body-secondary">Archived</span>
+            </div>
+            <div className="d-flex flex-column">
+              <span className="fs-4 fw-semibold lh-1 tabular-nums">
+                {stats.messages}
+              </span>
+              <span className="small text-body-secondary">Messages</span>
+            </div>
+            {Object.keys(stats.by_source).length > 0 && (
+              <div className="d-flex flex-column">
+                <span className="fs-4 fw-semibold lh-1 tabular-nums">
+                  {Object.keys(stats.by_source).length}
+                </span>
+                <span className="small text-body-secondary">Sources</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

@@ -1,9 +1,5 @@
 import { useMemo } from "react";
 import { Users } from "lucide-react";
-import {
-  Select,
-  SelectOption,
-} from "@nous-research/ui/ui/components/select";
 import { useProfileScope } from "@/contexts/useProfileScope";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -37,45 +33,45 @@ export function ProfileSwitcher({ collapsed }: ProfileSwitcherProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 border-b border-current/10 px-3 py-2",
+        "d-flex align-items-center gap-2 border-bottom border-current/10 px-3 py-2",
         collapsed && "lg:justify-center lg:px-0",
       )}
       title={managingLabel}
     >
       <Users
         className={cn(
-          "h-3.5 w-3.5 shrink-0",
-          isOther ? "text-amber-300" : "text-text-tertiary",
+          "shrink-0",
+          isOther ? "text-warning" : "text-body-secondary",
         )}
       />
 
-      <Select
+      {/* A native <select> styled by Bootstrap's form-select. The old
+          design-system Select needed a dozen arbitrary-variant classes to
+          be tamed inside the 256px rail, and it still overflowed the
+          sidebar edge; a native control truncates itself. */}
+      <select
+        aria-label={managingLabel}
         className={cn(
-          "min-w-0 flex-1",
-          collapsed && "lg:hidden",
-          "[&_button]:h-7 [&_button]:border-border [&_button]:bg-background [&_button]:px-2 [&_button]:text-xs",
-          "[&_button]:font-sans [&_button]:normal-case [&_button]:tracking-normal",
-          "[&_[role=listbox]>div]:font-sans [&_[role=listbox]>div]:text-xs",
-          "[&_[role=listbox]>div]:normal-case [&_[role=listbox]>div]:tracking-normal",
-          isOther &&
-            "[&_button]:border-amber-500/50 [&_button]:text-amber-300",
+          "form-select form-select-sm flex-grow-1 min-w-0",
+          collapsed && "lg:d-none",
+          isOther && "border-warning text-warning",
         )}
         id="hermes-profile-switcher"
-        onValueChange={setProfile}
+        onChange={(event) => setProfile(event.target.value)}
         value={profile}
       >
-        <SelectOption value="">{currentDashboardLabel}</SelectOption>
+        <option value="">{currentDashboardLabel}</option>
 
         {profiles
           .filter((name) => name !== currentProfile)
           .map((name) => (
-            <SelectOption key={name} value={name}>
+            <option key={name} value={name}>
               {name}
-            </SelectOption>
+            </option>
           ))}
-      </Select>
+      </select>
 
-      {collapsed && <span className="sr-only">{managed}</span>}
+      {collapsed && <span className="visually-hidden">{managed}</span>}
     </div>
   );
 }
