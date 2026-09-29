@@ -1,80 +1,233 @@
 /**
- * The kanban desk's main board -- `Kanban Desk → Main`.
+ * The kanban desk's main board — `Kanban Desk → Main`.
  *
- * Still renders against `MOCK_COLUMNS`, so it needs no API call and no
- * session token. The production board swaps `MOCK_COLUMNS` for the live
- * `/api/plugins/kanban/board` payload; nothing else about the component
- * changes, which is why this route could be filled in without touching
- * `KanbanBoard` itself.
+ * Reads the live `/api/plugins/kanban/board` payload. The board component
+ * itself is unchanged from the prototype: it renders whatever columns it is
+ * given, which is why the wiring could happen without touching it.
+ *
+ * ## The board slug
+ *
+ * Comes from `?board=<slug>`, defaulting to the server's own `current`
+ * board and then to `default`. It is threaded into every call — never
+ * omitted — because omitting it makes the server resolve a different board
+ * than the one on screen.
+ *
+ * ## Moves are optimistic, and they can be refused
+ *
+ * A drag lands the card immediately and PATCHes after. Two server replies
+ * are normal and must not look like breakage:
+ *
+ * - 409, when a task has unsatisfied dependencies. The detail names the
+ *   blocking parents, and that sentence is what goes on screen — a card
+ *   that snaps back with no reason reads as a bug in the board.
+ * - 400, for a move into `running`. That column is not a drop target; a
+ *   task reaches it by being dispatched. `SELECTABLE_STATUSES` is what the
+ *   UI offers.
  */
 
 import * as React from "react";
+import { useSearchParams } from "react-router";
+
 import {
   KanbanBoard,
   KANBAN_COLUMNS,
-  MOCK_COLUMNS,
   type KanbanColumn,
   type KanbanStatus,
 } from "@/components/kanban/KanbanBoard";
-import type { KanbanTaskCard } from "@/lib/kanban-api";
+import {
+  kanbanApi,
+  type KanbanBoardSummary,
+  type KanbanTaskCard,
+} from "@/lib/kanban-api";
+import { errorMessage } from "@/lib/api-error";
 import { Button } from "@/ui";
 
-export default function KanbanMainPage() {
-  const [columns, setColumns] = React.useState<KanbanColumn[]>(MOCK_COLUMNS);
-  const [lastMove, setLastMove] = React.useState<string | null>(null);
+type LoadState =
+  | { phase: "loading" }
+  | { phase: "ready" }
+  | { phase: "error"; message: string };
 
-  // Optimistic move: the card lands in its new column immediately, which
-  // is what makes the board feel instant. The real page will PATCH here
-  // and roll back on failure.
-  const handleMove = React.useCallback((taskId: string, to: KanbanStatus) => {
-    setColumns((previous) => {
-      let moved: KanbanTaskCard | undefined;
-      const stripped = previous.map((column) => {
-        const found = column.tasks.find((task) => task.id === taskId);
-        if (!found) return column;
-        moved = found;
-        return { ...column, tasks: column.tasks.filter((task) => task.id !== taskId) };
-      });
-      if (!moved) return previous;
-      return stripped.map((column) =>
-        column.name === to
-          ? { ...column, tasks: [...column.tasks, { ...moved!, status: to }] }
-          : column,
+export default function KanbanMainPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedBoard = searchParams.get("board");
+
+  const [board, setBoard] = React.useState<string>(requestedBoard ?? "");
+  const [boards, setBoards] = React.useState<KanbanBoardSummary[]>([]);
+  const [columns, setColumns] = React.useState<KanbanColumn[]>([]);
+  const [load, setLoad] = React.useState<LoadState>({ phase: "loading" });
+  const [notice, setNotice] = React.useState<{ tone: string; text: string } | null>(null);
+
+  // `board` is empty until /boards answers, so it is the dependency that
+  // actually gates the fetch -- not the URL parameter, which may be absent.
+  const options = React.useMemo(() => ({ board }), [board]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    // Nothing to ask for yet: /boards is what tells us the current board.
+    if (!board) return;
+    (async () => {
+      setLoad((s) => (s.phase === "ready" ? s : { phase: "loading" }));
+      try {
+        const payload = await kanbanApi.getBoard(options);
+        if (cancelled) return;
+        setColumns(payload.columns);
+        setLoad({ phase: "ready" });
+      } catch (err) {
+        if (cancelled) return;
+        setLoad({ phase: "error", message: errorMessage(err) });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [board, options]);
+
+  // Resolve the board list once, and adopt the server's `current` when the
+  // URL says nothing. `/boards` takes no board parameter -- it is the one
+  // endpoint in the API that is not board-scoped.
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const payload = await kanbanApi.listBoards();
+        if (cancelled) return;
+        setBoards(payload.boards);
+        if (!requestedBoard) {
+          setBoard(payload.current ?? payload.boards[0]?.slug ?? "default");
+        }
+      } catch (err) {
+        if (cancelled) return;
+        // Failing to list boards is not fatal: fall back to `default` and let
+        // the board fetch be the thing that reports a real problem.
+        setBoard(requestedBoard ?? "default");
+        setLoad({ phase: "error", message: errorMessage(err) });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [requestedBoard]);
+
+  const reload = React.useCallback(() => {
+    if (!board) return;
+    setLoad({ phase: "loading" });
+    kanbanApi
+      .getBoard(options)
+      .then((payload) => {
+        setColumns(payload.columns);
+        setLoad({ phase: "ready" });
+      })
+      .catch((err: unknown) => setLoad({ phase: "error", message: errorMessage(err) }));
+  }, [board, options]);
+
+  const handleMove = React.useCallback(
+    (taskId: string, to: KanbanStatus) => {
+      // Find the card before touching state, so the optimistic update is a
+      // single pure transform rather than a search repeated inside a setter.
+      const card = columns
+        .flatMap((column) => column.tasks)
+        .find((task) => task.id === taskId);
+      if (!card) return;
+
+      if (card.status === to) return;
+      setColumns((previous) =>
+        previous.map((column) => {
+          const holds = column.tasks.some((task) => task.id === taskId);
+          if (!holds) return column;
+          const without = column.tasks.filter((task) => task.id !== taskId);
+          return column.name === to
+            ? { ...column, tasks: [...without, { ...card, status: to }] }
+            : { ...column, tasks: without };
+        }),
       );
-    });
-    setLastMove(`${taskId} → ${to}`);
-    window.setTimeout(() => setLastMove(null), 2000);
-  }, []);
+
+      kanbanApi
+        .patchTask(taskId, { status: to }, options)
+        .then(() => setNotice({ tone: "info", text: `${card.title} → ${to}` }))
+        .catch((err: unknown) => {
+          // The server is the authority on where a card belongs, so undo by
+          // re-reading rather than by trying to reverse our own arithmetic.
+          // A 409 names the blocking parents, and that sentence is the useful
+          // thing to show -- "move failed" would not say why it snapped back.
+          reload();
+          setNotice({ tone: "danger", text: errorMessage(err) });
+        });
+    },
+    [columns, options, reload],
+  );
 
   const handleOpenTask = React.useCallback((task: KanbanTaskCard) => {
-    // The drawer is the next piece; the click target is wired so the
-    // affordance is testable now.
-    setLastMove(`open ${task.id}`);
-    window.setTimeout(() => setLastMove(null), 2000);
+    setNotice({ tone: "info", text: `open ${task.id}` });
   }, []);
 
   const total = columns.reduce((sum, column) => sum + column.tasks.length, 0);
+  const active = boards.find((b) => b.slug === board);
 
   return (
     <div className="d-flex flex-column gap-3">
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="d-flex align-items-center gap-2">
-          <h1 className="h4 mb-0">Kanban Desk — Main</h1>
+          <h1 className="h4 mb-0">{active?.name ?? "Kanban Desk — Main"}</h1>
           <span className="badge text-bg-secondary">
             {total} cards · {KANBAN_COLUMNS.length} columns
           </span>
         </div>
         <div className="d-flex align-items-center gap-2">
-          {lastMove ? <span className="badge text-bg-info">{lastMove}</span> : null}
-          <Button outlined size="sm" onClick={() => setColumns(MOCK_COLUMNS)}>
-            Reset
+          {boards.length > 1 ? (
+            <select
+              className="form-select form-select-sm w-auto"
+              aria-label="Board"
+              value={board}
+              onChange={(event) => {
+                setColumns([]);
+                setBoard(event.target.value);
+                // The slug lives in the URL so a reload, a link and the next
+                // session all agree on which board is open.
+                setSearchParams({ board: event.target.value });
+              }}
+            >
+              {boards.map((b) => (
+                <option key={b.slug} value={b.slug}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          <Button outlined size="sm" onClick={reload}>
+            Refresh
           </Button>
         </div>
       </div>
 
-      <p className="text-body-secondary small mb-0">
-        Drag a card between columns. Click a card to open it.
-      </p>
+      {notice ? (
+        <div
+          className={`alert alert-${notice.tone} py-2 px-3 mb-0 small`}
+          role="status"
+          onClick={() => setNotice(null)}
+        >
+          {notice.text}
+        </div>
+      ) : null}
+
+      {load.phase === "error" ? (
+        <div className="alert alert-danger d-flex justify-content-between align-items-center" role="alert">
+          <span>{load.message}</span>
+          <Button outlined size="sm" onClick={reload}>
+            Try again
+          </Button>
+        </div>
+      ) : null}
+
+      {load.phase === "loading" ? (
+        <p className="text-body-secondary small mb-0">Loading the board…</p>
+      ) : null}
+
+      {load.phase === "ready" && total === 0 ? (
+        <p className="text-body-secondary small mb-0">
+          This board is empty. Create a card with the + on a column, or check
+          you are looking at the right board.
+        </p>
+      ) : null}
 
       <KanbanBoard columns={columns} onMove={handleMove} onOpenTask={handleOpenTask} />
     </div>
