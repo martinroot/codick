@@ -1,0 +1,70 @@
+/* ------------------------------------------------------------------ */
+/* structure — the handful of app-level rules Bootstrap cannot express  */
+/* ------------------------------------------------------------------ */
+/*
+ * Everything that describes *this* application's frame, as opposed to
+ * its theme. Bootstrap gives components and utilities; it does not know
+ * that a dashboard rail pins to the viewport, or that a flex chain needs
+ * an explicit shrink floor.
+ *
+ * This layer is deliberately small. It is not a place to reimplement
+ * utilities — a rule that could be `d-flex` or `col` or `card h-100`
+ * belongs in the markup, not here.
+ *
+ * It replaced the generated `legacy-utilities.css`, which held roughly
+ * 650 rules translated from Tailwind class names. Those call sites are
+ * being converted to real Bootstrap, and rules here disappear as they
+ * become unnecessary.
+ *
+ * Declarations must be wrapped in `@layer structure { … }` so this
+ * import's `layer()` name and the block agree.
+ */
+@layer structure {
+  /*
+   * A flex item's `min-width` is `auto`, so it refuses to shrink below
+   * its content. Any column meant to ellipsise rather than push its
+   * container wider needs this floor — Bootstrap has no utility for it.
+   */
+  .min-w-0 {
+    min-width: 0;
+  }
+
+  /* Figures that change in place should not reflow as digits change. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
+   * The rail pins to the viewport and the content column beside it must
+   * be allowed to shrink; without this the content sets the row's width
+   * and the page scrolls horizontally.
+   */
+  .content-col {
+    min-width: 0;
+  }
+
+  /*
+   * Icon sizes. lucide icons are sized in px, and Bootstrap's width and
+   * height scale is percentage-only, so there is no utility to convert
+   * `h-4 w-4` into. Four steps covers every size the app uses.
+   */
+  .icon-sm {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .icon-md {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .icon-lg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .icon-xl {
+    width: 2rem;
+    height: 2rem;
+  }
+}

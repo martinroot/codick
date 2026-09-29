@@ -191,7 +191,7 @@ function SnippetHighlight({ snippet }: { snippet: string }) {
     parts.push(snippet.slice(last));
   }
   return (
-    <p className="font-mondwest normal-case mt-0.5 min-w-0 max-w-full truncate text-xs text-text-secondary">
+    <p className="font-mondwest text-lowercase mt-1 min-w-0 max-w-full text-truncate fs-6 text-body-secondary">
       {parts}
     </p>
   );
@@ -218,20 +218,20 @@ function ToolCallBlock({
         onClick={() => setOpen(!open)}
         aria-label={`${open ? t.common.collapse : t.common.expand} tool call ${toolCall.function.name}`}
         aria-expanded={open}
-        className="px-3 py-2 text-xs text-warning hover:bg-warning/10 hover:text-warning"
+        className="px-3 py-2 fs-6 text-warning hover:bg-warning/10 hover:text-warning"
       >
         {open ? (
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="icon-sm" />
         ) : (
-          <ChevronRight className="h-3 w-3" />
+          <ChevronRight className="icon-sm" />
         )}
-        <span className="font-mono-ui font-medium">
+        <span className="font-monospace fw-medium">
           {toolCall.function.name}
         </span>
         <span className="text-warning/50 ml-auto">{toolCall.id}</span>
       </ListItem>
       {open && (
-        <pre className="border-t border-warning/20 px-3 py-2 text-xs text-warning/80 overflow-x-auto whitespace-pre-wrap font-mono">
+        <pre className="border-top border-warning/20 px-3 py-2 fs-6 text-warning/80 overflow-x-auto text-wrap font-mono">
           {args}
         </pre>
       )}
@@ -398,22 +398,22 @@ function MessageBubble({
       className={`${style.bg} p-3 ${isHit ? "ring-1 ring-warning/40" : ""}`}
       data-search-hit={isHit || undefined}
     >
-      <div className="flex items-center gap-2 mb-1">
-        <span className={`text-xs font-semibold ${style.text}`}>{label}</span>
+      <div className="d-flex align-items-center gap-2 mb-1">
+        <span className={`fs-6 fw-semibold ${style.text}`}>{label}</span>
         {isHit && (
-          <Badge tone="warning" className="text-xs py-0 px-1.5">
+          <Badge tone="warning" className="fs-6 py-0 px-2">
             {t.common.match}
           </Badge>
         )}
         {msg.timestamp && (
-          <span className="text-xs text-text-tertiary">
+          <span className="fs-6 text-body-tertiary">
             {timeAgo(msg.timestamp)}
           </span>
         )}
       </div>
       {msg.content &&
         (msg.role === "system" ? (
-          <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+          <div className="fs-6 text-body-emphasis text-wrap leading-relaxed">
             {msg.content}
           </div>
         ) : (
@@ -455,7 +455,7 @@ function MessageList({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-2"
+      className="d-flex flex-column gap-3 max-h-[600px] overflow-y-auto pr-2"
     >
       {messages.map((msg, i) => (
         <MessageBubble key={i} msg={msg} highlight={highlight} />
@@ -525,8 +525,8 @@ function SessionRow({
 
   const actionButtons = (
     <>
-      <Badge tone="outline" className="text-xs">
-        <SourceIcon className={`mr-1 h-3 w-3 ${sourceInfo.color}`} />
+      <Badge tone="outline" className="fs-6">
+        <SourceIcon className={`mr-1 icon-sm ${sourceInfo.color}`} />
         {session.source ? sourceLabel(session.source) : "local"}
       </Badge>
 
@@ -534,7 +534,7 @@ function SessionRow({
         <Button
           ghost
           size="icon"
-          className="text-muted-foreground hover:text-success"
+          className="text-body-secondary hover:text-success"
           aria-label={t.sessions.resumeInChat}
           title={t.sessions.resumeInChat}
           onClick={(e) => {
@@ -549,7 +549,7 @@ function SessionRow({
       <Button
         ghost
         size="icon"
-        className="text-muted-foreground hover:text-foreground"
+        className="text-body-secondary hover:text-foreground"
         aria-label="Rename session"
         title="Rename session"
         onClick={(e) => {
@@ -568,7 +568,7 @@ function SessionRow({
       <Button
         ghost
         size="icon"
-        className="text-muted-foreground hover:text-foreground"
+        className="text-body-secondary hover:text-foreground"
         aria-label="Export session"
         title="Export session JSON"
         onClick={(e) => {
@@ -622,26 +622,26 @@ function SessionRow({
       className={`max-w-full min-w-0 overflow-hidden border transition-colors ${containerClasses}`}
     >
       <div
-        className="flex cursor-pointer items-start gap-3 p-3 transition-colors hover:bg-secondary/30"
+        className="d-flex cursor-pointer align-items-start gap-3 p-3 transition-colors hover:bg-secondary/30"
         onClick={onToggle}
       >
-        <span className="flex shrink-0 items-center pt-0.5">
+        <span className="d-flex flex-shrink-0 align-items-center pt-0.5">
           <Checkbox
             checked={isSelected}
             onClick={handleSelectClick}
             aria-label={t.sessions.selectSession}
           />
         </span>
-        <div className={`shrink-0 pt-0.5 ${sourceInfo.color}`}>
-          <SourceIcon className="h-4 w-4" />
+        <div className={`flex-shrink-0 pt-0.5 ${sourceInfo.color}`}>
+          <SourceIcon className="icon-md" />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <div className="flex min-w-0 items-center gap-2">
+        <div className="d-flex min-w-0 flex-grow-1 flex-column gap-2">
+          <div className="d-flex min-w-0 flex-column gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+            <div className="d-flex min-w-0 flex-grow-1 flex-column gap-0.5">
+              <div className="d-flex min-w-0 align-items-center gap-2">
                 {renaming ? (
                   <div
-                    className="flex min-w-0 flex-1 items-center gap-1.5"
+                    className="d-flex min-w-0 flex-grow-1 align-items-center gap-2"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Input
@@ -653,20 +653,20 @@ function SessionRow({
                         else if (e.key === "Escape") setRenaming(false);
                       }}
                       placeholder="Session title"
-                      className="h-7 min-w-0 flex-1 py-0 text-sm"
+                      className="h-7 min-w-0 flex-grow-1 py-0 fs-6"
                       disabled={renameSaving}
                     />
                     <Button
                       ghost
                       size="icon"
-                      className="text-muted-foreground hover:text-success"
+                      className="text-body-secondary hover:text-success"
                       aria-label="Save title"
                       title="Save title"
                       disabled={renameSaving}
                       onClick={() => void submitRename()}
                     >
                       {renameSaving ? (
-                        <Spinner className="text-sm" />
+                        <Spinner className="fs-6" />
                       ) : (
                         <Check />
                       )}
@@ -674,7 +674,7 @@ function SessionRow({
                     <Button
                       ghost
                       size="icon"
-                      className="text-muted-foreground hover:text-foreground"
+                      className="text-body-secondary hover:text-foreground"
                       aria-label="Cancel rename"
                       title="Cancel rename"
                       disabled={renameSaving}
@@ -685,7 +685,7 @@ function SessionRow({
                   </div>
                 ) : (
                   <span
-                    className={`font-mondwest normal-case min-w-0 flex-1 truncate text-sm ${hasTitle ? "font-medium" : "text-muted-foreground italic"}`}
+                    className={`font-mondwest text-lowercase min-w-0 flex-grow-1 text-truncate fs-6 ${hasTitle ? "font-medium" : "text-muted-foreground italic"}`}
                   >
                     {hasTitle
                       ? session.title
@@ -695,61 +695,61 @@ function SessionRow({
                   </span>
                 )}
                 {session.is_active && (
-                  <Badge tone="success" className="shrink-0 text-xs">
-                    <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+                  <Badge tone="success" className="flex-shrink-0 fs-6">
+                    <span className="mr-1 d-inline-block h-1.5 w-1.5 animate-pulse rounded-circle bg-current" />
                     {t.common.live}
                   </Badge>
                 )}
               </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
+              <div className="d-flex min-w-0 flex-wrap align-items-center gap-x-1.5 gap-y-0.5 fs-6 text-body-secondary">
                 {session.model && (
                   <>
-                    <span className="max-w-[min(100%,12rem)] truncate sm:max-w-[180px]">
+                    <span className="max-w-[min(100%,12rem)] text-truncate sm:max-w-[180px]">
                       {session.model.split("/").pop()}
                     </span>
                     <span className="text-border">&#183;</span>
                   </>
                 )}
-                <span className="shrink-0">
+                <span className="flex-shrink-0">
                   {session.message_count} {t.common.msgs}
                 </span>
                 {session.tool_call_count > 0 && (
                   <>
                     <span className="text-border">&#183;</span>
-                    <span className="shrink-0">
+                    <span className="flex-shrink-0">
                       {session.tool_call_count} {t.common.tools}
                     </span>
                   </>
                 )}
                 <span className="text-border">&#183;</span>
-                <span className="shrink-0">{timeAgo(session.last_active)}</span>
+                <span className="flex-shrink-0">{timeAgo(session.last_active)}</span>
               </div>
               {snippet && <SnippetHighlight snippet={snippet} />}
             </div>
 
-            <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <div className="d-none flex-shrink-0 align-items-center gap-2 sm:flex">
               {actionButtons}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:hidden">
+          <div className="d-flex flex-wrap align-items-center gap-2 sm:hidden">
             {actionButtons}
           </div>
         </div>
       </div>
 
       {isExpanded && (
-        <div className="min-w-0 border-t border-border bg-background/50 p-4">
+        <div className="min-w-0 border-top border-secondary bg-background/50 p-4">
           {messages === null && !error && (
-            <div className="flex items-center justify-center py-8">
-              <Spinner className="text-xl text-primary" />
+            <div className="d-flex align-items-center justify-content-center py-8">
+              <Spinner className="fs-4 text-primary" />
             </div>
           )}
           {error && (
-            <p className="text-sm text-destructive py-4 text-center">{error}</p>
+            <p className="fs-6 text-danger py-4 text-center">{error}</p>
           )}
           {messages && messages.length === 0 && (
-            <p className="text-sm text-muted-foreground py-4 text-center">
+            <p className="fs-6 text-body-secondary py-4 text-center">
               {t.sessions.noMessages}
             </p>
           )}
@@ -778,16 +778,16 @@ function SessionsPagination({
 
   return (
     <div
-      className={`flex items-center ${compact ? "gap-1" : "justify-between pt-2"}${className ? ` ${className}` : ""}`}
+      className={`d-flex align-items-center ${compact ? "gap-1" : "justify-between pt-2"}${className ? ` ${className}` : ""}`}
     >
       {!compact && (
-        <span className="text-xs text-muted-foreground">
+        <span className="fs-6 text-body-secondary">
           {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{" "}
           {t.common.of} {total}
         </span>
       )}
 
-      <div className="flex items-center gap-1">
+      <div className="d-flex align-items-center gap-1">
         <Button
           outlined
           size="icon"
@@ -797,7 +797,7 @@ function SessionsPagination({
         >
           <ChevronLeft />
         </Button>
-        <span className="px-2 text-xs text-muted-foreground">
+        <span className="px-2 fs-6 text-body-secondary">
           {t.common.page} {page + 1} {t.common.of} {pageCount}
         </span>
         <Button
@@ -1000,7 +1000,7 @@ export default function SessionsPage() {
       return;
     }
     setAfterTitle(
-      <Badge tone="secondary" className="text-xs tabular-nums">
+      <Badge tone="secondary" className="fs-6 tabular-nums">
         {total}
       </Badge>,
     );
@@ -1601,21 +1601,21 @@ export default function SessionsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="text-2xl text-primary" />
+      <div className="d-flex align-items-center justify-content-center py-24">
+        <Spinner className="fs-3 text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-w-0 w-full max-w-full flex-col gap-4">
+    <div className="d-flex flex-column gap-4 w-100 min-w-0">
       <PluginSlot name="sessions:top" />
       <Toast toast={toast} />
       <input
         ref={importInputRef}
         type="file"
         accept=".json,.jsonl,application/json,application/x-ndjson"
-        className="hidden"
+        className="d-none"
         onChange={(event) => void handleImportSessions(event.currentTarget.files)}
       />
 
@@ -1673,10 +1673,10 @@ export default function SessionsPage() {
               than the given number of days. Active sessions are never pruned.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-1.5">
+          <div className="d-flex flex-column gap-2">
             <label
               htmlFor="prune-days"
-              className="text-xs font-medium text-muted-foreground"
+              className="fs-6 fw-medium text-body-secondary"
             >
               Older than (days)
             </label>
@@ -1704,9 +1704,9 @@ export default function SessionsPage() {
               destructive
               onClick={() => void handlePrune()}
               disabled={pruning}
-              className="gap-1.5"
+              className="gap-2"
             >
-              {pruning && <Spinner className="text-sm" />}
+              {pruning && <Spinner className="fs-6" />}
               Prune
             </Button>
           </DialogFooter>
@@ -1758,16 +1758,16 @@ export default function SessionsPage() {
 
       {alerts.length > 0 && (
         <div className="border border-destructive/30 bg-destructive/[0.06] p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-2 min-w-0">
+          <div className="d-flex align-items-start gap-3">
+            <AlertTriangle className="icon-lg text-danger flex-shrink-0 mt-1" />
+            <div className="d-flex flex-column gap-2 min-w-0">
               {alerts.map((alert, i) => (
                 <div key={i}>
-                  <p className="text-sm font-medium text-destructive">
+                  <p className="fs-6 fw-medium text-danger">
                     {alert.message}
                   </p>
                   {alert.detail && (
-                    <p className="text-xs text-destructive/70 mt-0.5">
+                    <p className="fs-6 text-destructive/70 mt-1">
                       {alert.detail}
                     </p>
                   )}
@@ -1779,20 +1779,20 @@ export default function SessionsPage() {
       )}
 
       {activeAction && (
-        <div className="border border-border bg-background-base/50">
-          <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-            <div className="flex items-center gap-2 min-w-0">
+        <div className="border border-secondary bg-background-base/50">
+          <div className="d-flex align-items-center justify-content-between gap-2 border-bottom border-secondary px-3 py-2">
+            <div className="d-flex align-items-center gap-2 min-w-0">
               {actionStatus?.running ? (
-                <Spinner className="shrink-0 text-[0.875rem] text-warning" />
+                <Spinner className="flex-shrink-0 text-[0.875rem] text-warning" />
               ) : actionStatus?.exit_code === 0 ? (
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+                <CheckCircle2 className="icon-sm flex-shrink-0 text-success" />
               ) : actionStatus !== null ? (
-                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+                <AlertTriangle className="icon-sm flex-shrink-0 text-danger" />
               ) : (
-                <Spinner className="shrink-0 text-[0.875rem] text-muted-foreground" />
+                <Spinner className="flex-shrink-0 text-[0.875rem] text-body-secondary" />
               )}
 
-              <span className="text-xs font-mondwest tracking-[0.12em] truncate">
+              <span className="fs-6 font-mondwest tracking-[0.12em] text-truncate">
                 {activeAction === "restart"
                   ? t.status.restartGateway
                   : t.status.updateHermes}
@@ -1808,7 +1808,7 @@ export default function SessionsPage() {
                         ? "destructive"
                         : "outline"
                 }
-                className="text-xs shrink-0"
+                className="fs-6 flex-shrink-0"
               >
                 {actionStatus?.running
                   ? t.status.running
@@ -1824,7 +1824,7 @@ export default function SessionsPage() {
               ghost
               size="icon"
               onClick={dismissLog}
-              className="shrink-0 text-text-secondary hover:text-foreground"
+              className="flex-shrink-0 text-body-secondary hover:text-foreground"
               aria-label={t.common.close}
             >
               <X />
@@ -1833,7 +1833,7 @@ export default function SessionsPage() {
 
           <pre
             ref={logScrollRef}
-            className="max-h-72 overflow-auto px-3 py-2 font-mono-ui text-xs leading-relaxed whitespace-pre-wrap break-all"
+            className="max-h-72 overflow-auto px-3 py-2 font-monospace fs-6 leading-relaxed text-wrap break-all"
           >
             {actionStatus?.lines && actionStatus.lines.length > 0
               ? actionStatus.lines.join("\n")
@@ -1843,13 +1843,13 @@ export default function SessionsPage() {
       )}
 
       {(showOverviewTab && !isSearching) || showList ? (
-        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
+        <div className="d-flex w-100 min-w-0 flex-wrap align-items-center gap-2 sm:gap-3">
+          <div className="d-flex min-w-0 flex-grow-1 flex-wrap align-items-center gap-2 sm:gap-3">
           {/* Bootstrap nav-pills instead of the design-system Segmented
               control. The pills are plain anchors, so the active state
               comes from `active` and needs no bespoke styling. */}
           <ul
-            className="nav nav-pills gap-1 w-fit shrink-0"
+            className="nav nav-pills gap-1 fit-content flex-shrink-0"
             role="tablist"
           >
             {(
@@ -1877,7 +1877,7 @@ export default function SessionsPage() {
             ))}
           </ul>
 
-            <div ref={sourceMenuRef} className="relative shrink-0">
+            <div ref={sourceMenuRef} className="position-relative flex-shrink-0">
               <Button
                 outlined
                 size="sm"
@@ -1887,20 +1887,20 @@ export default function SessionsPage() {
                     className={`transition-transform ${sourceMenuOpen ? "rotate-180" : ""}`}
                   />
                 }
-                className="h-8 min-w-[10rem] max-w-[14rem] justify-between text-xs"
+                className="h-8 min-w-[10rem] max-w-[14rem] justify-content-between fs-6"
                 aria-label={t.sessions.sourceFilter}
                 aria-expanded={sourceMenuOpen}
                 onClick={() => setSourceMenuOpen((open) => !open)}
               >
-                <span className="min-w-0 truncate">{sourceFilterLabel}</span>
+                <span className="min-w-0 text-truncate">{sourceFilterLabel}</span>
               </Button>
 
               {sourceMenuOpen && (
                 <div
-                  className="absolute left-0 top-full z-30 mt-1 w-[18rem] max-w-[calc(100vw-2rem)] border border-border bg-background-base shadow-lg"
+                  className="position-absolute left-0 top-full z-30 mt-1 w-[18rem] max-w-[calc(100vw-2rem)] border border-secondary bg-body shadow-lg"
                 >
-                  <div className="flex items-center justify-between gap-2 border-b border-border px-2 py-1.5">
-                    <span className="min-w-0 truncate text-xs text-muted-foreground">
+                  <div className="d-flex align-items-center justify-content-between gap-2 border-bottom border-secondary px-2 py-2">
+                    <span className="min-w-0 text-truncate fs-6 text-body-secondary">
                       {sourceMenuTitle}
                     </span>
                     {selectedSources !== null && (
@@ -1908,7 +1908,7 @@ export default function SessionsPage() {
                         ghost
                         size="xs"
                         onClick={clearSourceFilters}
-                        className="shrink-0"
+                        className="flex-shrink-0"
                       >
                         {t.common.clear}
                       </Button>
@@ -1916,7 +1916,7 @@ export default function SessionsPage() {
                   </div>
                   <div className="max-h-64 overflow-y-auto p-1">
                     {sourceOptions.length === 0 ? (
-                      <div className="px-2 py-2 text-xs text-muted-foreground">
+                      <div className="px-2 py-2 fs-6 text-body-secondary">
                         {sourceMenuTitle}
                       </div>
                     ) : (
@@ -1929,7 +1929,7 @@ export default function SessionsPage() {
                         return (
                           <div
                             key={source}
-                            className="flex min-w-0 items-center gap-2 px-2 py-1.5 hover:bg-secondary/40"
+                            className="d-flex min-w-0 align-items-center gap-2 px-2 py-2 hover:bg-secondary/40"
                           >
                             <Checkbox
                               checked={selected}
@@ -1941,14 +1941,14 @@ export default function SessionsPage() {
                             />
                             <button
                               type="button"
-                              className="flex min-w-0 flex-1 items-center gap-2 text-left text-xs"
+                              className="d-flex min-w-0 flex-grow-1 align-items-center gap-2 text-start fs-6"
                               onClick={() => toggleSourceFilter(source)}
                             >
-                              <SourceIcon className={`h-3.5 w-3.5 shrink-0 ${sourceColor}`} />
-                              <span className="min-w-0 flex-1 truncate">
+                              <SourceIcon className={`icon-sm flex-shrink-0 ${sourceColor}`} />
+                              <span className="min-w-0 flex-grow-1 text-truncate">
                                 {sourceLabel(source)}
                               </span>
-                              <span className="shrink-0 tabular-nums text-muted-foreground">
+                              <span className="flex-shrink-0 tabular-nums text-body-secondary">
                                 {count}
                               </span>
                             </button>
@@ -1962,7 +1962,7 @@ export default function SessionsPage() {
             </div>
 
             {showOverviewTab && !isSearching && (
-              <ul className="nav nav-pills gap-1 w-fit shrink-0" role="tablist">
+              <ul className="nav nav-pills gap-1 fit-content flex-shrink-0" role="tablist">
                 {(
                   [
                     ["overview", t.sessions.overview],
@@ -1989,23 +1989,23 @@ export default function SessionsPage() {
             )}
 
             {showList && (
-              <div className="relative min-w-0 w-full sm:w-auto sm:min-w-[12rem] sm:max-w-md sm:flex-1">
+              <div className="position-relative min-w-0 flex-grow-1">
                 {searching ? (
-                  <Spinner className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[0.875rem] text-primary" />
+                  <Spinner className="position-absolute left-2.5 top-1/2 -translate-y-1/2 text-[0.875rem] text-primary" />
                 ) : (
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Search className="position-absolute left-2.5 top-1/2 -translate-y-1/2 icon-sm text-body-secondary" />
                 )}
                 <Input
                   placeholder={t.sessions.searchPlaceholder}
                   value={search}
                   onChange={(e) => updateSearch(e.target.value)}
-                  className="h-8 py-0 pr-7 pl-8 text-xs leading-none"
+                  className="h-8 py-0 pr-7 pl-8 fs-6 leading-none"
                 />
                 {search && (
                   <Button
                     ghost
                     size="xs"
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="position-absolute right-1.5 top-1/2 -translate-y-1/2 text-body-secondary hover:text-foreground"
                     onClick={() => updateSearch("")}
                     aria-label={t.common.clear}
                   >
@@ -2020,13 +2020,13 @@ export default function SessionsPage() {
                 outlined
                 destructive
                 size="sm"
-                className="shrink-0"
+                className="flex-shrink-0"
                 onClick={() => setDeleteEmptyOpen(true)}
                 aria-label={t.sessions.deleteEmpty}
                 title={t.sessions.deleteEmpty}
                 prefix={<Eraser />}
               >
-                <span className="font-mondwest normal-case text-xs">
+                <span className="font-mondwest text-lowercase fs-6">
                   {t.sessions.deleteEmpty} ({emptyCount})
                 </span>
               </Button>
@@ -2036,14 +2036,14 @@ export default function SessionsPage() {
               <Button
                 outlined
                 size="sm"
-                className="shrink-0"
+                className="flex-shrink-0"
                 disabled={importingSessions}
                 onClick={() => importInputRef.current?.click()}
                 aria-label="Import exported sessions"
                 title="Import exported session JSON or JSONL"
                 prefix={importingSessions ? <Spinner /> : <Upload />}
               >
-                <span className="font-mondwest normal-case text-xs">
+                <span className="font-mondwest text-lowercase fs-6">
                   Import sessions
                 </span>
               </Button>
@@ -2053,7 +2053,7 @@ export default function SessionsPage() {
           {showPagination && (
             <SessionsPagination
               compact
-              className="shrink-0 sm:ml-auto"
+              className="flex-shrink-0 sm:ml-auto"
               page={page}
               total={total}
               onPageChange={goToPage}
@@ -2064,14 +2064,14 @@ export default function SessionsPage() {
 
       {showList && selectedIds.size > 0 && (
         <div
-          className="flex flex-wrap items-center gap-2 border border-primary/30 bg-primary/[0.06] px-3 py-2"
+          className="d-flex flex-wrap align-items-center gap-2 border border-primary/30 bg-primary/[0.06] px-3 py-2"
           role="region"
           aria-label={t.sessions.selectedCount.replace(
             "{count}",
             String(selectedIds.size),
           )}
         >
-          <span className="font-mondwest normal-case text-xs text-primary tabular-nums">
+          <span className="font-mondwest text-lowercase fs-6 text-primary tabular-nums">
             {t.sessions.selectedCount.replace(
               "{count}",
               String(selectedIds.size),
@@ -2085,7 +2085,7 @@ export default function SessionsPage() {
               aria-label={t.sessions.selectAllOnPage}
               title={t.sessions.selectAllOnPage}
             >
-              <span className="font-mondwest normal-case text-xs">
+              <span className="font-mondwest text-lowercase fs-6">
                 {t.sessions.selectAllOnPage}
               </span>
             </Button>
@@ -2097,7 +2097,7 @@ export default function SessionsPage() {
             aria-label={t.sessions.clearSelection}
             title={t.sessions.clearSelection}
           >
-            <span className="font-mondwest normal-case text-xs">
+            <span className="font-mondwest text-lowercase fs-6">
               {t.sessions.clearSelection}
             </span>
           </Button>
@@ -2117,7 +2117,7 @@ export default function SessionsPage() {
             )}
             prefix={<Trash2 />}
           >
-            <span className="font-mondwest normal-case text-xs">
+            <span className="font-mondwest text-lowercase fs-6">
               {t.sessions.deleteSelected.replace(
                 "{count}",
                 String(selectedIds.size),
@@ -2148,7 +2148,7 @@ export default function SessionsPage() {
           </div>
         ) : (
           <>
-            <div className="flex min-w-0 flex-col gap-1.5">
+            <div className="d-flex min-w-0 flex-column gap-2">
               {filtered.map((s, index) => (
                 <SessionRow
                   key={s.id}
@@ -2181,7 +2181,7 @@ export default function SessionsPage() {
           </>
         )
       ) : (
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className="d-flex min-w-0 flex-column gap-4">
           {platformEntries.length > 0 && status && (
             <PlatformsCard platforms={platformEntries} />
           )}
@@ -2189,23 +2189,23 @@ export default function SessionsPage() {
           {recentSessions.length > 0 && (
             <Card className="min-w-0 max-w-full overflow-hidden">
               <CardHeader className="min-w-0">
-                <div className="flex min-w-0 items-center gap-2">
-                  <Clock className="h-5 w-5 shrink-0 text-muted-foreground" />
-                  <CardTitle className="min-w-0 truncate text-base">
+                <div className="d-flex min-w-0 align-items-center gap-2">
+                  <Clock className="icon-lg flex-shrink-0 text-body-secondary" />
+                  <CardTitle className="min-w-0 text-truncate fs-6">
                     {t.status.recentSessions}
                   </CardTitle>
                 </div>
               </CardHeader>
 
-              <CardContent className="grid min-w-0 gap-3">
+              <CardContent className="d-grid min-w-0 gap-3">
                 {recentSessions.map((s) => (
                   <div
                     key={s.id}
-                    className="flex min-w-0 max-w-full flex-col gap-2 border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
+                    className="d-flex min-w-0 max-w-full flex-column gap-2 border border-secondary p-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <div className="d-flex min-w-0 flex-grow-1 flex-column gap-1">
                       <span
-                        className={`font-mondwest normal-case min-w-0 truncate text-sm ${s.title ? "font-medium" : "text-muted-foreground italic"}`}
+                        className={`font-mondwest text-lowercase min-w-0 text-truncate fs-6 ${s.title ? "font-medium" : "text-muted-foreground italic"}`}
                       >
                         {s.title ??
                           (s.preview
@@ -2213,10 +2213,10 @@ export default function SessionsPage() {
                             : t.common.untitled)}
                       </span>
 
-                      <span className="min-w-0 break-words text-xs text-muted-foreground">
+                      <span className="min-w-0 text-break fs-6 text-body-secondary">
                         {s.model && (
                           <>
-                            <span className="font-mono-ui">
+                            <span className="font-monospace">
                               {s.model.split("/").pop()}
                             </span>{" "}
                             ·{" "}
@@ -2227,7 +2227,7 @@ export default function SessionsPage() {
                       </span>
 
                       {s.preview && s.title && (
-                        <p className="font-mondwest normal-case min-w-0 max-w-full text-xs leading-snug text-text-tertiary [overflow-wrap:anywhere]">
+                        <p className="font-mondwest text-lowercase min-w-0 max-w-full fs-6 leading-snug text-body-tertiary [overflow-wrap:anywhere]">
                           {s.preview}
                         </p>
                       )}
@@ -2235,9 +2235,9 @@ export default function SessionsPage() {
 
                     <Badge
                       tone="outline"
-                      className="shrink-0 self-start text-xs sm:self-center"
+                      className="flex-shrink-0 align-self-start fs-6 sm:self-center"
                     >
-                      <Database className="mr-1 h-3 w-3" />
+                      <Database className="mr-1 icon-sm" />
                       {s.source ? sourceLabel(s.source) : "local"}
                     </Badge>
                   </div>
