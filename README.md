@@ -22,6 +22,15 @@
 >
 > If you are looking for the official Hermes Agent, see
 > [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent).
+>
+> ---
+>
+> **This project was born out of the generosity of
+> [OpenRouter](https://openrouter.ai/stealth/space-bunny-alpha).** The work
+> behind it — a large UI migration, done commit by commit — ran on
+> `stealth/space-bunny-alpha` with the unlimited tokens of the *Boost skill
+> day* programme. Were that the norm rather than the occasion, the
+> open-source market would move a good deal faster.
 
 <p align="center">
   <img src="assets/banner.png" alt="CoDick, based on Hermes Agent" width="100%">
