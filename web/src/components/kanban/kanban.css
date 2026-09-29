@@ -41,7 +41,7 @@
   bottom: 0.5rem;
   width: 3rem;
   pointer-events: none;
-  background: linear-gradient(to right, transparent, var(--background-base, #041c1c) 85%);
+  background: linear-gradient(to right, transparent, var(--bs-body-bg) 85%);
   opacity: 0.9;
 }
 
@@ -54,7 +54,7 @@
   bottom: 0.5rem;
   width: 2rem;
   pointer-events: none;
-  background: linear-gradient(to right, var(--background-base, #041c1c) 15%, transparent);
+  background: linear-gradient(to right, var(--bs-body-bg) 15%, transparent);
   opacity: 0;
   transition: opacity 120ms ease;
 }
@@ -373,7 +373,7 @@
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--background-base, #041c1c);
+  color: var(--bs-body-bg);
   background: var(--bs-primary, #2dd4bf);
   flex-shrink: 0;
 }

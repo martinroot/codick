@@ -13,9 +13,8 @@
 /* call site now uses real Bootstrap, and `ui/structure.css` holds only  */
 /* the few app-level rules Bootstrap cannot express.                    */
 /* ------------------------------------------------------------------ */
-@layer bootstrap-base, bootstrap-theme, structure;
+@layer bootstrap-base, structure;
 @import 'bootstrap/dist/css/bootstrap.min.css' layer(bootstrap-base);
-@import './ui/bootstrap-theme.css' layer(bootstrap-theme);
 @import './ui/structure.css' layer(structure);
 /* Tailwind removed: @import 'tailwindcss'; */
 /* The old design system is gone too. Its stylesheet was the last thing
@@ -64,15 +63,6 @@
   /* LENS_0 — from design-language/src/ui/components/overlays/index.tsx.
      These are the defaults for the `default` (Hermes Teal) dashboard theme;
      ThemeProvider rewrites them as inline styles when a user switches themes. */
-  --foreground: color-mix(in srgb, #ffffff 0%, transparent);
-  --foreground-base: #ffffff;
-  --foreground-alpha: 0;
-  --midground: color-mix(in srgb, #ffe6cb 100%, transparent);
-  --midground-base: #ffe6cb;
-  --midground-alpha: 1;
-  --background: color-mix(in srgb, #041c1c 100%, transparent);
-  --background-base: #041c1c;
-  --background-alpha: 1;
 
   /* Typography tokens — rewritten by ThemeProvider. Defaults match the
      system stack so themes that don't override look native. */
@@ -97,8 +87,6 @@
      look: cream input + emerald-400 output read as warm/cool against
      the dark canvas. Themes override via ThemeProvider, which emits
      these as `--series-input-token` / `--series-output-token`. */
-  --series-input-token: #ffe6cb;
-  --series-output-token: #34d399;
 }
 
 /* Theme tokens cascade into the document root so every descendant inherits
@@ -157,47 +145,6 @@ code, kbd, pre, samp, .font-mono, .font-mono-ui {
    dashboard sizes. Keep in sync. */
 small { font-size: 1.0625rem; }
 code { font-size: 0.875rem; }
-
-/* Shadcn-compat tokens.
-   The dashboard's page code predates the Nous DS and uses shadcn-style
-   utility classes (bg-card, text-muted-foreground, border-border, etc.)
-   extensively. Rather than rewrite every call site, we expose those
-   tokens on top of the Nous palette so classes continue to resolve. */
-:root {
-  /* Remap foreground to midground so `text-foreground` / `bg-foreground`
-     stay visible — in LENS_0, `--foreground` itself has alpha 0. */
-  --color-foreground: var(--midground);
-
-  --color-card: color-mix(in srgb, var(--midground-base) 4%, var(--background-base));
-  --color-card-foreground: var(--midground);
-  --color-primary: var(--midground);
-  --color-primary-foreground: var(--background-base);
-  --color-secondary: color-mix(in srgb, var(--midground-base) 6%, var(--background-base));
-  --color-secondary-foreground: var(--midground);
-  --color-muted: color-mix(in srgb, var(--midground-base) 8%, var(--background-base));
-  /* Routes the shadcn `muted-foreground` slot through the DS semantic
-     text-secondary token (defaults to midground 80%) so legacy call
-     sites that use `text-muted-foreground` get a readable color
-     instead of the old 55%-transparent default. */
-  --color-muted-foreground: var(--color-text-secondary);
-  --color-accent: color-mix(in srgb, var(--midground-base) 10%, var(--background-base));
-  --color-accent-foreground: var(--midground);
-  --color-destructive: #fb2c36;
-  --color-destructive-foreground: #ffffff;
-  --color-success: #4ade80;
-  --color-warning: #ffbd38;
-  --color-border: color-mix(in srgb, var(--midground-base) 15%, transparent);
-  --color-input: color-mix(in srgb, var(--midground-base) 15%, transparent);
-  --color-ring: var(--midground);
-  --color-popover: color-mix(in srgb, var(--midground-base) 4%, var(--background-base));
-  --color-popover-foreground: var(--midground);
-
-  --radius-sm: calc(var(--theme-radius) - 4px);
-  --radius-md: calc(var(--theme-radius) - 2px);
-  --radius-lg: var(--theme-radius);
-  --radius-xl: calc(var(--theme-radius) + 4px);
-}
-
 
 /* Collapsed sidebar tooltip entrance — skipped when moving between items. */
 @keyframes sidebar-tooltip-in {

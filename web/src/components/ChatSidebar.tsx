@@ -458,7 +458,7 @@ export function ChatSidebar({
     >
       <Card className="d-flex align-items-center justify-content-between gap-2 px-3 py-2">
         <div className="min-w-0 flex-grow-1">
-          <div className="fs-4 fw-semibold fs-6 ls-wide text-body-tertiary">model</div>
+          <div className="fw-semibold fs-6 ls-wide text-body-tertiary">model</div>
 
           <Button
             ghost

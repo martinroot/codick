@@ -293,13 +293,13 @@ function UseAsMenu({
               Main model
             </span>
             {isMain && (
-              <span className="fs-4 fw-semibold fs-6 ls-wide text-primary">
+              <span className="fw-semibold fs-6 ls-wide text-primary">
                 current
               </span>
             )}
           </button>
 
-          <div className="border-top border-border/50 px-3 py-2 fs-4 fw-semibold fs-6 ls-wide text-body-tertiary">
+          <div className="border-top border-border/50 px-3 py-2 fw-semibold fs-6 ls-wide text-body-tertiary">
             Auxiliary task
           </div>
 
@@ -322,7 +322,7 @@ function UseAsMenu({
             >
               <span>{t.label}</span>
               {mainAuxTask === t.key && (
-                <span className="fs-4 fw-semibold fs-6 ls-wide text-primary">
+                <span className="fw-semibold fs-6 ls-wide text-primary">
                   current
                 </span>
               )}
@@ -406,12 +406,12 @@ function ModelCard({
                 {shortModelName(entry.model)}
               </CardTitle>
               {isMain && (
-                <span className="d-inline-flex align-items-center gap-0.5 bg-primary/15 px-2 py-0.5 fs-4 fw-semibold fs-6 fw-medium ls-wide text-primary">
+                <span className="d-inline-flex align-items-center gap-0.5 bg-primary/15 px-2 py-0.5 fw-semibold fs-6 fw-medium ls-wide text-primary">
                   <Star className="h-2.5 w-2.5" /> main
                 </span>
               )}
               {mainAuxTask && (
-                <span className="d-inline-flex align-items-center bg-purple-500/10 px-2 py-0.5 fs-4 fw-semibold fs-6 fw-medium ls-wide text-purple-600 dark:text-purple-400">
+                <span className="d-inline-flex align-items-center bg-purple-500/10 px-2 py-0.5 fw-semibold fs-6 fw-medium ls-wide text-purple-600 dark:text-purple-400">
                   aux · {mainAuxTask}
                 </span>
               )}
@@ -597,7 +597,7 @@ function AuxiliaryTasksModal({
           <div className="d-flex align-items-center justify-content-between gap-3 pr-8">
             <h2
               id="aux-modal-title"
-              className="fs-4 fw-semibold fs-6 ls-wide"
+              className="fw-semibold fs-6 ls-wide"
             >
               Auxiliary Tasks
             </h2>
@@ -813,7 +813,7 @@ function MoaModelsModal({
         <header className="p-5 pb-3 border-bottom border-secondary">
           <h2
             id="moa-modal-title"
-            className="fs-4 fw-semibold fs-6 ls-wide"
+            className="fw-semibold fs-6 ls-wide"
           >
             Configure Mixture of Agents presets
           </h2>
@@ -847,7 +847,7 @@ function MoaModelsModal({
           </div>
 
           <div className="stack-2">
-            <div className="fs-4 fw-semibold fs-6 fw-medium ls-wide">Reference models</div>
+            <div className="fw-semibold fs-6 fw-medium ls-wide">Reference models</div>
             {preset.reference_models.map((slot, index) => (
               <div
                 key={`${selected}-${slot.provider}-${slot.model}-${index}`}
@@ -876,7 +876,7 @@ function MoaModelsModal({
           </div>
 
           <div className="stack-2">
-            <div className="fs-4 fw-semibold fs-6 fw-medium ls-wide">Aggregator</div>
+            <div className="fw-semibold fs-6 fw-medium ls-wide">Aggregator</div>
             <div className="d-flex align-items-center gap-2 border border-border/50 bg-muted/20 px-3 py-2">
               <div className="min-w-0 flex-grow-1 text-truncate font-monospace fs-6 text-body-secondary">{slotLabel(preset.aggregator)}</div>
               <Button size="sm" outlined onClick={() => setPicker({ kind: "aggregator" })}>Change</Button>
@@ -989,7 +989,7 @@ function ModelSettingsPanel({
           <div className="min-w-0 flex-grow-1">
             <div className="d-flex align-items-center gap-2 mb-1">
               <Star className="icon-sm text-primary" />
-              <span className="fs-4 fw-semibold fs-6 fw-medium ls-wide">
+              <span className="fw-semibold fs-6 fw-medium ls-wide">
                 Main model
               </span>
             </div>
@@ -1013,7 +1013,7 @@ function ModelSettingsPanel({
           <div className="min-w-0 flex-grow-1">
             <div className="d-flex align-items-center gap-2 mb-1">
               <Cpu className="icon-sm text-body-tertiary" />
-              <span className="fs-4 fw-semibold fs-6 fw-medium ls-wide">
+              <span className="fw-semibold fs-6 fw-medium ls-wide">
                 Auxiliary tasks
               </span>
             </div>
@@ -1037,7 +1037,7 @@ function ModelSettingsPanel({
           <div className="min-w-0 flex-grow-1">
             <div className="d-flex align-items-center gap-2 mb-1">
               <Brain className="icon-sm text-body-tertiary" />
-              <span className="fs-4 fw-semibold fs-6 fw-medium ls-wide">
+              <span className="fw-semibold fs-6 fw-medium ls-wide">
                 Mixture of Agents
               </span>
             </div>
@@ -1295,8 +1295,8 @@ export default function ModelsPage() {
                   Token & cost analytics are hidden because the local counts
                   exclude auxiliary calls (compression, vision, web extract,
                   …) and provider retries, so they diverge from your provider
-                  bill. Enable{"                "}
-                  <span className="font-monospace">dashboard.show_token_analytics</span>{"                                                                "}
+                  bill. Enable{"                                "}
+                  <span className="font-monospace">dashboard.show_token_analytics</span>{"                                                                                                                                "}
                   in <a href="/config" className="text-decoration-underline">Config</a> to
                   show the local debug estimate anyway.
                 </p>

@@ -136,6 +136,16 @@ MAP = {
     "space-x-3": "stack-3",
     "space-x-4": "stack-4",
 
+    # Letter-spacing, under Bootstrap's `ls-*` names. The Tailwind
+    # `tracking-*` spellings had no rule left, so headings silently lost
+    # their tracking.
+    "tracking-tighter": "ls-narrow",
+    "tracking-tight": "ls-narrow",
+    "tracking-normal": "ls-normal",
+    "tracking-wide": "ls-wide",
+    "tracking-widest": "ls-wider",
+    "hover:text-foreground": "hover:text-body-emphasis",
+    "hover:text-foreground/80": "hover:text-body-emphasis",
     # Spacing.
     #
     # Tailwind's 0–5 scale and Bootstrap's are the same values

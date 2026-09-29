@@ -521,7 +521,7 @@ export function HermesConsoleModal({ open, onClose }: HermesConsoleModalProps) {
           <div className="min-w-0 flex-grow-1">
             <h2
               id="hermes-console-title"
-              className="fs-4 fw-semibold fs-6 ls-wide"
+              className="fw-semibold fs-6 ls-wide"
             >
               Hermes Console
             </h2>

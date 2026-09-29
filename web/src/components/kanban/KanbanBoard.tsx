@@ -133,7 +133,7 @@ function KanbanCardImpl({ task, dragging, onDragStart, onDragEnd, onOpen }: Kanb
       onClick={() => onOpen?.(task)}
       tabIndex={0}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === "                ") {
+        if (event.key === "Enter" || event.key === "                                ") {
           event.preventDefault();
           onOpen?.(task);
         }

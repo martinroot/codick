@@ -490,13 +490,13 @@ export default function AnalyticsPage() {
         <Card>
           <CardContent className="py-12">
             <div className="mx-auto d-flex max-w-2xl flex-column gap-3 fs-6 text-body-secondary">
-              <h2 className="fs-4 fw-semibold fs-6 ls-wide text-body-emphasis">
+              <h2 className="fw-semibold fs-6 ls-wide text-body-emphasis">
                 Token analytics hidden
               </h2>
               <p>
                 The token, cost, and per-day analytics on this page are a
                 local debug estimate. They only count successful main-agent
-                responses with a usable <span className="font-monospace">usage</span>{"                                                                "}
+                responses with a usable <span className="font-monospace">usage</span>{"                                                                                                                                "}
                 block, and silently exclude auxiliary calls (context
                 compression, title generation, vision, session search, web
                 extract, smart approvals, MCP routing, plugin LLM access)
@@ -512,10 +512,10 @@ export default function AnalyticsPage() {
               <p>
                 Check your provider dashboard (OpenRouter, Anthropic, etc.)
                 for actual usage and billing. To re-enable the local debug
-                estimate anyway, set{"                "}
+                estimate anyway, set{"                                "}
                 <span className="font-monospace">
                   dashboard.show_token_analytics: true
-                </span>{"                "}
+                </span>{"                                "}
                 in <a href="/config" className="text-decoration-underline">Config</a>.
               </p>
             </div>

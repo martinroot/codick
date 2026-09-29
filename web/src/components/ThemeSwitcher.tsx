@@ -84,7 +84,12 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
 
           {!collapsed && (
             <Typography
-              className="d-none sm:inline fs-4 fw-semibold tracking-wide fs-6"
+              // `fs-6`, not `fs-4`. This is the theme name in the rail
+              // footer, and 2.5rem rendered "Nous Research" as the
+              // largest thing in the column — wide enough to spill past
+              // the rail's edge. `ls-wide` was a Tailwind name with
+              // no rule; Bootstrap calls it `ls-wide`.
+              className="d-none sm:inline fs-6 fw-normal ls-normal text-truncate"
             >
               {label}
             </Typography>
@@ -123,7 +128,7 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
             aria-label={sheetTitle}
             className={cn(
               "min-w-[240px] max-h-[70dvh] overflow-y-auto",
-              "border border-current/20 bg-background-base/95",
+              "border border-secondary bg-body",
               "shadow-[0_12px_32px_-8px_rgba(0,0,0,0.6)]",
               dropUp ? "position-fixed z-[100]" : "position-absolute z-50 right-0 top-full mt-1",
             )}
@@ -136,7 +141,7 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
           >
             <div className="border-bottom border-current/20 px-3 py-2">
               <Typography
-                className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary"
+                className="fw-semibold fs-6 tracking-[0.12em] text-body-tertiary"
               >
                 {sheetTitle}
               </Typography>
@@ -193,7 +198,7 @@ function ThemeSwitcherOptions({
 
             <div className="d-flex min-w-0 flex-grow-1 flex-column gap-0.5">
               <Typography
-                className="text-truncate fs-4 fw-semibold fs-6 tracking-wide"
+                className="text-truncate fw-semibold fs-6 ls-wide"
               >
                 {th.label}
               </Typography>
@@ -235,7 +240,7 @@ function FontSection({ fontChoices, fontId, setFont }: FontSectionProps) {
         <span className="d-inline-flex align-items-center gap-2">
           <Type className="icon-sm text-body-tertiary" />
           <Typography
-            className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary"
+            className="fw-semibold fs-6 tracking-[0.12em] text-body-tertiary"
           >
             {t.theme?.fontTitle ?? "Font"}
           </Typography>

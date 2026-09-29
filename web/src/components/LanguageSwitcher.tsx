@@ -78,7 +78,10 @@ export function LanguageSwitcher({ collapsed = false, dropUp = false }: Language
       >
         <span className="d-inline-flex align-items-center gap-2">
           <Typography
-            className="d-none sm:inline fs-4 fw-semibold tracking-wide fs-6"
+            // Dropped `fs-4`: it sat next to `fs-6` in the same class list, and
+            // the heading size won, so the language name rendered larger
+            // than any label in the rail footer.
+            className="d-none sm:inline fs-6 fw-normal ls-normal text-truncate"
           >
             {locale === "en" ? "EN" : current.name}
           </Typography>
@@ -150,7 +153,7 @@ function LanguageSwitcherOptions({
             aria-selected={selected}
             className={cn(
               "w-100 text-start px-3 py-2 d-flex align-items-center gap-2 cursor-pointer",
-              "font-sans fs-4 fw-semibold fs-6 tracking-[0.08em]",
+              "font-sans fs-6 ls-wide",
               "hover:bg-accent hover:text-accent-foreground transition",
               selected ? "fw-semibold text-body-emphasis" : "text-body-secondary",
             )}

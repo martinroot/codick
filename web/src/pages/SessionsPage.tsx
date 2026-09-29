@@ -782,7 +782,7 @@ function SessionsPagination({
     >
       {!compact && (
         <span className="fs-6 text-body-secondary">
-          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{"                "}
+          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{"                                "}
           {t.common.of} {total}
         </span>
       )}
@@ -2218,11 +2218,11 @@ export default function SessionsPage() {
                           <>
                             <span className="font-monospace">
                               {s.model.split("/").pop()}
-                            </span>{"                "}
-                            ·{"                "}
+                            </span>{"                                "}
+                            ·{"                                "}
                           </>
                         )}
-                        {s.message_count} {t.common.msgs} ·{"                "}
+                        {s.message_count} {t.common.msgs} ·{"                                "}
                         {timeAgo(s.last_active)}
                       </span>
 

@@ -14,14 +14,18 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
-/** Mondwest font only — use on layout shells; do not force normal-case here or `text-display` chrome (Segmented, badges) stops uppercasing. */
-export const themedFont = "font-mondwest";
+/* The Mondwest brand face is gone. Every one of these three helpers
+ * existed only to apply it, and the class they injected resolved to
+ * nothing, so they were carrying empty strings through every call site
+ * that spread one into a className. They now contribute no styling of
+ * their own — callers that need a type role use Bootstrap's utilities. */
+export const themedFont = "";
 
-/** Mondwest body copy — sentence-case themed text (not uppercase chrome). */
-export const themedBody = "font-mondwest normal-case";
+/** Body copy — nothing to add beyond what the element already has. */
+export const themedBody = "";
 
-/** Mondwest brand chrome — uppercase section headers and nav labels. */
-export const themedChrome = "font-mondwest text-display";
+/** Brand chrome — a weight, which is the part that survives the move. */
+export const themedChrome = "fw-semibold";
 
 /** Relative time from a Unix epoch timestamp (seconds). */
 export function timeAgo(ts: number): string {

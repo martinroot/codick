@@ -202,7 +202,7 @@ export function ChatSessionList({
                 "text-lowercase ls-normal",
                 isActive
                   ? "bg-primary/10 text-body-emphasis border-l-2 border-primary"
-                  : "text-body-secondary hover:bg-midground/5 hover:text-foreground",
+                  : "text-body-secondary hover:bg-secondary-subtle hover:text-body-emphasis",
               )}
             >
               <span className="w-100 text-truncate fs-6 fw-medium">
@@ -238,7 +238,7 @@ export function ChatSessionList({
       )}
     >
       <div className="d-flex align-items-center justify-content-between gap-2 px-2 pb-2">
-        <span className="fs-4 fw-semibold fs-6 ls-wide text-body-tertiary">
+        <span className="fw-semibold fs-6 ls-wide text-body-tertiary">
           {t.sessions.title}
         </span>
         <Button

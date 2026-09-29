@@ -407,7 +407,7 @@ export default function SkillsPage() {
             <div className="d-flex flex-column rounded-0 border border-secondary bg-muted/20">
               <div className="d-none sm:flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary">
                 <Filter className="icon-sm text-body-tertiary" />
-                <span className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
+                <span className="fw-semibold fs-6 tracking-[0.12em] text-body-secondary">
                   {t.skills.filters}
                 </span>
               </div>
@@ -447,7 +447,7 @@ export default function SkillsPage() {
                 !isSearching &&
                 allCategories.length > 0 && (
                   <div className="d-none sm:flex flex-column border-top border-secondary">
-                    <div className="px-3 pt-2 pb-1 fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary">
+                    <div className="px-3 pt-2 pb-1 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary">
                       {t.skills.categories}
                     </div>
                     <div className="d-flex flex-column p-2 pt-1 gap-px max-h-[calc(100vh-340px)] overflow-y-auto">
@@ -1107,7 +1107,7 @@ function HubBrowser({
             <div className="d-flex flex-column gap-2">
               <div className="d-flex align-items-center gap-2 px-1">
                 <Sparkles className="icon-sm text-primary" />
-                <span className="fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-secondary text-uppercase">
+                <span className="fw-semibold fs-6 tracking-[0.12em] text-body-secondary text-uppercase">
                   Featured skills
                 </span>
                 <span className="fs-6 text-body-tertiary">
@@ -1201,7 +1201,7 @@ function ConnectedHubs({
   if (sources.length === 0) {
     return (
       <p className="fs-6 text-body-secondary">
-        Results come from the same sources as{"                "}
+        Results come from the same sources as{"                                "}
         <span className="font-monospace">hermes skills search</span>.
       </p>
     );
@@ -1428,7 +1428,7 @@ function SkillDetailDialog({
             )}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Preview the SKILL.md source and run a security scan for {result.name}{"                "}
+            Preview the SKILL.md source and run a security scan for {result.name}{"                                "}
             before installing.
           </DialogDescription>
         </DialogHeader>
@@ -1517,9 +1517,9 @@ function SkillDetailDialog({
                 {preview.files.length > 0 && (
                   <div className="fs-6 text-body-tertiary">
                     <span className="tracking-[0.1em] text-uppercase">
-                      Files:{"                "}
+                      Files:{"                                "}
                     </span>
-                    <span className="font-monospace">{preview.files.join("                                                                                                                                ")}</span>
+                    <span className="font-monospace">{preview.files.join("                                                                                                                                                                                                                                                                ")}</span>
                   </div>
                 )}
                 <pre className="text-wrap text-break bg-background/50 border border-secondary p-3 fs-6 font-monospace text-body-secondary leading-relaxed">

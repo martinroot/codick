@@ -392,7 +392,7 @@ function ProviderGroupCard({
           ) : (
             <ChevronRight className="icon-sm text-body-secondary flex-shrink-0" />
           )}
-          <span className="fw-semibold fs-6 tracking-wide">
+          <span className="fw-semibold fs-6 ls-wide">
             {group.name === "Other" ? t.common.other : group.name}
           </span>
           {hasAnyConfigured && (
@@ -563,7 +563,7 @@ function CustomKeysCard({
 
         {/* Add-key form */}
         <div className="d-grid gap-2 border border-dashed border-secondary p-4">
-          <Label className="fs-6 fw-semibold tracking-wide">
+          <Label className="fs-6 fw-semibold ls-wide">
             {t.env.addCustomKey}
           </Label>
           <div className="d-flex align-items-start gap-2">
@@ -666,7 +666,7 @@ export default function EnvPage() {
             key={s.id}
             type="button"
             onClick={() => scrollTo(s.id)}
-            className="flex-shrink-0 cursor-pointer px-2 py-0.5 fs-4 fw-semibold fs-6 ls-wide text-body-secondary hover:text-foreground border border-border/50 hover:border-foreground/30 transition"
+            className="flex-shrink-0 cursor-pointer px-2 py-0.5 fw-semibold fs-6 ls-wide text-body-secondary hover:text-foreground border border-border/50 hover:border-foreground/30 transition"
           >
             {s.label}
           </button>
@@ -1077,7 +1077,7 @@ function EnvCategoryCard({
         </div>
 
         <CardDescription>
-          {section.setEntries.length} {t.common.of} {section.totalEntries}{"                "}
+          {section.setEntries.length} {t.common.of} {section.totalEntries}{"                                "}
           {t.common.configured}
         </CardDescription>
 

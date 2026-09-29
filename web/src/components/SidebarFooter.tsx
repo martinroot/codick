@@ -25,9 +25,15 @@ export function SidebarFooter({ status }: SidebarFooterProps) {
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
-          "font-sans fs-4 fw-semibold fs-6 tracking-[0.12em] text-body",
-          "transition hover:opacity-90",
-          "focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground/40",
+          // `fs-4` was in this list alongside `fs-6` — a heading size next
+          // to a body size, which left "Nous Research" rendering as the
+          // largest thing in the rail and spilling past its edge.
+          // `text-decoration-none` because it is a link, and the rail
+          // version reads as a label rather than a hyperlink.
+          "font-sans fs-6 text-decoration-none text-truncate",
+          "ls-wide text-body-emphasis",
+          "hover:text-body",
+          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
         )}
       >
         {t.app.footer.org}

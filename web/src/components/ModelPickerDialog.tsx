@@ -358,7 +358,7 @@ export function ModelPickerDialog(props: Props) {
         <header className="p-5 pb-3 border-bottom border-secondary">
           <h2
             id="model-picker-title"
-            className="fs-4 fw-semibold fs-6 ls-wide"
+            className="fw-semibold fs-6 ls-wide"
           >
             {title}
           </h2>
@@ -640,7 +640,7 @@ function ModelColumn({
 
 function CurrentTag() {
   return (
-    <span className="fs-4 fw-semibold fs-6 ls-wide text-primary flex-shrink-0">
+    <span className="fw-semibold fs-6 ls-wide text-primary flex-shrink-0">
       current
     </span>
   );

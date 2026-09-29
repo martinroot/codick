@@ -551,11 +551,14 @@ export default function App() {
           "border-bottom",
           "bg-body-tertiary",
         )}
+        // Bootstrap's own variables, with the tertiary surface as the
+        // fallback. The old chain ended in `var(--background-base)`, which
+        // no longer exists — and a var() with no fallback makes the whole
+        // declaration invalid at computed-value time, so the header would
+        // have come out transparent rather than merely unstyled.
         style={{
           background:
-            "var(--component-header-background, var(--background-base))",
-          borderImage: "var(--component-header-border-image)",
-          clipPath: "var(--component-header-clip-path)",
+            "var(--component-header-background, var(--bs-tertiary-bg))",
         }}
       >
         <Button
@@ -706,7 +709,7 @@ export default function App() {
                   <span
                     className={cn(
                       "px-5 pt-2.5 pb-1",
-                      "font-sans fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary",
+                      "font-sans fw-semibold fs-6 tracking-[0.12em] text-body-tertiary",
                       isDesktopCollapsed && "lg:hidden",
                     )}
                     id="hermes-sidebar-plugin-nav-heading"
@@ -804,8 +807,15 @@ export default function App() {
               <div
                 className={cn(
                   "w-100 min-w-0",
-                  !isChatRoute &&
-                    "pb-[calc(2rem+env(safe-area-inset-bottom,0px))] lg:pb-4",
+                  /*
+                   * The inset the reference has. It is also load-bearing:
+                   * a Bootstrap `row` pulls itself 0.75rem outside its
+                   * container with negative margins to make room for its
+                   * gutters, so a container with no horizontal padding lets
+                   * the row hang past the viewport edge.
+                   */
+                  !isChatRoute && "px-3",
+                  !isChatRoute && "pb-4",
                   (isDocsRoute || isChatRoute) &&
                     "min-h-0 d-flex flex-grow-1 flex-column",
                 )}
@@ -1064,7 +1074,7 @@ function SidebarSystemActions({
       <span
         className={cn(
           "px-5 pt-0.5 pb-0.5",
-          "font-sans fs-4 fw-semibold fs-6 tracking-[0.12em] text-body-tertiary",
+          "font-sans fw-semibold fs-6 tracking-[0.12em] text-body-tertiary",
           collapsed && "lg:hidden",
         )}
       >
@@ -1323,7 +1333,7 @@ function SidebarTooltip({ anchor, label, warmRef }: SidebarTooltipProps) {
         "position-fixed z-[100] pointer-events-none",
         "px-2 py-1",
         "bg-body border border-current/20 shadow-lg",
-        "font-sans fs-4 fw-semibold fs-6 tracking-[0.1em] text-body text-uppercase",
+        "font-sans fw-semibold fs-6 tracking-[0.1em] text-body text-uppercase",
       )}
       style={{
         top: rect.top + rect.height / 2,

@@ -344,7 +344,7 @@ export default function ChannelsPage() {
             <WifiOff className="icon-md flex-shrink-0" />
             <span>
               The gateway is not running. Configure channels here, then start the
-              gateway with <code className="font-courier">{gatewayStartCommand}</code>{"                                                                "}
+              gateway with <code className="font-courier">{gatewayStartCommand}</code>{"                                                                                                                                "}
               (or the Restart button above).
             </span>
           </CardContent>
@@ -390,7 +390,7 @@ export default function ChannelsPage() {
             <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="channel-config-title"
-                className="fs-4 fw-semibold fs-6 ls-wide"
+                className="fw-semibold fs-6 ls-wide"
               >
                 {editing.id === "telegram"
                   ? "Use your own Telegram bot"
@@ -577,7 +577,7 @@ export default function ChannelsPage() {
                       )}
                       {platform.ingress_url && (
                         <span className="fs-6 text-body-secondary break-all">
-                          Callback URL (shared listener):{"                "}
+                          Callback URL (shared listener):{"                                "}
                           <code className="font-monospace">{platform.ingress_url}</code>
                         </span>
                       )}

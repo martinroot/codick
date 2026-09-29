@@ -36,12 +36,12 @@ export function SidebarStatusStrip({ status }: SidebarStatusStripProps) {
     >
       <div className="d-flex flex-column gap-1 font-sans fs-6 leading-snug tracking-[0.08em]">
         <p className="text-break">
-          <span className="text-body-tertiary">{gatewayStatusLabel}</span>{"                                                                "}
+          <span className="text-body-tertiary">{gatewayStatusLabel}</span>{"                                                                                                                                "}
           <span className={cn("fw-medium", gw.tone)}>{gw.label}</span>
         </p>
 
         <p className="text-break">
-          <span className="text-body-tertiary">{activeSessionsLabel}</span>{"                                                                "}
+          <span className="text-body-tertiary">{activeSessionsLabel}</span>{"                                                                                                                                "}
           <span className="tabular-nums text-body-secondary">
             {status.active_sessions}
           </span>

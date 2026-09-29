@@ -317,7 +317,7 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
                 {t.oauth.enterCodePrompt}
               </p>
               <div className="d-flex align-items-center justify-content-between gap-2 border border-secondary bg-secondary/30 p-4">
-                <code className="font-monospace fs-3 tracking-widest text-body-emphasis">
+                <code className="font-monospace fs-3 ls-wider text-body-emphasis">
                   {deviceCode}
                 </code>
                 <Button

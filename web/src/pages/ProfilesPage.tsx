@@ -832,7 +832,7 @@ export default function ProfilesPage() {
             <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="create-profile-title"
-                className="fs-4 fw-semibold fs-6 ls-wide"
+                className="fw-semibold fs-6 ls-wide"
               >
                 {t.profiles.newProfile}
               </h2>
@@ -925,7 +925,7 @@ export default function ProfilesPage() {
               </div>
 
               <fieldset className="d-grid gap-3 border-top border-secondary pt-4">
-                <legend className="fs-4 fw-semibold fs-6 ls-wide text-body-secondary">
+                <legend className="fw-semibold fs-6 ls-wide text-body-secondary">
                   {L.advancedOptions}
                 </legend>
 
@@ -991,7 +991,7 @@ export default function ProfilesPage() {
               <Check className="icon-sm text-success" />
 
               <span>
-                {L.activeProfile}:{"                "}
+                {L.activeProfile}:{"                                "}
                 <span className="fw-medium text-body-emphasis">
                   {activeInfo.active}
                 </span>
@@ -1257,7 +1257,7 @@ export default function ProfilesPage() {
             <header className="p-5 pb-3 border-bottom border-secondary">
               <h2
                 id="profile-editor-title"
-                className="fs-4 fw-semibold fs-6 ls-wide"
+                className="fw-semibold fs-6 ls-wide"
               >
                 {editorKind === "model"
                   ? L.editModel
@@ -1322,7 +1322,7 @@ export default function ProfilesPage() {
                   <div className="d-flex align-items-center justify-content-between gap-2">
                     <Label
                       htmlFor="profile-desc-editor"
-                      className="fs-4 fw-semibold fs-6 ls-wide text-body-secondary"
+                      className="fw-semibold fs-6 ls-wide text-body-secondary"
                     >
                       {L.description}
                     </Label>
@@ -1364,7 +1364,7 @@ export default function ProfilesPage() {
                 <>
                   <Label
                     htmlFor="profile-soul-editor"
-                    className="fs-4 fw-semibold fs-6 ls-wide text-body-secondary"
+                    className="fw-semibold fs-6 ls-wide text-body-secondary"
                   >
                     {t.profiles.soulSection}
                   </Label>

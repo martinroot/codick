@@ -154,7 +154,7 @@ export function OAuthProvidersCard({ onError, onSuccess }: Props) {
                       <span className="fw-medium fs-6">{p.name}</span>
                       <Badge
                         tone="outline"
-                        className="fs-6 tracking-wide"
+                        className="fs-6 ls-wide"
                       >
                         {t.oauth.flowLabels[p.flow]}
                       </Badge>
@@ -180,7 +180,7 @@ export function OAuthProvidersCard({ onError, onSuccess }: Props) {
                         {p.status.token_preview}
                         {p.status.source_label && (
                           <span className="text-body-tertiary">
-                            {"                "}
+                            {"                                "}
                             · {p.status.source_label}
                           </span>
                         )}

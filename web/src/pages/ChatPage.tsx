@@ -525,7 +525,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         aria-controls="chat-side-panel"
         className={cn(
           "flex-shrink-0 rounded border border-current/20",
-          "px-2 py-1 fs-6 fw-medium tracking-wide",
+          "px-2 py-1 fs-6 fw-medium ls-wide",
           "text-body-secondary hover:text-midground hover:bg-midground/5",
         )}
       >
@@ -1857,9 +1857,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             "border-l border-current/20 text-body",
             "bg-background-base/95",
             "transition duration-200 ease-out",
-            "[background:var(--component-sidebar-background,var(--background-base))]",
-            "[clip-path:var(--component-sidebar-clip-path)]",
-            "[border-image:var(--component-sidebar-border-image)]",
+            "[background:var(--component-sidebar-background,var(--bs-tertiary-bg))]",
             mobilePanelOpen
               ? "translate-x-0"
               : "pointer-events-none translate-x-full",
@@ -1926,7 +1924,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       {visibleBanner && (
         <div
           role="alert"
-          className="d-flex flex-wrap align-items-center gap-2 border border-warning/50 bg-warning/10 text-warning px-3 py-2 fs-6 tracking-wide"
+          className="d-flex flex-wrap align-items-center gap-2 border border-warning/50 bg-warning/10 text-warning px-3 py-2 fs-6 ls-wide"
         >
           <span className="min-w-0 flex-grow-1">{visibleBanner}</span>
           {banner && bannerAction === "reload" && (
@@ -1957,7 +1955,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           {showReconnectOverlay && (
             <div className="position-absolute inset-x-3 top-3 z-20 d-flex justify-content-center sm:inset-x-auto sm:right-3 sm:justify-end">
               <div className="d-flex max-w-[min(28rem,calc(100vw-3rem))] flex-column align-items-start gap-2 border border-warning/60 bg-black/80 px-3 py-2 fs-6 text-warning shadow-lg">
-                <div className="tracking-wide">
+                <div className="ls-wide">
                   {ptyState === "reconnecting"
                     ? "Chat is reconnecting."
                     : reconnectGaveUp
@@ -1996,7 +1994,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
               aria-live="polite"
               aria-label={PTY_RESUME_LOADING_MESSAGE}
             >
-              <div className="max-w-[min(28rem,calc(100vw-3rem))] border border-current/30 bg-black/80 px-4 py-3 text-center fs-6 tracking-wide text-white/85 shadow-lg">
+              <div className="max-w-[min(28rem,calc(100vw-3rem))] border border-current/30 bg-black/80 px-4 py-3 text-center fs-6 ls-wide text-white/85 shadow-lg">
                 {PTY_RESUME_LOADING_MESSAGE}
               </div>
             </div>
@@ -2007,7 +2005,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
               whole page to get a working chat back. */}
           {ptyState === "ended" && (
             <div className="position-absolute top-0 start-0 w-100 h-100 z-30 d-flex flex-column align-items-center justify-content-center gap-3 bg-black/60">
-              <div className="max-w-[min(32rem,calc(100vw-3rem))] text-center fs-6 tracking-wide text-white/80">
+              <div className="max-w-[min(32rem,calc(100vw-3rem))] text-center fs-6 ls-wide text-white/80">
                 {endedReason === "start-failed"
                   ? PTY_START_FAILED_MESSAGE
                   : PTY_SESSION_ENDED_MESSAGE}
@@ -2052,7 +2050,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           >
             <span className="d-inline-flex align-items-center gap-2">
               <Copy className="icon-sm flex-shrink-0" />
-              <span className="d-none min-[400px]:inline tracking-wide">
+              <span className="d-none min-[400px]:inline ls-wide">
                 {copyState === "copied" ? "copied" : "copy last response"}
               </span>
             </span>
@@ -2077,7 +2075,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
             >
               <span className="d-inline-flex align-items-center gap-1">
                 <PanelRight className="icon-sm flex-shrink-0" />
-                <span className="d-none min-[400px]:inline tracking-wide">
+                <span className="d-none min-[400px]:inline ls-wide">
                   panel
                 </span>
               </span>
