@@ -1,0 +1,51 @@
+# The web interface must typecheck and build.
+#
+# The 52 workflows this replaced were upstream's release machinery:
+# installer builds, desktop bundles, rust and termux matrices, and a bot that
+# pushed to a branch of its own. None of it could run here — it expects
+# upstream's secrets, runners and trusted-automation environment — and none
+# of it describes anything this project builds.
+#
+# What is left is the one check that describes the work in this repository.
+# It runs on the same command the local build runs, so a green run here means
+# the tree is the tree that ships.
+
+name: web
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci --workspace web --include-workspace-root
+
+      # The solution build, not `npm run typecheck`. The latter runs
+      # `tsc -p . --noEmit`, which is looser than what actually compiles the
+      # frontend and passes on code the real build rejects — missing exports,
+      # wrong element prop types. Type-checking with the weaker command is
+      # how three compile-breaking bugs got through.
+      - name: Typecheck
+        run: npx tsc -b web/tsconfig.json --force
+
+      - name: Build
+        run: npm run build --workspace web
