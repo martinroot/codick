@@ -283,6 +283,27 @@ function applyLayoutVariant(variant: ThemeLayoutVariant | undefined) {
   root.style.setProperty("--theme-layout-variant", final);
 }
 
+/**
+ * Put Bootstrap's own colour-mode switch in charge.
+ *
+ * Bootstrap 5.3 ships two complete palettes keyed off `data-bs-theme`,
+ * and every surface utility resolves through the *pair* of variables
+ * (`--bs-body-bg` and `--bs-body-bg-rgb`, likewise for the tertiary
+ * surface). Overriding only the first half leaves the second at
+ * Bootstrap's light default, so `bg-body` — which reads
+ * `rgba(var(--bs-body-bg-rgb), …)` — paints white while everything else
+ * is dark. Declaring the attribute flips both halves together, which is
+ * the inheritance the framework was designed around.
+ *
+ * The app's own `--background-base` / `--midground` tokens remain the
+ * source of truth; `ui/bootstrap-theme.css` maps them onto Bootstrap's
+ * slots under this attribute.
+ */
+function applyBootstrapColourMode(mode: "dark" | "light") {
+  if (typeof document === "undefined") return;
+  document.documentElement.setAttribute("data-bs-theme", mode);
+}
+
 // ---------------------------------------------------------------------------
 // Font stylesheet injection
 // ---------------------------------------------------------------------------
@@ -347,6 +368,12 @@ function applyFontOverride(fontId: string | undefined) {
 function applyTheme(theme: DashboardTheme) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
+
+  // Bootstrap's colour mode follows the dashboard's. Every theme in the
+  // catalog paints a dark canvas — `--background-base` is near-black in
+  // all of them — so the framework is told "dark" outright. Reading it
+  // from the theme instead would need a per-theme flag nobody sets today.
+  applyBootstrapColourMode("dark");
 
   // Clear any overrides from a previous theme before applying the new set.
   for (const cssVar of ALL_OVERRIDE_VARS) {
