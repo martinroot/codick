@@ -986,12 +986,12 @@ export default function ProfilesPage() {
       {/* Active profile banner */}
       {activeInfo && (
         <Card>
-          <CardContent className="d-flex flex-wrap align-items-center gap-x-4 gap-y-1 py-3 fs-6">
+          <CardContent className="d-flex flex-wrap align-items-center column-gap-4 row-gap-1 py-3 fs-6">
             <span className="d-flex align-items-center gap-2 text-body-secondary">
               <Check className="icon-sm text-success" />
 
               <span>
-                {L.activeProfile}:{"        "}
+                {L.activeProfile}:{"                "}
                 <span className="fw-medium text-body-emphasis">
                   {activeInfo.active}
                 </span>

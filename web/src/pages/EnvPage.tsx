@@ -137,7 +137,7 @@ function EnvVarRow({
   // Compact inline row for unset, non-editing keys (used inside provider groups)
   if (compact && !info.is_set && !isEditing) {
     return (
-      <div className="d-flex align-items-center justify-content-between gap-3 py-2 min-w-0 overflow-hidden text-body-secondary hover:text-foreground transition-colors">
+      <div className="d-flex align-items-center justify-content-between gap-3 py-2 min-w-0 overflow-hidden text-body-secondary hover:text-foreground transition">
         <div className="d-flex align-items-center gap-2 min-w-0">
           <span className="font-monospace fs-6">
             {varKey}
@@ -173,7 +173,7 @@ function EnvVarRow({
   // Non-compact unset row
   if (!info.is_set && !isEditing) {
     return (
-      <div className="d-flex align-items-center justify-content-between gap-3 border border-border/50 px-4 py-2.5 min-w-0 overflow-hidden text-body-secondary hover:text-foreground transition-colors">
+      <div className="d-flex align-items-center justify-content-between gap-3 border border-border/50 px-4 py-2.5 min-w-0 overflow-hidden text-body-secondary hover:text-foreground transition">
         <div className="d-flex align-items-center gap-3 min-w-0">
           <Label className="font-monospace fs-6">
             {varKey}
@@ -666,7 +666,7 @@ export default function EnvPage() {
             key={s.id}
             type="button"
             onClick={() => scrollTo(s.id)}
-            className="flex-shrink-0 cursor-pointer px-2 py-0.5 fs-4 fw-semibold fs-6 ls-wide text-body-secondary hover:text-foreground border border-border/50 hover:border-foreground/30 transition-colors"
+            className="flex-shrink-0 cursor-pointer px-2 py-0.5 fs-4 fw-semibold fs-6 ls-wide text-body-secondary hover:text-foreground border border-border/50 hover:border-foreground/30 transition"
           >
             {s.label}
           </button>
@@ -1069,7 +1069,7 @@ function EnvCategoryCard({
               type="button"
               onClick={() => setShowAll((open) => !open)}
               aria-expanded={showAll}
-              className="flex-shrink-0 cursor-pointer border-0 bg-transparent p-0 fs-6 tracking-[0.08em] text-body-secondary transition-colors hover:text-foreground"
+              className="flex-shrink-0 cursor-pointer border-0 bg-transparent p-0 fs-6 tracking-[0.08em] text-body-secondary transition hover:text-foreground"
             >
               {showAll ? t.env.showLess : t.env.showMore}
             </button>
@@ -1077,7 +1077,7 @@ function EnvCategoryCard({
         </div>
 
         <CardDescription>
-          {section.setEntries.length} {t.common.of} {section.totalEntries}{"        "}
+          {section.setEntries.length} {t.common.of} {section.totalEntries}{"                "}
           {t.common.configured}
         </CardDescription>
 

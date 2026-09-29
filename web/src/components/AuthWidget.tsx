@@ -158,7 +158,7 @@ export function AuthWidget({ className }: AuthWidgetProps) {
         onClick={handleLogout}
         className={cn(
           "flex-shrink-0 rounded p-2 text-muted-foreground/70",
-          "transition-colors hover:bg-current/10 hover:text-foreground",
+          "transition hover:bg-current/10 hover:text-foreground",
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-current/40",
         )}
         aria-label="Log out"

@@ -298,7 +298,7 @@ export default function ProfileBuilderPage() {
             disabled={i > 0 && !nameValid}
             onClick={() => setStep(s.id)}
             className={cn(
-              "rounded-circle px-3 py-1 transition-colors",
+              "rounded-circle px-3 py-1 transition",
               s.id === step
                 ? "bg-primary text-primary-foreground"
                 : i <= stepIndex
@@ -572,7 +572,7 @@ export default function ProfileBuilderPage() {
                           type="button"
                           aria-pressed={mcpDraft.transport === value}
                           className={cn(
-                            "px-3 py-2 fs-6 fw-medium transition-colors",
+                            "px-3 py-2 fs-6 fw-medium transition",
                             mcpDraft.transport === value
                               ? "bg-primary text-primary-foreground"
                               : "text-body-secondary hover:bg-muted hover:text-foreground",
@@ -618,7 +618,7 @@ export default function ProfileBuilderPage() {
                             type="button"
                             aria-pressed={mcpDraft.httpAuth === value}
                             className={cn(
-                              "px-2 py-2 fs-6 fw-medium transition-colors",
+                              "px-2 py-2 fs-6 fw-medium transition",
                               mcpDraft.httpAuth === value
                                 ? "bg-primary text-primary-foreground"
                                 : "text-body-secondary hover:bg-muted hover:text-foreground",
@@ -732,7 +732,7 @@ export default function ProfileBuilderPage() {
                           )}
                         </span>
                         <span className="mt-1 d-block break-all fs-6 text-body-secondary">
-                          {s.url || [s.command, ...(s.args || [])].join("        ")}
+                          {s.url || [s.command, ...(s.args || [])].join("                ")}
                         </span>
                       </span>
                       <Button

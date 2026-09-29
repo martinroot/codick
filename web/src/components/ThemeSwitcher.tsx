@@ -69,7 +69,10 @@ export function ThemeSwitcher({ collapsed = false, dropUp = false }: ThemeSwitch
         className={cn(
           collapsed
             ? "text-body-secondary hover:text-foreground hover:bg-transparent"
-            : "px-2 py-1 text-lowercase ls-normal fw-normal fs-6 text-body-secondary hover:text-foreground",
+            : // `text-decoration-none` because this renders a link-coloured
+              // label inside the rail, and the theme name is long enough
+              // that the underline reads as noise at this size.
+              "px-2 py-1 text-decoration-none text-lowercase ls-normal fw-normal fs-6 text-truncate text-body-secondary hover:text-foreground",
         )}
         title={`${t.theme?.switchTheme ?? "Switch theme"}: ${label}`}
         aria-label={t.theme?.switchTheme ?? "Switch theme"}

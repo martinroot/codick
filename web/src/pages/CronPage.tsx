@@ -1220,7 +1220,7 @@ export default function CronPage() {
                   )}
                   {job.last_fire_error?.detail && (
                     <p className="fs-6 text-danger mt-1">
-                      missed scheduled fire ({formatTime(job.last_fire_error.at ?? null)}):{"        "}
+                      missed scheduled fire ({formatTime(job.last_fire_error.at ?? null)}):{"                "}
                       {job.last_fire_error.detail}
                     </p>
                   )}

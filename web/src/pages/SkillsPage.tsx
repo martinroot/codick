@@ -768,7 +768,7 @@ function SkillRow({
   noDescriptionLabel,
 }: SkillRowProps) {
   return (
-    <div className="group d-flex align-items-start gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40">
+    <div className="group d-flex align-items-start gap-3 px-3 py-2.5 transition hover:bg-muted/40">
       <div className="pt-0.5 flex-shrink-0">
         <Switch
           checked={skill.enabled}
@@ -791,7 +791,7 @@ function SkillRow({
       <Button
         ghost
         size="icon"
-        className="flex-shrink-0 text-body-secondary opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-foreground"
+        className="flex-shrink-0 text-body-secondary opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 hover:text-foreground"
         title="Edit SKILL.md"
         aria-label={`Edit ${skill.name}`}
         onClick={onEdit}
@@ -1201,7 +1201,7 @@ function ConnectedHubs({
   if (sources.length === 0) {
     return (
       <p className="fs-6 text-body-secondary">
-        Results come from the same sources as{"        "}
+        Results come from the same sources as{"                "}
         <span className="font-monospace">hermes skills search</span>.
       </p>
     );
@@ -1290,7 +1290,7 @@ function HubResultCard({
 }) {
   const trust = trustVisual(result.trust_level);
   return (
-    <Card className="rounded-0 transition-colors hover:bg-muted/30">
+    <Card className="rounded-0 transition hover:bg-muted/30">
       <CardContent className="py-3 d-flex align-items-start gap-3">
         <button
           type="button"
@@ -1428,7 +1428,7 @@ function SkillDetailDialog({
             )}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Preview the SKILL.md source and run a security scan for {result.name}{"        "}
+            Preview the SKILL.md source and run a security scan for {result.name}{"                "}
             before installing.
           </DialogDescription>
         </DialogHeader>
@@ -1517,9 +1517,9 @@ function SkillDetailDialog({
                 {preview.files.length > 0 && (
                   <div className="fs-6 text-body-tertiary">
                     <span className="tracking-[0.1em] text-uppercase">
-                      Files:{"        "}
+                      Files:{"                "}
                     </span>
-                    <span className="font-monospace">{preview.files.join("                                                                ")}</span>
+                    <span className="font-monospace">{preview.files.join("                                                                                                                                ")}</span>
                   </div>
                 )}
                 <pre className="text-wrap text-break bg-background/50 border border-secondary p-3 fs-6 font-monospace text-body-secondary leading-relaxed">

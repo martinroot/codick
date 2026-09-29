@@ -397,7 +397,7 @@ export function ToolsetConfigDrawer({ toolset, profile, onClose, onChanged }: Pr
                     <div className="mt-3 border-top border-secondary pt-3">
                       <p className="fs-6 text-body-secondary mb-1.5">
                         This backend needs a one-time install
-                        {"        "}
+                        {"                "}
                         <span className="font-monospace">
                           ({provider.post_setup})
                         </span>

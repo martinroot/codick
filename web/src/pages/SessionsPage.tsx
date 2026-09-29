@@ -619,10 +619,10 @@ function SessionRow({
 
   return (
     <div
-      className={`max-w-full min-w-0 overflow-hidden border transition-colors ${containerClasses}`}
+      className={`max-w-full min-w-0 overflow-hidden border transition ${containerClasses}`}
     >
       <div
-        className="d-flex cursor-pointer align-items-start gap-3 p-3 transition-colors hover:bg-secondary/30"
+        className="d-flex cursor-pointer align-items-start gap-3 p-3 transition hover:bg-secondary/30"
         onClick={onToggle}
       >
         <span className="d-flex flex-shrink-0 align-items-center pt-0.5">
@@ -782,7 +782,7 @@ function SessionsPagination({
     >
       {!compact && (
         <span className="fs-6 text-body-secondary">
-          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{"        "}
+          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{"                "}
           {t.common.of} {total}
         </span>
       )}
@@ -1884,7 +1884,7 @@ export default function SessionsPage() {
                 prefix={<ListFilter />}
                 suffix={
                   <ChevronDown
-                    className={`transition-transform ${sourceMenuOpen ? "rotate-180" : ""}`}
+                    className={`transition ${sourceMenuOpen ? "rotate-180" : ""}`}
                   />
                 }
                 className="h-8 min-w-[10rem] max-w-[14rem] justify-content-between fs-6"
@@ -2218,11 +2218,11 @@ export default function SessionsPage() {
                           <>
                             <span className="font-monospace">
                               {s.model.split("/").pop()}
-                            </span>{"        "}
-                            ·{"        "}
+                            </span>{"                "}
+                            ·{"                "}
                           </>
                         )}
-                        {s.message_count} {t.common.msgs} ·{"        "}
+                        {s.message_count} {t.common.msgs} ·{"                "}
                         {timeAgo(s.last_active)}
                       </span>
 

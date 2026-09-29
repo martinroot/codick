@@ -413,7 +413,7 @@ export default function ConfigPage() {
           {showSection && (
             <div className="d-flex align-items-center gap-2 pt-4 pb-2 first:pt-0">
               <span className="fs-4 fw-semibold fs-6 fw-semibold ls-wide text-body-secondary">
-                {section.replace(/_/g, "        ")}
+                {section.replace(/_/g, "                ")}
               </span>
               <div className="flex-grow-1 border-top border-secondary" />
             </div>
@@ -607,7 +607,7 @@ export default function ConfigPage() {
                       {t.config.searchResults}
                     </CardTitle>
                     <Badge tone="secondary" className="fs-6">
-                      {searchMatchedFields.length}{"        "}
+                      {searchMatchedFields.length}{"                "}
                       {t.config.fields.replace(
                         "{s}",
                         searchMatchedFields.length !== 1 ? "s" : "",
@@ -638,7 +638,7 @@ export default function ConfigPage() {
                       {prettyCategoryName(activeCategory)}
                     </CardTitle>
                     <Badge tone="secondary" className="fs-6">
-                      {activeFields.length}{"        "}
+                      {activeFields.length}{"                "}
                       {t.config.fields.replace(
                         "{s}",
                         activeFields.length !== 1 ? "s" : "",

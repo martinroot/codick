@@ -143,7 +143,7 @@ export function H2({ className, ...props }: H2Props) {
   return (
     <Typography
       as="h2"
-      className={["h4 fw-semibold mb-0", className].filter(Boolean).join(" ")}
+      className={["h4 fw-semibold mb-0", className].filter(Boolean).join("  ")}
       {...(props as TypographyOwnProps)}
     />
   );

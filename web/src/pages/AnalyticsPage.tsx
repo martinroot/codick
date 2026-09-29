@@ -110,7 +110,7 @@ function SortHeader({
       onClick={() => toggle(col)}
       className={`cursor-pointer user-select-none ${className ?? ""}`}
     >
-      <span className="d-inline-flex align-items-center gap-2 rounded px-1 -mx-1 py-0.5 hover:bg-muted/40 transition-colors">
+      <span className="d-inline-flex align-items-center gap-2 rounded px-1 -mx-1 py-0.5 hover:bg-muted/40 transition">
         {label}
         {active ? (
           sortDir === "asc" ? (
@@ -264,7 +264,7 @@ function DailyTable({ daily }: { daily: AnalyticsDailyEntry[] }) {
               {sorted.map((d) => (
                 <tr
                     key={d.day}
-                    className="border-bottom border-border/50 hover:bg-secondary/20 transition-colors"
+                    className="border-bottom border-border/50 hover:bg-secondary/20 transition"
                   >
                   <td className="py-2 pr-4 fw-medium">
                       {formatDate(d.day)}
@@ -322,7 +322,7 @@ function ModelTable({ models }: { models: AnalyticsModelEntry[] }) {
               {sorted.map((m) => (
                 <tr
                   key={m.model}
-                  className="border-bottom border-border/50 hover:bg-secondary/20 transition-colors"
+                  className="border-bottom border-border/50 hover:bg-secondary/20 transition"
                 >
                   <td className="py-2 pr-4">
                     <span className="font-monospace fs-6">{m.model}</span>
@@ -379,7 +379,7 @@ function SkillTable({ skills }: { skills: AnalyticsSkillEntry[] }) {
               {sorted.map((skill) => (
                 <tr
                   key={skill.skill}
-                  className="border-bottom border-border/50 hover:bg-secondary/20 transition-colors"
+                  className="border-bottom border-border/50 hover:bg-secondary/20 transition"
                 >
                   <td className="py-2 pr-4">
                     <span className="font-monospace fs-6">{skill.skill}</span>
@@ -496,7 +496,7 @@ export default function AnalyticsPage() {
               <p>
                 The token, cost, and per-day analytics on this page are a
                 local debug estimate. They only count successful main-agent
-                responses with a usable <span className="font-monospace">usage</span>{"                                "}
+                responses with a usable <span className="font-monospace">usage</span>{"                                                                "}
                 block, and silently exclude auxiliary calls (context
                 compression, title generation, vision, session search, web
                 extract, smart approvals, MCP routing, plugin LLM access)
@@ -512,10 +512,10 @@ export default function AnalyticsPage() {
               <p>
                 Check your provider dashboard (OpenRouter, Anthropic, etc.)
                 for actual usage and billing. To re-enable the local debug
-                estimate anyway, set{"        "}
+                estimate anyway, set{"                "}
                 <span className="font-monospace">
                   dashboard.show_token_analytics: true
-                </span>{"        "}
+                </span>{"                "}
                 in <a href="/config" className="text-decoration-underline">Config</a>.
               </p>
             </div>

@@ -681,7 +681,7 @@ export default function App() {
                 dropped: the rail already carries `p-3`, and keeping both
                 indented the links twice. */}
             <nav
-              className="nav nav-pills flex-column gap-1 flex-grow-1 overflow-y-auto overflow-x-hidden pb-2 mb-2 border-bottom"
+              className="nav nav-pills flex-column gap-1 flex-grow-1 min-h-0 overflow-y-auto overflow-x-hidden pb-2 mb-2 border-bottom"
               aria-label={t.app.navigation}
             >
               <ul className="nav nav-pills flex-column gap-1">
@@ -1182,7 +1182,7 @@ function SystemActionButton({
         )}
 
         <span className={cn(
-          "text-truncate transition-opacity duration-300",
+          "text-truncate transition duration-300",
           collapsed ? "lg:opacity-0" : "lg:opacity-100",
         )}>
           {displayLabel}
@@ -1229,7 +1229,7 @@ function SidebarIconWithTooltip({
       {collapsed && (
         <span
           aria-hidden
-          className="position-absolute inset-y-0 inset-x-[-0.375rem] bg-body-tertiary opacity-0 pointer-events-none transition-opacity duration-200 group-hover/icon:opacity-5 d-none lg:block"
+          className="position-absolute inset-y-0 inset-x-[-0.375rem] bg-body-tertiary opacity-0 pointer-events-none transition duration-200 group-hover/icon:opacity-5 d-none lg:block"
         />
       )}
 
@@ -1275,7 +1275,7 @@ function GatewayDot({ collapsed, status, tooltipWarmRef }: GatewayDotProps) {
   return (
     <div
       className={cn(
-        "d-none lg:flex py-3 pl-[1.625rem] transition-opacity duration-300",
+        "d-none lg:flex py-3 pl-[1.625rem] transition duration-300",
         collapsed ? "lg:opacity-100" : "lg:opacity-0 lg:h-0 lg:py-0 lg:overflow-hidden",
       )}
       role="status"

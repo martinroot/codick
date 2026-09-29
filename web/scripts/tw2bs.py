@@ -178,6 +178,33 @@ MAP = {
     "my-4": "my-4", "my-5": "my-5",
     # Flex sizing / overflow helpers Bootstrap does have.
     "text-primary": "text-primary",
+    # Axis-specific gutters. Bootstrap names them column/row-gap, so these
+    # are the same value under a different name — and without them a
+    # `gap-x-2` header row loses its spacing entirely, which is what ran
+    # "Model Settings" into "applies to new sessions".
+    "gap-x-0": "column-gap-0", "gap-x-1": "column-gap-1",
+    "gap-x-2": "column-gap-2", "gap-x-3": "column-gap-3",
+    "gap-x-4": "column-gap-4", "gap-x-5": "column-gap-5",
+    "gap-y-0": "row-gap-0", "gap-y-1": "row-gap-1",
+    "gap-y-2": "row-gap-2", "gap-y-3": "row-gap-3",
+    "gap-y-4": "row-gap-4", "gap-y-5": "row-gap-5",
+    # Tinted surfaces. The old system expressed these as an alpha over a
+    # semantic token; Bootstrap has explicit subtle slots, which are the
+    # same intent without a colour-mix.
+    "bg-muted/20": "bg-secondary-subtle",
+    "bg-muted/40": "bg-secondary-subtle",
+    "bg-muted/10": "bg-secondary-subtle",
+    "hover:bg-muted/20": "hover:bg-secondary-subtle",
+    "bg-border/30": "bg-body-tertiary",
+    "border-border/30": "border-secondary",
+    "border-border/50": "border-secondary",
+    "border-border/60": "border-secondary",
+    "bg-card/50": "bg-body-tertiary",
+    "bg-background/85": "bg-body",
+    "bg-background/70": "bg-body",
+    "transition-colors": "transition",
+    "transition-opacity": "transition",
+    "transition-transform": "transition",
     "hover:text-foreground": "hover:text-body-emphasis",
     "hover:text-midground": "hover:text-body",
     "hover:bg-secondary": "hover:bg-secondary",

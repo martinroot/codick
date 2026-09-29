@@ -901,7 +901,7 @@ export default function PluginsPage() {
             </div>
           ) : catalogEntries.length === 0 ? (
             <p className="fs-6 text-body-tertiary">
-              {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{"        "}
+              {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{"                "}
               <a
                 className="text-decoration-underline"
                 href="https://hermes-agent.nousresearch.com/docs/plugins"

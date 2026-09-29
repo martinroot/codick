@@ -138,7 +138,7 @@ function TokenBar({
       </div>
 
       {/* Legend */}
-      <div className="d-flex flex-wrap gap-x-3 gap-y-0.5 fs-6 text-body-secondary">
+      <div className="d-flex flex-wrap column-gap-3 gap-y-0.5 fs-6 text-body-secondary">
         {segments.map((s, i) => (
           <span key={i} className="d-flex align-items-center gap-1">
             <span
@@ -628,7 +628,7 @@ function AuxiliaryTasksModal({
             return (
               <div
                 key={t.key}
-                className="d-flex align-items-center justify-content-between gap-3 px-3 py-2 border border-border/30 bg-card/50 hover:bg-muted/20 transition-colors"
+                className="d-flex align-items-center justify-content-between gap-3 px-3 py-2 border border-border/30 bg-card/50 hover:bg-muted/20 transition"
               >
                 <div className="min-w-0 flex-grow-1">
                   <div className="d-flex align-items-baseline gap-2">
@@ -974,7 +974,7 @@ function ModelSettingsPanel({
   return (
     <Card className="min-w-0 max-w-full overflow-hidden">
       <CardHeader className="min-w-0 pb-3">
-        <div className="d-flex min-w-0 flex-wrap align-items-center gap-x-2 gap-y-1">
+        <div className="d-flex min-w-0 flex-wrap align-items-center column-gap-2 row-gap-1">
           <Settings2 className="icon-md flex-shrink-0 text-body-secondary" />
           <CardTitle className="fs-6">Model Settings</CardTitle>
           <span className="max-w-full min-w-0 fs-6 text-body-secondary [overflow-wrap:anywhere]">
@@ -1295,8 +1295,8 @@ export default function ModelsPage() {
                   Token & cost analytics are hidden because the local counts
                   exclude auxiliary calls (compression, vision, web extract,
                   …) and provider retries, so they diverge from your provider
-                  bill. Enable{"        "}
-                  <span className="font-monospace">dashboard.show_token_analytics</span>{"                                "}
+                  bill. Enable{"                "}
+                  <span className="font-monospace">dashboard.show_token_analytics</span>{"                                                                "}
                   in <a href="/config" className="text-decoration-underline">Config</a> to
                   show the local debug estimate anyway.
                 </p>
