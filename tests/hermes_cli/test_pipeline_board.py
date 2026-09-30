@@ -76,6 +76,20 @@ def _template(template_id: str = "word") -> dict:
     }
 
 
+@pytest.fixture
+def client():
+    """The kanban API on the same isolated databases, for the drag-guard tests."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from hermes_cli import kanban_api
+    from hermes_cli import pipeline_credentials
+
+    app = FastAPI()
+    app.include_router(kanban_api.router, prefix="/api/kanban")
+    with TestClient(app) as c:
+        yield c
+
+
 def _conns():
     pipeline_conn = db.connect()
     card_conn = kanban_db_connect.connect()
@@ -147,6 +161,147 @@ def test_the_reconciler_finds_a_run_whose_card_is_gone():
         broken = pipeline_board.find_broken_pairs(pipeline_conn, card_conn)
         assert any(b.kind == "card_without_run" and b.run_id == started["run_id"]
                    for b in broken), broken
+
+
+# --- run status -> board column (spec §9) ----------------------------------
+
+
+def test_the_spec_mapping_column_for_run():
+    """The mapping is the spec's, asserted here so it cannot be quietly edited."""
+    assert pipeline_board.column_for_run("queued") == "ready"
+    assert pipeline_board.column_for_run("running") == "running"
+    assert pipeline_board.column_for_run("running", on_review=True) == "review"
+    assert pipeline_board.column_for_run("waiting_input") == "blocked"
+    assert pipeline_board.column_for_run("blocked") == "blocked"
+    assert pipeline_board.column_for_run("failed") == "blocked"
+    assert pipeline_board.column_for_run("completed") == "done"
+    assert pipeline_board.column_for_run("cancelled") == "archived"
+
+
+def test_an_unmapped_status_moves_nothing_rather_than_guessing():
+    assert pipeline_board.column_for_run("some_state_the_spec_does_not_cover") is None
+
+
+def test_the_column_follows_the_run_status():
+    pipeline_conn, card_conn = _conns()
+    with closing(pipeline_conn), closing(card_conn):
+        started = pipeline_board.start_run_with_card(
+            pipeline_conn, template=_template(), owner_scope="site-a")
+        run_id, card_id = started["run_id"], started["card_id"]
+
+        pipeline_conn.execute(
+            "UPDATE pipeline_runs SET status = 'completed' WHERE id = ?", (run_id,))
+        pipeline_conn.commit()
+        assert pipeline_board.sync_card_column(pipeline_conn, card_conn, run_id) == "done"
+        assert kb.get_task(card_conn, card_id).status == "done"
+
+
+def test_a_running_review_step_lands_in_review():
+    pipeline_conn, card_conn = _conns()
+    with closing(pipeline_conn), closing(card_conn):
+        started = pipeline_board.start_run_with_card(
+            pipeline_conn, template=_template(), owner_scope="site-a")
+        pipeline_conn.execute(
+            "UPDATE pipeline_runs SET status = 'running' WHERE id = ?", (started["run_id"],))
+        pipeline_conn.commit()
+        assert pipeline_board.sync_card_column(
+            pipeline_conn, card_conn, started["run_id"], on_review=True) == "review"
+
+
+def test_an_ordinary_card_is_untouched_by_any_run():
+    """No run references it, so nothing the executor does can reach it.
+
+    This is the property that actually holds, and it holds because ownership is
+    by reference: a card becomes a pipeline card by being named in a run's
+    `card_id`. A run that names a card owns that card, and moving it is then
+    correct rather than a violation. The spec's real protection — refusing a
+    *manual* column change on a pipeline card — belongs in the drag path, not
+    here, and asserting it here would have tested a check that does not exist.
+    """
+    pipeline_conn, card_conn = _conns()
+    with closing(pipeline_conn), closing(card_conn):
+        ordinary = kb.create_task(card_conn, title="a normal card")
+        # Runs exist; none of them name this card.
+        other = pipeline_board.start_run_with_card(
+            pipeline_conn, template=_template(), owner_scope="site-a")
+        pipeline_conn.execute(
+            "UPDATE pipeline_runs SET status = 'completed' WHERE id = ?", (other["run_id"],))
+        pipeline_conn.commit()
+        assert pipeline_board.sync_card_column(pipeline_conn, card_conn, other["run_id"]) == "done"
+        # `ready` is what create_task derives for a card with no parents and no
+        # explicit initial status.
+        assert kb.get_task(card_conn, ordinary).status == "ready"
+
+
+def test_a_manual_column_change_on_a_pipeline_card_is_refused(client):
+    """Spec §9, in the MVP: drag must not start a step, skip a review, or mark a
+    run done. Refused where a human's drag lands.
+
+    The pair is created through `start_run_with_card` rather than the pipelines
+    API so that the only thing under test is the board's refusal — which is
+    where the spec puts it, and which needs no credential to set up.
+    """
+    pipeline_conn, card_conn = _conns()
+    with closing(pipeline_conn), closing(card_conn):
+        started = pipeline_board.start_run_with_card(
+            pipeline_conn, template=_template(), owner_scope="site-a")
+    moved = client.patch(f"/api/kanban/tasks/{started['card_id']}", json={"status": "done"})
+    assert moved.status_code == 409, moved.text
+    assert "pipeline" in moved.text.lower()
+
+
+def test_a_manual_column_change_on_an_ordinary_card_still_works(client):
+    """The guard must not stop the ordinary board, which is the whole risk here."""
+    card_id = client.post("/api/kanban/tasks",
+                         json={"title": "an ordinary card"}).json()["task"]["id"]
+    # `review`, not `done`: the completion gate (#11) refuses `done` without
+    # result/summary evidence, which is correct and unrelated to this guard.
+    moved = client.patch(f"/api/kanban/tasks/{card_id}", json={"status": "review"})
+    assert moved.status_code == 200, moved.text
+
+
+def test_a_missing_card_is_a_no_op_not_an_error():
+    """A run whose card was deleted: the sync reports nothing and raises nothing."""
+    pipeline_conn, card_conn = _conns()
+    with closing(pipeline_conn), closing(card_conn):
+        started = pipeline_board.start_run_with_card(
+            pipeline_conn, template=_template(), owner_scope="site-a")
+        kb.delete_task(card_conn, started["card_id"])
+        pipeline_conn.execute(
+            "UPDATE pipeline_runs SET status = 'completed' WHERE id = ?",
+            (started["run_id"],))
+        pipeline_conn.commit()
+        assert pipeline_board.sync_card_column(
+            pipeline_conn, card_conn, started["run_id"]) is None
+
+
+def test_a_second_sync_is_a_no_op():
+    pipeline_conn, card_conn = _conns()
+    with closing(pipeline_conn), closing(card_conn):
+        started = pipeline_board.start_run_with_card(
+            pipeline_conn, template=_template(), owner_scope="site-a")
+        run_id = started["run_id"]
+        pipeline_conn.execute(
+            "UPDATE pipeline_runs SET status = 'completed' WHERE id = ?", (run_id,))
+        pipeline_conn.commit()
+        assert pipeline_board.sync_card_column(pipeline_conn, card_conn, run_id) == "done"
+        assert pipeline_board.sync_card_column(pipeline_conn, card_conn, run_id) is None
+
+
+def test_the_column_change_is_recorded_on_the_card():
+    pipeline_conn, card_conn = _conns()
+    with closing(pipeline_conn), closing(card_conn):
+        started = pipeline_board.start_run_with_card(
+            pipeline_conn, template=_template(), owner_scope="site-a")
+        run_id = started["run_id"]
+        pipeline_conn.execute(
+            "UPDATE pipeline_runs SET status = 'completed' WHERE id = ?", (run_id,))
+        pipeline_conn.commit()
+        pipeline_board.sync_card_column(pipeline_conn, card_conn, run_id)
+        events = card_conn.execute(
+            "SELECT kind, payload FROM task_events WHERE task_id = ? ORDER BY id",
+            (started["card_id"],)).fetchall()
+        assert any(e["kind"] == "status_changed" for e in events), [e["kind"] for e in events]
 
 
 def test_a_whole_pair_is_not_reported_as_broken():

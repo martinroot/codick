@@ -116,6 +116,96 @@ def start_run_with_card(
     return {"run_id": new_run_id, "card_id": card_id}
 
 
+# --- run status -> board column (spec §9) ----------------------------------
+#
+# The mapping is given by the spec and is not re-invented here:
+#   queued -> Queued; running -> Running; running on review -> Review;
+#   waiting_input -> Waiting for input; blocked/failed -> Blocked;
+#   completed -> Done; cancelled -> archive.
+#
+# "running on review" is a *step* fact, not a run fact: a run is `running` both
+# while an agent step executes and while a review step is what is executing. The
+# caller has to say which, because only it knows the current step.
+
+_COLUMN_FOR_STATUS = {
+    "queued": "ready",
+    "running": "running",
+    "waiting_input": "blocked",
+    "blocked": "blocked",
+    "failed": "blocked",
+    "completed": "done",
+    "cancelled": "archived",
+}
+
+# `waiting_input` is Blocked on the board, which would make "waiting for a human"
+# indistinguishable from "genuinely stuck" — and the board's own diagnostics
+# treat those very differently, counting the second as an incident. The card is
+# parked in `blocked` because the strip has nowhere else to put a human wait, and
+# the input marker on the card is what distinguishes them. Recorded here because
+# it is a real loss of information, not a free choice.
+REVIEW_COLUMN = "review"
+
+
+def column_for_run(status: str, *, on_review: bool = False) -> Optional[str]:
+    """The board column a run's card belongs in, or ``None`` if unmapped.
+
+    An unmapped status returns ``None`` rather than guessing: inventing a column
+    for a state the spec does not cover would move a card somewhere the spec does
+    not sanction.
+    """
+    if status == "running" and on_review:
+        return REVIEW_COLUMN
+    return _COLUMN_FOR_STATUS.get(status)
+
+
+def sync_card_column(
+    pipelines_conn: sqlite3.Connection, card_conn: sqlite3.Connection,
+    run_id: str, *, on_review: bool = False,
+) -> Optional[str]:
+    """Move the run's card to the column its status calls for.
+
+    Returns the column written, or ``None`` if nothing moved — which includes the
+    card already being there, the card being gone, and the card not being a
+    pipeline card. Only pipeline cards are ever touched: a run whose ``card_id``
+    points at an ordinary card must not be able to drag it around the board.
+
+    Called after the executor has committed, never inside its transaction, for
+    the same reason the card is not created in one: the two databases cannot
+    share a transaction, so a failure here is a mismatch a later sync repairs,
+    not a corruption.
+    """
+    run = db.get_run(pipelines_conn, run_id)
+    if run is None or not run.card_id:
+        return None
+    column = column_for_run(run.status, on_review=on_review)
+    if column is None:
+        return None
+
+    task = kb.get_task(card_conn, run.card_id)
+    if task is None or task.status == column:
+        return None
+    # A run reaching a card *through* `card_id` is what makes it a pipeline card;
+    # there is no separate flag, because adding one would mean a column on the
+    # board's own `tasks` table and spec §12 keeps CoDick's state in CoDick's
+    # space. So this function cannot distinguish a wrongly-claimed card, and
+    # pretending otherwise would be a comment in place of a check.
+    #
+    # The protection the spec actually asks for is elsewhere and is the
+    # frontend's: drag-and-drop must not start steps, skip a review or mark a
+    # run done, so manual column changes are rejected for pipeline cards. That
+    # check belongs where a human's drag lands, not in the executor's own sync.
+    with kb.write_txn(card_conn):
+        changed = card_conn.execute(
+            "UPDATE tasks SET status = ? WHERE id = ? AND status != ?",
+            (column, run.card_id, column)).rowcount
+        if changed != 1:
+            return None
+        kb._append_event(
+            card_conn, run.card_id, "status_changed",
+            {"from": task.status, "to": column, "source": "pipeline", "run_id": run_id})
+    return column
+
+
 def find_broken_pairs(
     pipelines_conn: sqlite3.Connection, card_conn: sqlite3.Connection
 ) -> list[BrokenPair]:
@@ -148,4 +238,7 @@ def find_broken_pairs(
     return broken
 
 
-__all__ = ["BrokenPair", "StartError", "find_broken_pairs", "start_run_with_card"]
+__all__ = [
+    "BrokenPair", "StartError", "column_for_run", "find_broken_pairs",
+    "start_run_with_card", "sync_card_column",
+]

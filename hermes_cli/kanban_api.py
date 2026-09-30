@@ -667,6 +667,12 @@ def _patch_status(conn, task_id: str, payload: UpdateTaskBody, review_assignee_d
     """PATCH status phase: 400 on a rejected verb, 409 when the transition is refused
     (naming the blocking parent(s) for ``ready``/``done``/``review`` so the UI renders an actionable toast)."""
     s = payload.status
+    # Spec §9: for pipeline cards a manual column change is refused in the MVP,
+    # because dragging must not start a step, skip a review, or mark a run done —
+    # those are the executor's to decide. The check is here, where a human's drag
+    # lands, rather than in the executor's own sync, which is a different path
+    # and has no way to tell a person from the dispatcher.
+    _refuse_manual_pipeline_move(task_id, s)
     if s == "archived":
         ok = kanban_db.archive_task(conn, task_id)
     else:
@@ -681,6 +687,38 @@ def _patch_status(conn, task_id: str, payload: UpdateTaskBody, review_assignee_d
         names = ", ".join(f"{p['title']!r} ({p['id']}, status={p['status']})" for p in blockers)
         raise _conflict(f"Cannot move to 'ready': blocked by parent(s) not done — {names}")
     raise _conflict(_open_parent_refusal(conn, task_id, s) or f"status transition to {s!r} not valid from current state")
+
+
+def _refuse_manual_pipeline_move(task_id: str, new_status: str) -> None:
+    """409 when the card belongs to a pipeline run and this is a manual move.
+
+    A read of the pipelines DB, not a write: the board cannot know which cards
+    are pipeline cards without asking the side that owns that fact, and spec §12
+    keeps that state out of the board's own tables. The two databases cannot
+    share a transaction, so this is a check-then-act and the executor's sync
+    remains the authority — a move that slips through is corrected on the next
+    sync rather than corrupting anything.
+    """
+    if new_status == "archived":
+        # Archiving is not a column change that advances a run, and the spec's
+        # list of forbidden effects is about progress, so it is left alone.
+        return
+    try:
+        from hermes_cli import pipelines_db as pipelines
+        conn = pipelines.connect()
+    except Exception:
+        # No pipelines DB means no pipeline cards; refusing everything would
+        # break the ordinary board, so this fails open to today's behaviour.
+        return
+    try:
+        runs = pipelines.list_runs(conn)
+    finally:
+        conn.close()
+    if any(run.card_id == task_id for run in runs):
+        raise HTTPException(
+            status_code=409,
+            detail={"message": "this card is driven by a pipeline run; its column is set by the run",
+                    "task_id": task_id, "status": new_status})
 
 
 def _open_parent_refusal(conn, task_id: str, s: str) -> Optional[str]:
