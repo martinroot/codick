@@ -455,6 +455,101 @@ def test_a_card_with_no_run_and_a_card_you_do_not_own_look_the_same(client):
     assert stranger.json()["detail"] == f"card run {card_id} not found"
 
 
+def _register_file_artifact(client, run_id, filename="report.docx", body=b"PK\x03\x04body"):
+    """Register an artifact and put a real file behind it.
+
+    The route serves bytes off disk, so a test that registers metadata without
+    writing the file would pass the metadata contract and never reach the
+    response.
+    """
+    root = db.artifacts_root()
+    root.mkdir(parents=True, exist_ok=True)
+    ref = f"{run_id}/{filename}"
+    (root / ref).parent.mkdir(parents=True, exist_ok=True)
+    (root / ref).write_bytes(body)
+    conn = db.connect()
+    try:
+        artifact_id = db.register_artifact(
+            conn, run_id, filename=filename, storage_ref=ref, size=len(body),
+            mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+    finally:
+        conn.close()
+    return artifact_id
+
+
+def test_an_artifact_is_listed_on_the_run_and_downloadable(client):
+    tpl = _variant("artifacts")
+    _store(client, tpl)
+    r = client.post("/api/pipelines/runs", json={"template_id": tpl["id"], "inputs": {}},
+                    headers={"Idempotency-Key": "art-setup"})
+    assert r.status_code == 201, r.text
+    run_id = r.json()["id"]
+
+    artifact_id = _register_file_artifact(client, run_id)
+    detail = client.get(f"/api/pipelines/runs/{run_id}").json()
+    listed = [a for a in detail["artifacts"] if a["id"] == artifact_id]
+    assert listed, detail["artifacts"]
+    # Metadata, never a path: `storage_ref` is server-side only.
+    assert "storage_ref" not in listed[0]
+
+    got = client.get(f"/api/pipelines/artifacts/{artifact_id}/download")
+    assert got.status_code == 200, got.text
+    assert got.content.startswith(b"PK")
+    assert "report.docx" in got.headers.get("content-disposition", "")
+
+
+def test_someone_elses_artifact_is_a_404_that_looks_like_any_other(client):
+    """A download route must not confirm the guess.
+
+    "Exists but not yours" is the answer that turns an id space into an oracle,
+    so it has to be indistinguishable from "no such artifact" — which means the
+    test has to assert the *shape*, since the detail echoes the caller's own id.
+    """
+    tpl = _variant("artifacts-other")
+    _store(client, tpl)
+    r = client.post("/api/pipelines/runs", json={"template_id": tpl["id"], "inputs": {}},
+                    headers={"Idempotency-Key": "art-other"})
+    run_id = r.json()["id"]
+    artifact_id = _register_file_artifact(client, run_id)
+
+    stranger = client.get(
+        f"/api/pipelines/artifacts/{artifact_id}/download",
+        headers={"Authorization": f"Bearer {mint('site-not-mine')}"},
+    )
+    missing = client.get("/api/pipelines/artifacts/art_nonexistent/download")
+    assert stranger.status_code == missing.status_code == 404
+    assert set(stranger.json()) == set(missing.json()) == {"detail"}
+    assert stranger.json()["detail"] == f"artifact {artifact_id} not found"
+
+
+def test_a_storage_ref_that_escapes_the_root_is_refused(client):
+    """The check that matters is after the join, not before it.
+
+    `register_artifact` rejects a traversing ref, so this writes one straight into
+    the table: the resolved path must be inside the root, or the download route
+    would hand out a file from anywhere on the disk.
+    """
+    tpl = _variant("artifacts-escape")
+    _store(client, tpl)
+    r = client.post("/api/pipelines/runs", json={"template_id": tpl["id"], "inputs": {}},
+                    headers={"Idempotency-Key": "art-escape"})
+    run_id = r.json()["id"]
+    conn = db.connect()
+    try:
+        conn.execute(
+            "INSERT INTO artifacts (id, run_id, filename, mime_type, size, checksum, owner,"
+            " storage_ref, created_at) VALUES ('art_evil', ?, 'x.txt', 'text/plain', 0, NULL,"
+            " NULL, '../../../../etc/hostname', 1)", (run_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    # No connection held open, so the run ownership lookup and the refusal are
+    # independent: the route must not serve this even to the rightful owner.
+    got = client.get("/api/pipelines/artifacts/art_evil/download")
+    assert got.status_code == 404, got.text
+
+
 def test_run_creation_requires_an_idempotency_key(client):
     """Required, not optional.
 

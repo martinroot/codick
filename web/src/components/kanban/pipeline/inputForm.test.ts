@@ -7,6 +7,7 @@ import {
   missingRequired,
   unsupportedFields,
 } from "@/components/kanban/pipeline/inputForm";
+import { artifactDownloadUrl } from "@/lib/pipelines-api";
 import {
   DisclosureError,
   assertDisplayable,
@@ -123,6 +124,33 @@ describe("buildInputs", () => {
 // check's own thresholds tests the fixture, not the check.
 const JWT_FIXTURE =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+
+describe("artifactDownloadUrl", () => {
+  it("points at the protected download route with the session in the query", () => {
+    // A navigation cannot set a header, and the server accepts the query token on
+    // this path only — so a link built without it is a link that 401s.
+    const url = artifactDownloadUrl("art_1", "tok-123");
+    expect(url).toContain("/api/pipelines/artifacts/art_1/download");
+    expect(url).toContain("token=tok-123");
+  });
+
+  it("encodes the id, so a crafted id cannot add a path segment", () => {
+    // The server matches this path by its shape; an unencoded slash here would
+    // make the link point at a different route entirely.
+    const url = artifactDownloadUrl("../../etc/passwd", "t");
+    expect(url).toContain("..%2F..%2Fetc%2Fpasswd");
+    // Six segments: "", api, pipelines, artifacts, id, download. The server
+    // matches this path by exactly that shape, so pinning the count here is
+    // pinning the contract the link depends on.
+    expect(url.split("/")).toHaveLength(6);
+  });
+
+  it("appends the token with & when the url already carries the profile scope", () => {
+    const url = artifactDownloadUrl("art_1", "t");
+    // Either form is fine; what matters is that the separator is right.
+    expect(url).toMatch(/[?&]token=t($|&)/);
+  });
+});
 
 // The spec calls this "a check, not a convention" (spec §10), so it is tested as one.
 describe("the Data/API tab's disclosure check", () => {

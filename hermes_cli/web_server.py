@@ -468,8 +468,30 @@ def _has_valid_session_token(request: Request) -> bool:
 _QUERY_TOKEN_API_PATHS: frozenset[str] = frozenset({"/api/files/download"})
 
 
+def _is_query_token_path(path: str) -> bool:
+    """Whether ``path`` may authenticate by ``?token=`` instead of a header.
+
+    The set above is exact matches. The pipeline artifact download is a shaped
+    path, so it gets a shaped test rather than a prefix: one subtree, one verb,
+    exactly one id segment. A bare ``startswith("/api/pipelines")`` would hand
+    query-token auth to every route in the surface, which is the opposite of
+    "kept narrow".
+    """
+    if path in _QUERY_TOKEN_API_PATHS:
+        return True
+    parts = path.split("/")
+    return (
+        len(parts) == 6
+        and parts[1] == "api"
+        and parts[2] == "pipelines"
+        and parts[3] == "artifacts"
+        and parts[5] == "download"
+        and bool(parts[4])
+    )
+
+
 def _has_valid_query_token(request: Request, path: str) -> bool:
-    if path not in _QUERY_TOKEN_API_PATHS:
+    if not _is_query_token_path(path):
         return False
     token = request.query_params.get("token", "")
     return bool(token) and hmac.compare_digest(token.encode(), _SESSION_TOKEN.encode())

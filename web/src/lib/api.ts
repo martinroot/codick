@@ -139,7 +139,13 @@ const PROFILE_SCOPED_PREFIXES = [
 // when it provably resolves back to the serving home, so this can never retarget another
 // profile — it just says out loud what an unnamed request already meant. Without it every
 // destructive route 400s on a host that merely HAS a second profile directory.
-function withManagementProfile(url: string): string {
+/**
+ * Exported because a download *link* has to carry the same scope as the fetch
+ * that would otherwise have set the header: a selected profile's artifact must
+ * not be read from the launch profile's store, and a link cannot set a header.
+ * A caller that builds a URL and forgets this gets a file from the wrong place.
+ */
+export function withManagementProfile(url: string): string {
   const scope = getManagementProfile();
   if (!scope) return url;
   if (url.includes("profile=")) return url; // explicit param wins

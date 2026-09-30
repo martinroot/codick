@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { ArtifactList } from "@/components/kanban/pipeline/ArtifactList";
 import { DataApiTab } from "@/components/kanban/pipeline/DataApiTab";
 import { InputChat } from "@/components/kanban/pipeline/InputChat";
 import { StepStripView } from "@/components/kanban/pipeline/StepStripView";
@@ -421,6 +422,15 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
                 validationErrors={validationErrors.map((e) => ({ path: e.path, message: e.message }))}
               />
             )}
+          </div>
+        )}
+
+        {run && (
+          <div className="mt-2 pt-2 border-top">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <span className="small fw-semibold">Result</span>
+            </div>
+            <ArtifactList artifacts={run.artifacts ?? []} />
           </div>
         )}
 

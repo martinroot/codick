@@ -1236,8 +1236,10 @@ def register_artifact(
 ) -> str:
     """Record an artefact: metadata + a RELATIVE storage reference under ``artifacts_root()``
     (spec §12: metadata apart from large JSON columns; served through a protected route,
-    never a raw filesystem path). ``owner`` is the scope that may read it — the external
-    credential's scope format lands with #42; until then it is informational."""
+    never a raw filesystem path). ``owner`` records who produced the file and is
+    informational for *authorisation*: the download route authorises on the run's
+    owner scope, which #42 stamps server-side and which cannot be absent. A
+    missing or stale ``owner`` here must not be able to grant or deny access."""
     if not isinstance(filename, str) or not filename.strip():
         raise ValueError("artifact filename must be a non-empty string")
     if not isinstance(storage_ref, str) or not storage_ref.strip():
@@ -1254,6 +1256,38 @@ def register_artifact(
             (artifact_id, run_id, filename, mime_type, int(size), checksum, owner, storage_ref, ts),
         )
     return artifact_id
+
+
+def get_artifact(conn: sqlite3.Connection, artifact_id: str) -> Optional[Artifact]:
+    # The `is None` guard is load-bearing: `fetchone()` returns None for a miss,
+    # and handing that to `_artifact_from_row` — which subscripts its argument —
+    # turns "no such artifact" into a TypeError and a 500. A lookup that can miss
+    # has to say so; that is the whole difference between a 404 and a crash on the
+    # download route.
+    row = conn.execute("SELECT * FROM artifacts WHERE id = ?", (artifact_id,)).fetchone()
+    return None if row is None else _artifact_from_row(row)
+
+
+def resolve_artifact_path(storage_ref: str) -> Path:
+    """The file behind a storage reference, or refuse.
+
+    ``register_artifact`` already rejects an absolute ref or one containing
+    ``..``, and this re-checks after the join. The second check is not
+    redundancy for its own sake: a reference that passed validation can still
+    land outside the root through a symlink, and this is the function that hands
+    a path to the file response. The resolved path must be *inside* the root, not
+    merely built from a relative piece.
+    """
+    if not isinstance(storage_ref, str) or not storage_ref.strip():
+        raise ValueError("storage_ref must be a non-empty string")
+    ref = Path(storage_ref)
+    if ref.is_absolute() or ".." in ref.parts:
+        raise ValueError("storage_ref must be relative and cannot traverse upward")
+    root = artifacts_root().resolve()
+    target = (root / ref).resolve()
+    if target != root and root not in target.parents:
+        raise ValueError("storage_ref resolves outside the artifacts root")
+    return target
 
 
 def list_artifacts(conn: sqlite3.Connection, run_id: str) -> List[Artifact]:

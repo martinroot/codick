@@ -170,6 +170,37 @@ export interface PipelineRun {
   attempts: PipelineStepAttempt[];
   input_requests: PipelineInputRequest[];
   events: PipelineRunEvent[];
+  /** Metadata only — no filesystem path; fetch the bytes from the download route. */
+  artifacts?: PipelineArtifact[];
+}
+
+/** A delivered file: what the run produced, and how to ask for it. */
+export interface PipelineArtifact {
+  id: string;
+  run_id: string;
+  filename: string;
+  mime_type: string | null;
+  size: number;
+  checksum: string | null;
+  created_at: number;
+}
+
+/**
+ * The URL to download an artifact from.
+ *
+ * A plain link, not a fetch: the route answers with the bytes and the
+ * `Content-Disposition` the browser turns into a save, and a JS fetch would put
+ * the file in memory to re-save it by hand. The session rides in the URL
+ * because a browser cannot set `Authorization` on a navigation.
+ */
+export function artifactDownloadUrl(artifactId: string, token?: string | null): string {
+  // The id is encoded, so a real id never introduces a path segment — which is
+  // what the server's shape test on this path relies on.
+  const path = withManagementProfile(
+    `/api/pipelines/artifacts/${encodeURIComponent(artifactId)}/download`
+  );
+  const session = token ?? window.__HERMES_SESSION_TOKEN__ ?? null;
+  return session ? `${path}${path.includes("?") ? "&" : "?"}token=${encodeURIComponent(session)}` : path;
 }
 
 /**
@@ -247,6 +278,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 // -------------------------------------------------------------------------
 // Calls
 // -------------------------------------------------------------------------
+
+import { withManagementProfile } from "@/lib/api";
 
 export const pipelinesApi = {
   listTemplates(): Promise<{ templates: PipelineTemplateSummary[] }> {

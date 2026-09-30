@@ -40,10 +40,12 @@ import logging
 import sqlite3
 import time
 from contextlib import closing
+from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import (APIRouter, Body, Depends, Header, HTTPException, Query, Request,
                      Response)
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from gateway.platforms.api_server_run_idempotency import RunIdempotencyStore
@@ -261,6 +263,9 @@ def _run_detail(run_id: str) -> dict:
         attempts = [a for a in db.list_attempts(conn, run_id)]
         requests = [r for r in db.list_input_requests(conn, run_id)]
         events = [e for e in db.list_events(conn, run_id)][-50:]
+        # Metadata only: `to_dict` omits storage_ref, so a client learns the
+        # filename and can ask for the bytes through the protected route.
+        artifacts = [a.to_dict() for a in db.list_artifacts(conn, run_id)]
     return {
         "id": run.id,
         "template_id": run.template_id,
@@ -268,6 +273,7 @@ def _run_detail(run_id: str) -> dict:
         # The card this run is anchored to. The board's panel needs it to move
         # the selection across to the card it just made.
         "card_id": run.card_id,
+        "artifacts": artifacts,
         "status": run.status,
         "current_step_id": run.current_step_id,
         "error": run.error,
@@ -459,6 +465,48 @@ def get_run(run_id: str, request: Request) -> dict:
     with closing(conn):
         _require_owned_run(conn, run_id, scope)
     return _run_detail(run_id)
+
+
+@router.get("/artifacts/{artifact_id}/download")
+def download_artifact(artifact_id: str, request: Request):
+    """Serve an artifact's bytes (spec §11).
+
+    The spec is explicit that a file is passed as an ``artifact_ref`` and fetched
+    "through a protected route or a short-lived link" — never as a raw filesystem
+    path, which is why ``storage_ref`` is excluded from every default payload.
+
+    **Authorisation is the run's, not the artifact's.** ``Artifact.owner`` records
+    who produced the file and can legitimately be null; the run's ``owner_scope``
+    is stamped server-side by #42 and is the fact that is actually checked. A
+    missing or stale ``owner`` on the artifact therefore cannot grant access, and
+    cannot be used to deny it either.
+
+    A missing artifact, one owned by nobody and one owned by somebody else are all
+    the same 404, for the same reason the run routes do it: a download route that
+    answered "exists but not yours" would confirm the guess.
+    """
+    scope = _scope_for_request(request)
+    conn = _connect()
+    with closing(conn):
+        artifact = db.get_artifact(conn, artifact_id)
+        if artifact is None or not request_owns_run(conn, artifact.run_id, scope):
+            raise _not_found("artifact", artifact_id)
+        run_id = artifact.run_id
+    try:
+        path = db.resolve_artifact_path(artifact.storage_ref)
+    except ValueError:
+        # A reference that will not resolve is not a 500: it is not there as far
+        # as the caller is concerned, and saying more describes our storage.
+        raise _not_found("artifact", artifact_id)
+    if not path.is_file():
+        raise _not_found("artifact", artifact_id)
+    return FileResponse(
+        path,
+        media_type=artifact.mime_type or "application/octet-stream",
+        # `filename` is quoted by Starlette, and it is the caller's own recorded
+        # name rather than anything taken from the path.
+        filename=Path(artifact.filename).name,
+    )
 
 
 @router.get("/cards/{card_id}/run")
