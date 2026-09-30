@@ -642,6 +642,14 @@ def _rule_block_loop_detected(task, events, runs, now, cfg) -> list[Diagnostic]:
     if task_id:
         cmd = f"hermes kanban events {task_id}"
         actions.append(_cli_hint(f"Check block reasons: {cmd}", cmd, suggested=True))
+        # Offer the valve next to the alarm. Without it the only ways out of a
+        # spent counter are to complete a task that is not finished or to keep
+        # tripping the guard on every real block — and a counter set by a probe
+        # or a stale external actor is indistinguishable from a genuine one.
+        actions.append(_cli_hint(
+            f"If the counter is stale, clear it: hermes kanban reset-block-loop {task_id}",
+            f"hermes kanban reset-block-loop {task_id} --reason 'why the counter is stale'",
+        ))
     latest = _parse_payload(hits[-1])
     limit = latest.get("limit")
     recurrences = latest.get("recurrences")

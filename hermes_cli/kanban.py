@@ -207,7 +207,7 @@ def _profile_author() -> str:
 _DELEGATED_CHILD_DENIED_ACTIONS: frozenset[str] = frozenset({
     "init", "create", "swarm", "assign", "reclaim", "reassign", "link", "unlink",
     "claim", "comment", "attach", "attach-rm", "complete", "edit", "block",
-    "schedule", "unblock", "promote", "archive", "dispatch", "daemon", "repair",
+    "schedule", "unblock", "reset-block-loop", "promote", "archive", "dispatch", "daemon", "repair",
     "heartbeat", "notify-subscribe", "notify-unsubscribe", "specify", "decompose",
     "request-review", "request-changes", "reopen-review",
     "gc",
@@ -1031,6 +1031,30 @@ def _cmd_unblock(args: argparse.Namespace) -> int:
                            lambda tid: f"cannot unblock {tid} (not blocked/scheduled?)")
 
 
+def _cmd_reset_block_loop(args: argparse.Namespace) -> int:
+    """Operator-only. Deliberately shares nothing with the automatic unblock path."""
+    if os.environ.get("HERMES_KANBAN_TASK"):
+        return _err("kanban reset-block-loop is orchestrator-only; workers must hand off their assigned task")
+    ids, rc = _require_ids(args)
+    if rc:
+        return rc
+    reason = _stripped_or_none(getattr(args, "reason", None))
+    author = _profile_author() if reason else None
+    suffix = f": {reason}" if reason else ""
+    with kbc.connect_closing() as conn:
+        def op(tid: str) -> bool:
+            cleared = kb.reset_block_loop(conn, tid, reason=reason)
+            if cleared and reason:
+                kb.add_comment(conn, tid, author, f"RESET BLOCK LOOP{suffix}")
+            return cleared
+
+        return _bulk_apply(
+            ids, op,
+            lambda tid: f"Cleared block counter on {tid}{suffix} (status unchanged)",
+            lambda tid: f"no block counter set on {tid}",
+        )
+
+
 def _cmd_request_review(args: argparse.Namespace) -> int:
     tid = args.task_id
     summary = _stripped_or_none(getattr(args, "summary", None))
@@ -1326,7 +1350,7 @@ _HANDLERS = {
     "comment": _cmd_comment, "attach": _cmd_attach,
     "attachments": _cmd_attachments, "attach-rm": _cmd_attach_rm,
     "complete": _cmd_complete, "edit": _cmd_edit, "block": _cmd_block,
-    "schedule": _cmd_schedule, "unblock": _cmd_unblock,
+    "schedule": _cmd_schedule, "unblock": _cmd_unblock, "reset-block-loop": _cmd_reset_block_loop,
     "request-review": _cmd_request_review, "request-changes": _cmd_request_changes,
     "reopen-review": _cmd_reopen_review, "promote": _cmd_promote,
     "archive": _cmd_archive, "tail": _cmd_tail, "dispatch": _cmd_dispatch,

@@ -3649,6 +3649,50 @@ def _landing_status_after_parents(conn: sqlite3.Connection, task_id: str) -> str
     return "ready" if _parents_satisfied(conn, task_id) else "todo"
 
 
+def reset_block_loop(conn: sqlite3.Connection, task_id: str, *, reason: Optional[str] = None,
+                     now: Optional[int] = None) -> bool:
+    """Clear ``block_kind``/``block_recurrences`` without completing the task.
+
+    ``unblock_task`` deliberately leaves the recurrence counter alone — resetting
+    it there is the amnesia that let a cron-driven unblock/re-block cycle run
+    unbounded, and only :func:`complete_task` clears it. That is the right
+    default, but it leaves one case with no way out: a counter set by a test
+    probe, a mistaken external call, or a stale actor is indistinguishable from
+    a genuine one, and the guard will trip on the *next* real block.
+
+    The only supported alternative to finishing a task that is not finished was
+    to finish a task that is not finished. This is the valve, and it is
+    reachable only by an operator naming a task — never from ``unblock_task``,
+    never from the dispatcher, never from diagnostics. If it were wired into the
+    automatic path it would reopen exactly the loop the counter exists to stop.
+    """
+    ts = int(time.time()) if now is None else int(now)
+    with write_txn(conn):
+        row = conn.execute(
+            "SELECT status, block_kind, block_recurrences FROM tasks WHERE id = ?", (task_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"task {task_id} not found")
+        if not row["block_kind"] and not (row["block_recurrences"] or 0):
+            return False
+        conn.execute(
+            "UPDATE tasks SET block_kind = NULL, block_recurrences = 0 WHERE id = ?", (task_id,),
+        )
+        _append_event(
+            conn, task_id, "block_loop_reset",
+            {
+                "cleared_kind": row["block_kind"],
+                "cleared_recurrences": int(row["block_recurrences"] or 0),
+                "status": row["status"],
+                # Stated so the event log says the counter was cleared without
+                # the cause being fixed — the next real block starts from zero
+                # and is counted on its own merits.
+                "reason": reason or "operator reset",
+            },
+        )
+    return True
+
+
 def unblock_task(conn: sqlite3.Connection, task_id: str) -> bool:
     """``blocked``/``scheduled`` -> its resumable phase (parent re-gated; ``review``
     when that is where it left off), closing any leaked run first."""

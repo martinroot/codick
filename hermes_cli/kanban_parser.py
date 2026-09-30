@@ -332,6 +332,12 @@ _SPECS = [
         _reason("Optional reason/note — recorded as a comment before unblocking. Quote multi-word reasons."),
         _TASK_IDS,
     ], help="Return blocked/scheduled tasks to ready, or todo while parents remain open"),
+    _cmd("reset-block-loop", [
+        _reason("Why the block counter is being cleared — recorded on the task."),
+        _TASK_IDS,
+    ], help="Clear block_kind/block_recurrences on tasks, restoring the guard's "
+           "full budget. Does not unblock and does not complete: the next real "
+           "block is counted from zero."),
     _cmd("request-review", [
         _TASK_ID,
         _arg("--summary", help="What was implemented and how it was verified — shown to the reviewer."),
