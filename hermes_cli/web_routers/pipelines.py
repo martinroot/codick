@@ -461,6 +461,30 @@ def get_run(run_id: str, request: Request) -> dict:
     return _run_detail(run_id)
 
 
+@router.get("/cards/{card_id}/run")
+def get_run_for_card(card_id: str, request: Request) -> dict:
+    """The run anchored to a board card.
+
+    This exists because the panel cannot otherwise re-attach: a run is created
+    together with its card, but nothing could find it again by the card, so a
+    reload left the operator with a card on the board and no question to answer.
+    For a service someone pays for and comes back to later, that is the normal
+    case rather than an edge one.
+
+    Ownership is checked the same way as on the run routes, and the failure is
+    the same 404. A card that has a run and a card that has not must be
+    indistinguishable here, or this route becomes an oracle for guessing which
+    cards are running pipelines.
+    """
+    scope = _scope_for_request(request)
+    conn = _connect()
+    with closing(conn):
+        run = db.get_run_by_card(conn, card_id)
+        if run is None or not request_owns_run(conn, run.id, scope):
+            raise _not_found("card run", card_id)
+    return _run_detail(run.id)
+
+
 # --- credentials (#42) -----------------------------------------------------
 #
 # Operator-only, and deliberately not on the read path of a run: a credential

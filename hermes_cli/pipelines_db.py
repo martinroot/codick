@@ -736,6 +736,21 @@ def delete_unstarted_run(conn: sqlite3.Connection, run_id: str) -> bool:
     return True
 
 
+def get_run_by_card(conn: sqlite3.Connection, card_id: str) -> Optional[PipelineRun]:
+    """The run anchored to a board card, if there is one.
+
+    A card has at most one pipeline run — that is what the pair in
+    `pipeline_board` means — so this is a lookup, not a search. Ordered newest
+    first so a card that somehow carries two answers with the newer, which is the
+    one the board is showing.
+    """
+    row = conn.execute(
+        "SELECT * FROM pipeline_runs WHERE card_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1",
+        (card_id,),
+    ).fetchone()
+    return _run_from_row(row) if row is not None else None
+
+
 def get_run(conn: sqlite3.Connection, run_id: str) -> Optional[PipelineRun]:
     row = conn.execute("SELECT * FROM pipeline_runs WHERE id = ?", (run_id,)).fetchone()
     return None if row is None else _run_from_row(row)

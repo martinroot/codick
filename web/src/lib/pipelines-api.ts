@@ -298,6 +298,18 @@ export const pipelinesApi = {
     return request(`/runs/${encodeURIComponent(runId)}`);
   },
 
+  /**
+   * The run anchored to a board card.
+   *
+   * Without this the panel cannot re-attach: a run is created together with its
+   * card, but nothing could find it again by the card, so a reload left the
+   * operator looking at a card with no question to answer. For a service someone
+   * pays for and returns to later, that reload is the normal case.
+   */
+  getRunByCard(cardId: string): Promise<PipelineRun> {
+    return request(`/cards/${encodeURIComponent(cardId)}/run`);
+  },
+
   /** Events after `afterSeq`, so a reconnect catches up instead of restarting. */
   listEvents(runId: string, afterSeq = 0): Promise<{ events: PipelineRunEvent[] }> {
     return request(`/runs/${encodeURIComponent(runId)}/events?after_seq=${afterSeq}`);

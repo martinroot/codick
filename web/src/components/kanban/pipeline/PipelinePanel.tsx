@@ -182,6 +182,30 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
   );
   const openRequest = run ? openInputRequest(run) : null;
 
+  // Re-attach to the card's run whenever the selection changes. This is what
+  // makes the panel survive a reload: without it, coming back to answer a
+  // question an hour later would show a card and no question.
+  React.useEffect(() => {
+    if (!selectedCardId) {
+      setRun(null);
+      return;
+    }
+    let cancelled = false;
+    pipelinesApi
+      .getRunByCard(selectedCardId)
+      .then((found) => {
+        if (!cancelled) setRun(found);
+      })
+      .catch(() => {
+        // An ordinary card has no pipeline run, and that is not an error worth a
+        // toast every time someone clicks a normal task.
+        if (!cancelled) setRun(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCardId]);
+
   // The server is the state, so answering re-reads the run rather than guessing
   // what it became. The dispatcher's next step is not ours to predict.
   const refreshRun = React.useCallback(async () => {

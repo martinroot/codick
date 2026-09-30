@@ -415,6 +415,46 @@ def test_exactly_one_router_owns_the_pipelines_prefix():
     assert len(routes) >= 10, "the merged surface lost routes"
 
 
+def test_a_run_can_be_found_again_by_its_card(client):
+    """A card is not enough to find a run; this is what makes it enough."""
+    tpl = _variant("by-card")
+    run_id, _request_id = _run_to_waiting(client, tpl)
+    # The card id comes from the run's own snapshot rather than from the helper's
+    # second value, which is the *request* id.
+    card_id = client.get(f"/api/pipelines/runs/{run_id}").json()["card_id"]
+    assert card_id, "a run is created together with its card, so this must not be null"
+    found = client.get(f"/api/pipelines/cards/{card_id}/run")
+    assert found.status_code == 200, found.text
+    assert found.json()["id"] == run_id
+
+
+def test_a_card_with_no_run_and_a_card_you_do_not_own_look_the_same(client):
+    """The lookup must not become an oracle for "is this card running a pipeline?".
+
+    A 404 that differed between "no run here" and "a run here that is not yours"
+    would answer the question for whoever asked, which is the one thing the
+    indistinguishable-404 rule exists to prevent.
+    """
+    tpl = _variant("by-card-other")
+    run_id, _request_id = _run_to_waiting(client, tpl)
+    card_id = client.get(f"/api/pipelines/runs/{run_id}").json()["card_id"]
+
+    stranger = client.get(
+        f"/api/pipelines/cards/{card_id}/run",
+        headers={"Authorization": f"Bearer {mint('site-not-mine')}"},
+    )
+    missing = client.get("/api/pipelines/cards/card_nonexistent/run")
+    assert stranger.status_code == missing.status_code == 404
+    # The detail echoes the id the caller itself sent, and nothing else. That is
+    # the whole rule: the message is a function of the request, never of the
+    # data. Echoing back an id the caller supplied is not a disclosure — it
+    # already knows it — but a message that differed on the *shape* between
+    # "no run" and "not yours" would answer the question, which is what the
+    # identical status and identical key here prevent.
+    assert set(stranger.json()) == set(missing.json()) == {"detail"}
+    assert stranger.json()["detail"] == f"card run {card_id} not found"
+
+
 def test_run_creation_requires_an_idempotency_key(client):
     """Required, not optional.
 
