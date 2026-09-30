@@ -47,7 +47,8 @@ __all__ = [
     "ScenarioTemplate", "PipelineRun", "StepAttempt", "InputRequest", "RunEvent", "Artifact",
     "pipelines_data_root", "pipelines_db_path", "artifacts_root", "connect", "connect_closing",
     "import_template", "get_template", "list_templates", "list_template_versions", "delete_template",
-    "create_run", "get_run", "list_runs", "runs_for_card", "set_run_status", "set_run_scheduling",
+    "create_run", "delete_unstarted_run",
+ "get_run", "list_runs", "runs_for_card", "set_run_status", "set_run_scheduling",
     "set_run_result", "finish_run", "bump_rework_cycles", "bump_step_executions",
     "expire_input_deadlines",
     "create_attempt", "get_attempt", "list_attempts", "start_attempt", "finish_attempt",
@@ -696,6 +697,32 @@ def create_run(
                                                            "template_version": template_version},
                      txn_open=True, occurred_at=ts)
     return run_id
+
+
+def delete_unstarted_run(conn: sqlite3.Connection, run_id: str) -> bool:
+    """Drop a run that was created but never started. Returns whether it was dropped.
+
+    This exists for one caller: run creation reserves an ``Idempotency-Key`` *after*
+    the run exists (#41 follows the gateway, which creates the run first and then
+    discards it on a replay or conflict), so a losing request has a row to undo.
+    It is deliberately not a general delete — the guard refuses any run that has
+    started, so it cannot be used to erase a run's history.
+    """
+    with write_txn(conn):
+        row = conn.execute(
+            "SELECT status FROM pipeline_runs WHERE id = ?", (run_id,)).fetchone()
+        if row is None:
+            return False
+        if row["status"] != "queued":
+            raise ValueError(
+                f"refusing to delete run {run_id!r}: status is {row['status']!r}, not 'queued'")
+        started = conn.execute(
+            "SELECT COUNT(*) AS n FROM step_attempts WHERE run_id = ?", (run_id,)).fetchone()["n"]
+        if started:
+            raise ValueError(
+                f"refusing to delete run {run_id!r}: it has {started} attempt(s)")
+        conn.execute("DELETE FROM pipeline_runs WHERE id = ?", (run_id,))
+    return True
 
 
 def get_run(conn: sqlite3.Connection, run_id: str) -> Optional[PipelineRun]:

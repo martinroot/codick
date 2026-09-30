@@ -26,12 +26,16 @@ from __future__ import annotations
 
 import json
 import logging
+import hashlib
+import json
 import sqlite3
 import time
 from contextlib import closing
 from typing import Any, Optional
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Body, Header, HTTPException, Query, Response
+
+from gateway.platforms.api_server_run_idempotency import RunIdempotencyStore
 from pydantic import BaseModel, Field
 
 from hermes_cli import pipelines_db as db
@@ -44,6 +48,66 @@ router = APIRouter()
 
 def _connect() -> sqlite3.Connection:
     return db.connect()
+
+
+# --- Idempotency-Key (#41) ------------------------------------------------
+#
+# This is a port, not a build. The gateway already has a durable store with the
+# exact semantics the spec wants: rows keyed (scope, key, fingerprint), a replay
+# classified `reused` on a fingerprint match and `conflict` on a mismatch via
+# hmac.compare_digest, and fingerprints and public status only — never request
+# bodies or credentials, which section 12 independently requires. Reimplementing
+# it would be a second store to keep in step with the first, so this reuses it.
+#
+# What is adapted: the scope. The gateway keys by authenticated principal; the
+# dashboard surface has no such principal, so the scope is the operation itself,
+# which is what keeps a key from one operation from colliding with another.
+
+_IDEMPOTENCY_STORE: Optional["RunIdempotencyStore"] = None
+_IDEMPOTENCY_STORE_PATH: Optional[str] = None
+
+
+def _idempotency_store() -> "RunIdempotencyStore":
+    """The shared store, created on first use.
+
+    Deliberately not process state: the whole point of the donor store is that a
+    replay survives a restart, and an in-process cache would be a different,
+    weaker guarantee wearing its name.
+
+    It is cached against the path it was opened for, not just once per process.
+    A bare ``if store is None`` would keep serving whichever home opened the
+    store first, which hands a later caller a store for a database that is no
+    longer the one it is writing to.
+    """
+    global _IDEMPOTENCY_STORE, _IDEMPOTENCY_STORE_PATH
+    path = str(db.pipelines_data_root() / "runs_idempotency.db")
+    if _IDEMPOTENCY_STORE is None or _IDEMPOTENCY_STORE_PATH != path:
+        _IDEMPOTENCY_STORE = RunIdempotencyStore(db_path=path)
+        _IDEMPOTENCY_STORE_PATH = path
+    return _IDEMPOTENCY_STORE
+
+
+def _fingerprint(payload: Any) -> str:
+    """A stable digest of the request body.
+
+    Canonical JSON (sorted keys, no whitespace) so that two byte-different but
+    semantically identical bodies do not read as a conflict, then hashed rather
+    than stored: the row keeps a fingerprint, so the request body is not retained
+    anywhere.
+    """
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _reserve(scope: str, key: str, payload: Any, run_id: str, status: dict) -> tuple[str, dict]:
+    """Reserve an idempotency key, returning ``(outcome, stored_record)``.
+
+    Outcomes are the donor's: ``created`` for a fresh key, ``reused`` when the
+    same key carries the same payload (replay the stored result), ``conflict``
+    when it carries a different one (409). The whole record is returned because
+    a replay has to name the run the key originally admitted.
+    """
+    return _idempotency_store().reserve(scope, key, _fingerprint(payload), run_id, status)
 
 
 def _template_errors(errors) -> list[dict]:
@@ -206,7 +270,19 @@ def validate_only(body: StoreTemplateBody) -> dict:
 
 
 @router.post("/runs")
-def create_run(body: CreateRunBody) -> dict:
+def create_run(body: CreateRunBody, response: Response, idempotency_key: str | None = Header(None)) -> dict:
+    """Create a run. ``Idempotency-Key`` is required (spec §12).
+
+    Required rather than optional because the alternative is a caller with no way
+    to tell a lost response from a lost run, retrying into a second run and a
+    second card. A missing key is 400, not a silent pass-through.
+    """
+    if not idempotency_key or not idempotency_key.strip():
+        raise HTTPException(status_code=400,
+                            detail={"message": "Idempotency-Key header is required to create a run"})
+    key = idempotency_key.strip()
+    scope = "pipelines:run"
+
     conn = _connect()
     with closing(conn):
         row = db.get_template(conn, body.template_id, body.version)
@@ -225,7 +301,27 @@ def create_run(body: CreateRunBody) -> dict:
                                 detail={"message": "stored template no longer validates",
                                         "errors": _template_errors(errors)})
         run_id = db.create_run(conn, row.template, inputs=body.inputs)
+        # Reserved after the run exists, following the gateway: a reservation is
+        # keyed on the run it admitted, and `reserve` will not rewrite an
+        # existing row, so reserving against a placeholder id would both lose the
+        # real run id and collide on the store's UNIQUE(run_id) index the moment
+        # a second key arrived. The loser is rolled back below.
+        outcome, stored = _reserve(scope, key, body.model_dump(), run_id,
+                                   {"status": "queued", "template_id": body.template_id})
+        if outcome != "created":
+            db.delete_unstarted_run(conn, run_id)
+            if outcome == "conflict":
+                raise HTTPException(
+                    status_code=409,
+                    detail={"message": "Idempotency-Key was already used with a different payload"})
+            # A replay returns the originally admitted run, not a second one.
+            replayed = _run_detail(stored["run_id"]) if stored.get("run_id") else stored.get("status", {})
+            response.status_code = 200
+            response.headers["Idempotency-Key"] = key
+            return replayed
         detail = _run_detail(run_id)
+    response.status_code = 201
+    response.headers["Idempotency-Key"] = key
     return detail
 
 
@@ -258,6 +354,32 @@ def submit_input_response(run_id: str, request_id: str, body: SubmitResponseBody
     advance the run twice because the ``status = 'open'`` compare-and-set admits
     exactly one of them, and the loser's 409 says which request already won.
     """
+    # The donor's store holds UNIQUE(run_id) across the whole table, and run
+    # creation already reserved the pipeline run's own id. A response is
+    # therefore reserved under a distinct, request-scoped identity.
+    reservation_id = f"input:{request_id}"
+    if idempotency_key and idempotency_key.strip():
+        # lookup, not reserve: the pre-check must not consume the key, because
+        # the reservation written at the end carries the real result and
+        # `reserve` will not rewrite an existing row.
+        outcome, record = _idempotency_store().lookup(
+            f"pipelines:response:{run_id}", idempotency_key.strip(),
+            _fingerprint(body.model_dump()))
+        if outcome == "conflict":
+            raise HTTPException(
+                status_code=409,
+                detail={"message": "Idempotency-Key was already used with a different payload",
+                        "request_id": request_id})
+        if outcome == "reused":
+            # A legitimate retry of an accepted response. The request is closed
+            # by now, so without this the caller would get a 409 that looks like
+            # a conflict when it is in fact a replay.
+            return {"request_id": request_id,
+                    "status": record["status"].get("status"),
+                    "accepted_response": record["status"].get("accepted_response"),
+                    "responded_at": record["status"].get("responded_at"),
+                    "replayed": True}
+
     conn = _connect()
     with closing(conn):
         db.expire_input_deadlines(conn)
@@ -295,7 +417,7 @@ def submit_input_response(run_id: str, request_id: str, body: SubmitResponseBody
                 detail={"message": str(exc), "request_id": request_id},
             ) from exc
         run = db.get_run(conn, run_id)
-    return {
+    result = {
         "request_id": request_id,
         "status": accepted.status,
         "accepted_response": accepted.accepted_response,
@@ -304,6 +426,14 @@ def submit_input_response(run_id: str, request_id: str, body: SubmitResponseBody
         "current_step_id": run.current_step_id if run else None,
         "deadline": run.deadline if run else None,
     }
+    if idempotency_key and idempotency_key.strip():
+        # Recorded after acceptance, and stored as the *result* so a replay can
+        # return it verbatim. Only the public outcome is kept — never the body.
+        _reserve(f"pipelines:response:{run_id}", idempotency_key.strip(),
+                 body.model_dump(), reservation_id,
+                 {"status": accepted.status, "accepted_response": accepted.accepted_response,
+                  "responded_at": accepted.responded_at})
+    return result
 
 
 @router.get("/runs/{run_id}/events")

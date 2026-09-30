@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import sys
+from contextlib import closing
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -95,8 +96,9 @@ def _store(client, template: dict) -> dict:
 def _run_to_waiting(client, template: dict) -> tuple[str, str]:
     """Store, create, and drive to the wait — the dispatcher, simulated."""
     _store(client, template)
-    r = client.post("/api/pipelines/runs", json={"template_id": template["id"], "inputs": {}})
-    assert r.status_code == 200, r.text
+    r = client.post("/api/pipelines/runs", json={"template_id": template["id"], "inputs": {}},
+                    headers={"Idempotency-Key": f"setup-{template['id']}"})
+    assert r.status_code == 201, r.text
     run_id = r.json()["id"]
     adapter = FakeAdapter(scripted(draft=[{}], publish=[{}]))
     conn = db.connect()
@@ -150,7 +152,8 @@ def test_a_stored_template_round_trips_and_versions(client):
 
 def test_an_unknown_template_is_404(client):
     assert client.get("/api/pipelines/templates/nope").status_code == 404
-    assert client.post("/api/pipelines/runs", json={"template_id": "nope"}).status_code == 404
+    assert client.post("/api/pipelines/runs", json={"template_id": "nope"},
+                       headers={"Idempotency-Key": "k1"}).status_code == 404
 
 
 # --- the wait -------------------------------------------------------------
@@ -175,6 +178,77 @@ def test_a_wait_holds_no_worker_and_survives_a_re_read(client):
 
 
 # --- the response surface -------------------------------------------------
+
+
+# --- Idempotency-Key (#41) ------------------------------------------------
+
+
+def test_run_creation_requires_an_idempotency_key(client):
+    """Required, not optional.
+
+    A caller that cannot tell a lost response from a lost run has to retry, and
+    an unkeyed retry would create a second run and a second card. A missing key
+    is a 400 rather than a silent pass-through.
+    """
+    _store(client, TEMPLATE)
+    assert client.post("/api/pipelines/runs", json={"template_id": "ask"}).status_code == 400
+
+
+def test_the_same_key_and_payload_replays_the_first_run(client):
+    _store(client, TEMPLATE)
+    first = client.post("/api/pipelines/runs", json={"template_id": "ask"},
+                        headers={"Idempotency-Key": "k1"})
+    assert first.status_code == 201
+    again = client.post("/api/pipelines/runs", json={"template_id": "ask"},
+                        headers={"Idempotency-Key": "k1"})
+    assert again.status_code == 200
+    assert again.json()["id"] == first.json()["id"], "a replay must not be a second run"
+
+
+def test_the_same_key_with_a_different_payload_is_a_conflict(client):
+    _store(client, TEMPLATE)
+    assert client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {"topic": "a"}},
+                       headers={"Idempotency-Key": "k1"}).status_code == 201
+    clash = client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {"topic": "b"}},
+                        headers={"Idempotency-Key": "k1"})
+    assert clash.status_code == 409
+
+
+def test_a_rejected_replay_leaves_no_orphan_run(client):
+    """The gateway creates the run first and forgets it on a conflict; so do we."""
+    _store(client, TEMPLATE)
+    assert client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {"topic": "a"}},
+                       headers={"Idempotency-Key": "k1"}).status_code == 201
+    assert client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {"topic": "b"}},
+                       headers={"Idempotency-Key": "k1"}).status_code == 409
+    # The rolled-back run is really gone, not merely hidden behind a 409.
+    conn = db.connect()
+    with closing(conn):
+        assert len([r for r in db.list_runs(conn) if r.template_id == "ask"]) == 1
+
+
+def test_a_response_replays_instead_of_conflicting_on_its_own_closed_request(client):
+    """The ordering that matters: the key is checked before the closed check.
+
+    Accepting a response closes its request, so a caller retrying the same
+    answer would otherwise get a 409 that reads like a conflict but is a replay.
+    """
+    run_id, request_id = _run_to_waiting(client, TEMPLATE)
+    path = f"/api/pipelines/runs/{run_id}/input-requests/{request_id}/response"
+    key = {"Idempotency-Key": "r1"}
+    assert client.post(path, json={"response": {"approved": True}}, headers=key).status_code == 200
+    replay = client.post(path, json={"response": {"approved": True}}, headers=key)
+    assert replay.status_code == 200
+    assert replay.json()["replayed"] is True
+    assert replay.json()["accepted_response"] == {"approved": True}
+
+
+def test_a_response_key_reused_with_a_different_body_is_a_conflict(client):
+    run_id, request_id = _run_to_waiting(client, TEMPLATE)
+    path = f"/api/pipelines/runs/{run_id}/input-requests/{request_id}/response"
+    key = {"Idempotency-Key": "r1"}
+    assert client.post(path, json={"response": {"approved": True}}, headers=key).status_code == 200
+    assert client.post(path, json={"response": {"approved": False}}, headers=key).status_code == 409
 
 
 def test_a_422_names_the_failing_json_path_and_leaves_the_request_open(client):
@@ -357,6 +431,7 @@ def test_an_unavailable_template_is_409_not_runnable(client):
     conn.execute("UPDATE scenario_templates SET readiness = 'unavailable' WHERE id = 'ask'")
     conn.commit()
     conn.close()
-    r = client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {}})
+    r = client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {}},
+                    headers={"Idempotency-Key": "k1"})
     assert r.status_code == 409, r.text
     assert r.json()["detail"]["readiness"] == "unavailable"
