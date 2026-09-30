@@ -38,7 +38,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional
 
-from hermes_cli.sqlite_util import open_db, write_txn
+from hermes_cli.sqlite_util import add_column_if_missing, open_db, write_txn
 from hermes_constants import get_hermes_home
 
 __all__ = [
@@ -111,6 +111,10 @@ CREATE TABLE IF NOT EXISTS scenario_templates (
     name        TEXT,
     description TEXT,
     json        TEXT NOT NULL,
+    -- Import readiness (#30, spec §6): 'ready' or 'unavailable'; a template
+    -- stored unavailable may exist but must not be runnable.
+    readiness        TEXT NOT NULL DEFAULT 'ready',
+    readiness_detail TEXT,
     created_at  INTEGER NOT NULL,
     updated_at  INTEGER NOT NULL,
     PRIMARY KEY (id, version)
@@ -230,6 +234,11 @@ def connect(db_path: Optional[Path] = None) -> sqlite3.Connection:
         if resolved in _INITIALIZED_PATHS:
             return
         conn.executescript(SCHEMA_SQL)
+        # #30 migration: readiness columns on DBs created before the column
+        # existed. The CREATE TABLE above covers fresh DBs.
+        add_column_if_missing(conn, "scenario_templates", "readiness",
+                              "readiness TEXT NOT NULL DEFAULT 'ready'")
+        add_column_if_missing(conn, "scenario_templates", "readiness_detail", "readiness_detail TEXT")
         _INITIALIZED_PATHS.add(resolved)
 
     return open_db(path, db_label="plugin-data/pipelines/pipelines.db",
@@ -286,9 +295,20 @@ def import_template(conn: sqlite3.Connection, template: dict, *, now: Optional[i
 
 
 def _template_from_row(row: sqlite3.Row) -> ScenarioTemplate:
+    keys = row.keys()
+    detail: Optional[List[str]] = None
+    if "readiness_detail" in keys and row["readiness_detail"]:
+        try:
+            loaded = json.loads(row["readiness_detail"])
+            if isinstance(loaded, list):
+                detail = loaded
+        except (TypeError, ValueError):
+            detail = None
     return ScenarioTemplate(
         id=row["id"], version=row["version"], name=row["name"], description=row["description"],
         template=json.loads(row["json"]), created_at=row["created_at"], updated_at=row["updated_at"],
+        readiness_status=row["readiness"] if "readiness" in keys and row["readiness"] else "ready",
+        readiness_detail=detail,
     )
 
 
@@ -346,12 +366,18 @@ class ScenarioTemplate:
     updated_at: int
     name: Optional[str] = None
     description: Optional[str] = None
+    # Import readiness (#30, spec §6). ``readiness_status`` is 'ready' or
+    # 'unavailable'; ``readiness_detail`` carries the missing profile/tool
+    # reasons. A run may only start from a 'ready' template.
+    readiness_status: str = "ready"
+    readiness_detail: Optional[List[str]] = None
 
     def to_dict(self) -> dict:
         return {
             "id": self.id, "version": self.version, "name": self.name,
             "description": self.description, "template": self.template,
             "created_at": self.created_at, "updated_at": self.updated_at,
+            "readiness_status": self.readiness_status, "readiness_detail": self.readiness_detail,
         }
 
 
