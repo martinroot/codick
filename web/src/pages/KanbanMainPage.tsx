@@ -31,6 +31,7 @@ import { useSearchParams } from "react-router";
 
 import { AttentionStrip } from "@/components/kanban/AttentionStrip";
 import { ConfirmDialog } from "@/components/kanban/ConfirmDialog";
+import { PipelinePanel } from "@/components/kanban/pipeline/PipelinePanel";
 import { CreateTaskDialog } from "@/components/kanban/CreateTaskDialog";
 import {
   BulkActionBar,
@@ -1035,6 +1036,30 @@ export default function KanbanMainPage() {
                 : `Complete ${bulkCompletion.ids.length} tasks`
               : "Complete this task"
         }
+      />
+
+      {/* Spec §9: a compact panel above the board, not a page and not a
+          separate stage. The drawer owns which card is selected, so the panel
+          reads that rather than keeping a second notion of "the current card". */}
+      <PipelinePanel
+        selectedCardId={openTaskId}
+        onRunCreated={(cardId) => {
+          // The pair is created together, so there is a card to open the moment
+          // Run returns. The board is re-read rather than patched: the panel
+          // does not know the board's shape, and a local insert here would be a
+          // second thing to keep in step with the server.
+          kanbanApi
+            .getBoard(options)
+            .then((payload) => {
+              setColumns(payload.columns);
+              setServerNow(payload.now ?? null);
+              setOpenTaskId(cardId);
+            })
+            .catch((err: unknown) => {
+              setNotice({ tone: "error", text: errorMessage(err) });
+            });
+        }}
+        onError={(message) => setNotice({ tone: "error", text: message })}
       />
 
       <AttentionStrip

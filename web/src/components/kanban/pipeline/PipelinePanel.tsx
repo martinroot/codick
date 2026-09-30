@@ -62,6 +62,17 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
   const [busy, setBusy] = React.useState(false);
   const [tab, setTab] = React.useState<"steps" | "data">("steps");
 
+  // The callbacks are held in refs and deliberately left out of the effect
+  // dependencies. The page passes `onError` as an inline arrow, so its identity
+  // changes on every render; depending on it re-ran this effect each time, and
+  // the panel asked the server for its templates in a loop. A ref is the honest
+  // fix — the effect wants the current callback, not a new subscription every
+  // time the parent re-renders.
+  const onErrorRef = React.useRef(onError);
+  React.useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
   // The template list is a prerequisite for a control, not a detail: without it
   // the select is empty and Run has nothing to run.
   React.useEffect(() => {
@@ -74,12 +85,12 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
         setTemplateId((current) => current || res.templates[0]?.id || "");
       })
       .catch((err: unknown) => {
-        if (!cancelled) onError(`Could not load templates: ${String(err)}`);
+        if (!cancelled) onErrorRef.current(`Could not load templates: ${String(err)}`);
       });
     return () => {
       cancelled = true;
     };
-  }, [onError]);
+  }, []);
 
   React.useEffect(() => {
     if (!templateId) {
@@ -96,12 +107,12 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
         setValidationErrors([]);
       })
       .catch((err: unknown) => {
-        if (!cancelled) onError(`Could not load template: ${String(err)}`);
+        if (!cancelled) onErrorRef.current(`Could not load template: ${String(err)}`);
       });
     return () => {
       cancelled = true;
     };
-  }, [templateId, onError]);
+  }, [templateId]);
 
   const fields = React.useMemo(
     () => fieldsFromInputsSchema(body?.inputs_schema),
@@ -135,16 +146,16 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
       setValues({});
       setShowJson(false);
     } catch (err) {
-      onError(`Load JSON failed: ${String(err)}`);
+      onErrorRef.current(`Load JSON failed: ${String(err)}`);
     } finally {
       setBusy(false);
     }
-  }, [draft, onError]);
+  }, [draft]);
 
   const start = React.useCallback(async () => {
     if (!row || !body) return;
     if (missing.length > 0) {
-      onError(`Fill in: ${missing.join(", ")}`);
+      onErrorRef.current(`Fill in: ${missing.join(", ")}`);
       return;
     }
     setBusy(true);
@@ -157,11 +168,11 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
       setRun(created);
       if (created.card_id) onRunCreated(created.card_id);
     } catch (err) {
-      onError(`Run failed: ${String(err)}`);
+      onErrorRef.current(`Run failed: ${String(err)}`);
     } finally {
       setBusy(false);
     }
-  }, [row, body, missing, fields, values, onRunCreated, onError]);
+  }, [row, body, missing, fields, values, onRunCreated]);
 
   const steps = React.useMemo(
     () => (run && body ? buildStepStrip(body, run) : []),
