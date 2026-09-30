@@ -195,6 +195,14 @@ class ToolEntry:
     # Zero-arg callable whose dict is shallow-merged onto the schema at every get_definitions()
     # — for fields tracking runtime config (delegate_task's description reflects limits).
     dynamic_schema_overrides: Optional[Callable] = None
+    # Spec §8 execution semantics for a pipeline tool step (issue #47). Defaults are the
+    # conservative reading of an unknown tool: side-effecting, not idempotent, no cancel —
+    # so a pipeline must not silently retry it and Stop cannot promise anything. Declared
+    # on ToolEntry (not a pipeline side table) so the registry stays the single source of
+    # truth and the values survive plugin overrides and entry identity/snapshot paths.
+    read_only: bool = False
+    idempotent: bool = False
+    cancellable: bool = False
 
 
 class _PluginOverridePolicy:
@@ -668,7 +676,8 @@ class ToolRegistry:
         check_fn: Callable = None, requires_env: list = None, is_async: bool = False,
         description: str = "", emoji: str = "", max_result_size_chars: int | float | None = None,
         dynamic_schema_overrides: Callable = None, override: bool = False,
-        scope: Optional[str] = None):
+        scope: Optional[str] = None, read_only: bool = False, idempotent: bool = False,
+        cancellable: bool = False):
         """Register a tool (called at import time by each tool file). ``override=True`` is an
         explicit opt-in for plugins replacing a built-in implementation (e.g. a headed-Chrome
         browser backend); without it, cross-toolset shadowing is rejected."""
@@ -733,7 +742,9 @@ class ToolRegistry:
                 requires_env=requires_env or [], is_async=is_async,
                 description=description or schema.get("description", ""), emoji=emoji,
                 max_result_size_chars=max_result_size_chars,
-                dynamic_schema_overrides=dynamic_schema_overrides)
+                dynamic_schema_overrides=dynamic_schema_overrides,
+                read_only=bool(read_only), idempotent=bool(idempotent),
+                cancellable=bool(cancellable))
             # Availability is derived per-tool (_toolset_has_exposable_tools), so this map no
             # longer gates a toolset; it still feeds get_toolset_requirements ->
             # TOOLSET_REQUIREMENTS["check_fn"], which banner.py reads (presence only,
@@ -948,6 +959,25 @@ class ToolRegistry:
     def get_emoji(self, name: str, default: str = "⚡") -> str:
         """Return the emoji for a tool, or *default* if unset."""
         return self._attr(name, "emoji") or default
+
+    def get_tool_semantics(self, name: str) -> Optional[dict]:
+        """Spec §8 execution semantics for a pipeline tool step (issue #47).
+
+        ``retry_safe`` answers "may a pipeline executor silently re-run this
+        step": only read-only or declared-idempotent tools qualify. A
+        side-effecting, non-idempotent tool must surface its failure instead of
+        being retried; ``cancellable=False`` means Stop cannot promise the
+        external operation is undone. ``None`` for an unregistered tool.
+        """
+        entry = self.get_entry(name)
+        if not entry:
+            return None
+        return {
+            "read_only": bool(entry.read_only),
+            "idempotent": bool(entry.idempotent),
+            "cancellable": bool(entry.cancellable),
+            "retry_safe": bool(entry.read_only or entry.idempotent),
+        }
 
     def get_tool_to_toolset_map(self) -> Dict[str, str]:
         return {entry.name: entry.toolset for entry in self._snapshot_entries()}
