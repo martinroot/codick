@@ -814,6 +814,7 @@ export default function KanbanMainPage() {
       ) : null}
 
       <TaskDrawer
+        cards={columns.flatMap((column) => column.tasks)}
         commentFocus={commentFocus}
         onClose={() => setOpenTaskId(null)}
         // The same gate the bulk bar goes through, with a one-card selection.

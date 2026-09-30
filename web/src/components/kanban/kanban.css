@@ -1074,6 +1074,110 @@
   padding: 0.5rem 1.25rem;
 }
 
+/* --- Drawer write side (#49): composer, attachments, dependencies ------- */
+
+.kb-comment-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--kb-line);
+  margin-top: 0.25rem;
+}
+
+.kb-comment-composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.kb-comment-composer-actions .kb-drawer-muted {
+  font-size: 0.6875rem;
+}
+
+.kb-file-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.kb-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--kb-line);
+}
+
+.kb-upload input[type="file"] {
+  /* The styled "Attach file" button is the control the user reaches for;
+     the raw input only exists so a keyboard or assistive-tech user still
+     gets a real file picker. Keeping it visible keeps it honest. */
+  min-width: 0;
+  flex: 1;
+}
+
+.kb-upload-note {
+  font-size: 0.6875rem;
+  margin: 0;
+}
+
+.kb-deps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.kb-deps-rows {
+  gap: 0.25rem;
+}
+
+.kb-deps-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 1px solid var(--kb-line);
+  border-radius: 0.375rem;
+  padding: 0.3rem 0.5rem;
+}
+
+.kb-deps-row code {
+  background: none;
+  padding: 0;
+}
+
+.kb-deps-title {
+  color: var(--kb-muted);
+  font-size: 0.8125rem;
+}
+
+.kb-deps-remove {
+  padding: 0 0.4rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.kb-deps-add {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.kb-deps-side {
+  width: auto;
+  min-width: 7.5rem;
+  flex-shrink: 0;
+}
+
+.kb-deps-add .form-control {
+  flex: 1;
+  min-width: 10rem;
+}
+
 .kb-card-ident {
   font-size: 0.625rem;
   color: var(--kb-muted);

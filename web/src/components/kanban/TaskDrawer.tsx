@@ -6,6 +6,7 @@ import { RecoveryPanel } from "@/components/kanban/RecoveryPanel";
 import { ACCENTS } from "@/components/kanban/KanbanBoard";
 import {
   kanbanApi,
+  type KanbanComment,
   type KanbanDiagnostic,
   type KanbanRequestOptions,
   type KanbanStatus,
@@ -50,6 +51,13 @@ export interface TaskDrawerProps {
    * there is already exactly one of those in the app.
    */
   onRequestDelete?: (task: KanbanTaskCard) => void;
+  /**
+   * Every card on the board, for the dependency editor's suggestions. The
+   * editor also accepts an id that is not on the board — the server refuses
+   * it with its own sentence — so this widens what the input suggests
+   * without ever narrowing what it accepts.
+   */
+  cards?: KanbanTaskCard[];
 }
 
 type Tab = "detail" | "comments" | "events" | "runs" | "files" | "log";
@@ -82,6 +90,7 @@ export function TaskDrawer({
   onChanged,
   commentFocus,
   onRequestDelete,
+  cards,
 }: TaskDrawerProps) {
   const [detail, setDetail] = React.useState<KanbanTaskDetail | null>(null);
   const [load, setLoad] = React.useState<{ phase: string; message?: string }>({
@@ -273,6 +282,7 @@ export function TaskDrawer({
 
           {tab === "detail" && task ? (
             <DetailTab
+              cards={cards}
               detail={detail}
               diagnostics={detail?.task.diagnostics ?? []}
               setTab={setTab}
@@ -285,18 +295,12 @@ export function TaskDrawer({
           ) : null}
 
           {tab === "comments" ? (
-            <List
-              empty="No comments yet."
-              items={detail?.comments ?? []}
-              render={(c) => (
-                <article className="kb-drawer-item" key={String(c.id)}>
-                  <p className="kb-drawer-item-head">
-                    <strong>{c.author ?? "unknown"}</strong>
-                    <span className="kb-drawer-muted">{when(c.created_at)}</span>
-                  </p>
-                  <Markdown content={c.body} />
-                </article>
-              )}
+            <CommentsTab
+              comments={detail?.comments ?? []}
+              detailLoaded={detail !== null}
+              options={options}
+              onChanged={reloadDetail}
+              taskId={taskId}
             />
           ) : null}
 
@@ -331,7 +335,14 @@ export function TaskDrawer({
             />
           ) : null}
 
-          {tab === "files" ? <FilesTab detail={detail} options={options} /> : null}
+          {tab === "files" ? (
+            <FilesTab
+              detail={detail}
+              options={options}
+              onChanged={reloadDetail}
+              taskId={taskId}
+            />
+          ) : null}
 
           {tab === "log" ? (
             <div className="kb-drawer-log">
@@ -355,6 +366,124 @@ export function TaskDrawer({
         ) : null}
       </aside>
     </>
+  );
+}
+
+/**
+ * The comment thread, plus the composer that was missing.
+ *
+ * The drawer could read comments from the day it could render them, but
+ * posting meant leaving the drawer for the CLI — the write was reachable
+ * from the API and from nowhere in the UI. The composer closes that gap
+ * inline: `reloadDetail` re-reads the detail payload after the POST, so
+ * your own post appears in the rendered thread without a page reload, at
+ * the bottom, where the server's own ordering puts it.
+ *
+ * Refusals are shown here rather than thrown away: an empty post is the
+ * ordinary mistake, and the composer stays open with the text in it.
+ */
+function CommentsTab({
+  taskId,
+  comments,
+  detailLoaded,
+  options,
+  onChanged,
+}: {
+  taskId: string;
+  comments: KanbanComment[];
+  detailLoaded: boolean;
+  options: KanbanRequestOptions;
+  onChanged: () => void | Promise<void>;
+}) {
+  const [draft, setDraft] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [postError, setPostError] = React.useState<string | null>(null);
+
+  const post = async () => {
+    const body = draft.trim();
+    if (!body || busy) return;
+    setBusy(true);
+    setPostError(null);
+    try {
+      await kanbanApi.addComment(taskId, body, options);
+      setDraft("");
+      await onChanged();
+    } catch (err: unknown) {
+      setPostError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="kb-drawer-section">
+      {postError ? (
+        <p className="kb-drawer-error" role="alert">
+          {postError}
+          <button
+            className="btn btn-sm btn-link"
+            onClick={() => setPostError(null)}
+            type="button"
+          >
+            Dismiss
+          </button>
+        </p>
+      ) : null}
+      {comments.length === 0 ? (
+        <p className="kb-drawer-muted">No comments yet.</p>
+      ) : (
+        comments.map((c) => (
+          <article className="kb-drawer-item" key={String(c.id)}>
+            <p className="kb-drawer-item-head">
+              <strong>{c.author ?? "unknown"}</strong>
+              <span className="kb-drawer-muted">{when(c.created_at)}</span>
+            </p>
+            <Markdown content={c.body} />
+          </article>
+        ))
+      )}
+      <form
+        className="kb-comment-composer"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void post();
+        }}
+      >
+        <textarea
+          aria-label="Write a comment"
+          className="form-control form-control-sm"
+          disabled={busy}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter posts; Shift+Enter is the newline. Match the chat
+            // composer muscle memory — Ctrl+Enter never made it into one.
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void post();
+            }
+          }}
+          placeholder="Write a comment…"
+          rows={3}
+          value={draft}
+        />
+        <div className="kb-comment-composer-actions">
+          <span className="kb-drawer-muted">Enter to post · Shift+Enter for a new line</span>
+          <button
+            className="btn btn-sm btn-primary"
+            disabled={busy || !draft.trim()}
+            type="submit"
+          >
+            {busy ? "Posting…" : "Comment"}
+          </button>
+        </div>
+      </form>
+      {!detailLoaded ? (
+        <p className="kb-drawer-muted">
+          The thread could not be read just now — posting still works, but you
+          may be replying to comments you cannot see.
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -394,6 +523,7 @@ function DetailTab({
   onRequestDelete,
   diagnostics,
   setTab,
+  cards,
 }: {
   detail: KanbanTaskDetail | null;
   task: KanbanTaskCard;
@@ -403,6 +533,7 @@ function DetailTab({
   onError: (message: string) => void;
   diagnostics: KanbanDiagnostic[];
   setTab: (tab: Tab) => void;
+  cards?: KanbanTaskCard[];
 }) {
   return (
     <div className="kb-drawer-section">
@@ -490,7 +621,7 @@ function DetailTab({
         </dl>
       </section>
 
-      {detail && (detail.links.parents.length || detail.links.children.length) ? (
+      {detail ? (
         <section className="kb-drawer-block">
           <h3 className="kb-drawer-h3">Dependencies</h3>
           {/*
@@ -502,6 +633,13 @@ function DetailTab({
           */}
           {linkRows(detail, "parents", "Blocked by")}
           {linkRows(detail, "children", "Blocks")}
+          <DependenciesEditor
+            cards={cards}
+            detail={detail}
+            options={options}
+            onChanged={onChanged}
+            onError={onError}
+          />
         </section>
       ) : null}
 
@@ -545,15 +683,260 @@ function DetailTab({
   );
 }
 
+/**
+ * Add and remove dependency edges from the drawer.
+ *
+ * ## Why an editor rather than two text fields
+ *
+ * A title edit cannot fail in ways that matter; a link can. The server
+ * refuses a self-link, an unknown id, a link to a running child, and a
+ * cycle — and each refusal names its reason. So the editor shows the
+ * server's own sentence verbatim instead of a generic "failed", keeps the
+ * inputs filled after a refusal (retrying is usually a typo fix, not a
+ * re-type), and clears itself only on success.
+ *
+ * ## The id with `t_` prefixes
+ *
+ * The board's links carry full ids (`t_xxx`). The rest of the drawer
+ * displays them stripped (`id.replace(/^t_/, "")`), so the editor accepts
+ * the short form too and puts the `t_` back — matching what the user can
+ * actually see on screen.
+ */
+function DependenciesEditor({
+  detail,
+  cards,
+  options,
+  onChanged,
+  onError,
+}: {
+  detail: KanbanTaskDetail;
+  cards?: KanbanTaskCard[];
+  options: KanbanRequestOptions;
+  onChanged: () => void | Promise<void>;
+  onError: (message: string) => void;
+}) {
+  const [side, setSide] = React.useState<LinkSide>("parents");
+  const [value, setValue] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const self = detail.task.id;
+  const normalize = (raw: string) => {
+    const id = raw.trim();
+    if (!id) return "";
+    return id.startsWith("t_") ? id : `t_${id}`;
+  };
+
+  const add = async () => {
+    if (busy) return;
+    const other = normalize(value);
+    if (!other) return;
+    if (other === self) {
+      setError("a task cannot depend on itself");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      // `side === "parents"`: this task is blocked BY the typed id, so the
+      // typed one is the parent. Otherwise this task blocks it and is the
+      // child.
+      const parentId = side === "parents" ? other : self;
+      const childId = side === "parents" ? self : other;
+      await kanbanApi.addLink(parentId, childId, options);
+      setValue("");
+      await onChanged();
+    } catch (err: unknown) {
+      // The server's sentence, verbatim: "linking t_a -> t_b would create
+      // a cycle" beats a generic "failed". The input keeps its text.
+      setError(err instanceof Error ? err.message : String(err));
+      onError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async (linkParentId: string, linkChildId: string) => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await kanbanApi.removeLink(linkParentId, linkChildId, options);
+      await onChanged();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      onError(message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // A datalist suggests, it does not constrain: any id the server knows is
+  // legal even when the board does not show it (filtered tenant, another
+  // tab's fresh card).
+  const suggestions = (cards ?? [])
+    .filter((c) => c.id !== self)
+    .map((c) => ({ id: c.id, title: c.title }));
+
+  const linkRow = (linkParentId: string, linkChildId: string, otherId: string, title: string | null) => {
+    const row = (
+      linkParentId === self
+        ? (detail.link_tasks?.children ?? [])
+        : (detail.link_tasks?.parents ?? [])
+    ).find((t) => t.id === otherId);
+    return { otherId, title: title ?? row?.title ?? null, linkParentId, linkChildId };
+  };
+
+  return (
+    <div className="kb-deps">
+      {(detail.links.parents.length || detail.links.children.length) ? (
+        <ul className="kb-drawer-list kb-deps-rows">
+          {detail.links.parents.map((id) => {
+            const { title, linkParentId, linkChildId } = linkRow(id, self, id, null);
+            return (
+              <li key={`p-${id}`} className="kb-deps-row">
+                <span>
+                  <code>{id.replace(/^t_/, "")}</code>
+                  {title ? <span className="kb-deps-title"> {title}</span> : null}
+                </span>
+                <button
+                  aria-label={`Remove dependency on ${id}`}
+                  className="btn btn-sm btn-outline-danger kb-deps-remove"
+                  disabled={busy}
+                  onClick={() => void remove(linkParentId, linkChildId)}
+                  title="Remove this dependency"
+                  type="button"
+                >
+                  ✕
+                </button>
+              </li>
+            );
+          })}
+          {detail.links.children.map((id) => {
+            const { title, linkParentId, linkChildId } = linkRow(self, id, id, null);
+            return (
+              <li key={`c-${id}`} className="kb-deps-row">
+                <span>
+                  <code>{id.replace(/^t_/, "")}</code>
+                  {title ? <span className="kb-deps-title"> {title}</span> : null}
+                </span>
+                <button
+                  aria-label={`Remove dependency ${id}`}
+                  className="btn btn-sm btn-outline-danger kb-deps-remove"
+                  disabled={busy}
+                  onClick={() => void remove(linkParentId, linkChildId)}
+                  title="Remove this dependency"
+                  type="button"
+                >
+                  ✕
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="kb-drawer-muted">No dependencies.</p>
+      )}
+
+      {error ? (
+        <p className="kb-drawer-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="kb-deps-add">
+        <select
+          aria-label="Dependency direction"
+          className="form-select form-select-sm kb-deps-side"
+          disabled={busy}
+          onChange={(e) => setSide(e.target.value as LinkSide)}
+          value={side}
+        >
+          <option value="parents">Blocked by</option>
+          <option value="children">Blocks</option>
+        </select>
+        <input
+          aria-label={side === "parents" ? "Task id that blocks this task" : "Task id this task blocks"}
+          className="form-control form-control-sm"
+          disabled={busy}
+          list="kb-deps-suggestions"
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void add();
+            }
+          }}
+          placeholder={side === "parents" ? "Task id that blocks this one" : "Task id this one blocks"}
+          type="text"
+          value={value}
+        />
+        <datalist id="kb-deps-suggestions">
+          {suggestions.map((s) => (
+            <option key={s.id} value={s.id.replace(/^t_/, "")}>
+              {s.title}
+            </option>
+          ))}
+        </datalist>
+        <button
+          className="btn btn-sm btn-outline-secondary"
+          disabled={busy || !value.trim()}
+          onClick={() => void add()}
+          type="button"
+        >
+          {busy ? "Linking…" : "Add"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function FilesTab({
+  taskId,
   detail,
   options,
+  onChanged,
 }: {
+  taskId: string;
   detail: KanbanTaskDetail | null;
   options: KanbanRequestOptions;
+  onChanged: () => void | Promise<void>;
 }) {
   const [busy, setBusy] = React.useState<number | null>(null);
+  const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const upload = async (file: File) => {
+    if (uploading) return;
+    setUploading(true);
+    setError(null);
+    try {
+      await kanbanApi.uploadAttachment(taskId, file, options);
+      await onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setUploading(false);
+      // Reset so picking the same file again still fires `change`. Without
+      // it a re-upload of the same name after a fix is a no-op click.
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  const remove = async (id: number) => {
+    setBusy(id);
+    setError(null);
+    try {
+      await kanbanApi.deleteAttachment(id, options);
+      await onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const download = async (id: number) => {
     setBusy(id);
@@ -585,6 +968,13 @@ function FilesTab({
       {error ? (
         <p className="kb-drawer-error" role="alert">
           {error}
+          <button
+            className="btn btn-sm btn-link"
+            onClick={() => setError(null)}
+            type="button"
+          >
+            Dismiss
+          </button>
         </p>
       ) : null}
       {files.length === 0 ? (
@@ -597,18 +987,62 @@ function FilesTab({
                 {f.filename}
                 <span className="kb-drawer-muted"> · {size(f.size)}</span>
               </span>
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                disabled={busy === f.id}
-                onClick={() => download(f.id)}
-                type="button"
-              >
-                {busy === f.id ? "Downloading…" : "Download"}
-              </button>
+              <span className="kb-file-actions">
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  disabled={busy === f.id || uploading}
+                  onClick={() => download(f.id)}
+                  type="button"
+                >
+                  {busy === f.id ? "Downloading…" : "Download"}
+                </button>
+                <button
+                  aria-label={`Delete ${f.filename}`}
+                  className="btn btn-sm btn-outline-danger"
+                  disabled={busy === f.id || uploading}
+                  onClick={() => void remove(f.id)}
+                  title="Delete this attachment"
+                  type="button"
+                >
+                  {busy === f.id ? "Deleting…" : "Delete"}
+                </button>
+              </span>
             </li>
           ))}
         </ul>
       )}
+      <form
+        className="kb-upload"
+        onSubmit={(event) => {
+          event.preventDefault();
+        }}
+      >
+        <input
+          aria-label="Choose a file to attach"
+          className="form-control form-control-sm"
+          disabled={uploading}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void upload(file);
+          }}
+          ref={inputRef}
+          type="file"
+        />
+        {/* A hidden-input + styled button pair: `type="file"` cannot be
+            styled, and the label row needs a real button for focus order. */}
+        <button
+          className="btn btn-sm btn-primary"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          type="button"
+        >
+          {uploading ? "Uploading…" : "Attach file"}
+        </button>
+      </form>
+      <p className="kb-drawer-muted kb-upload-note">
+        Uploads go through the authenticated fetch path — the same one
+        downloads use — so they work behind the dashboard's auth gate.
+      </p>
     </div>
   );
 }
