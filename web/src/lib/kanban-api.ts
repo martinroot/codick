@@ -296,6 +296,13 @@ export interface KanbanTaskCard {
   /** Truncated to 200 chars on the board; the full text is on the detail endpoint. */
   latest_summary: string | null;
   current_run_started_at: number | null;
+  /**
+   * Spec section 9: true when the card belongs to a pipeline run (read off the
+   * server's `workflow_template_id`/`current_step_key`). The executor owns such
+   * a card's column — the server refuses manual status writes on it, and the
+   * board hides the drag handle to match.
+   */
+  pipeline: boolean;
   link_counts: { parents: number; children: number };
   comment_count: number;
   /** null when the task has no children. */

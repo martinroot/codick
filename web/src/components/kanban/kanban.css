@@ -512,6 +512,28 @@
   color: var(--kb-stale-amber);
 }
 
+/*
+ * The pipeline chip (spec section 9): a card the executor owns. Purple is the
+ * one hue nothing else on the board claims, so "this card is not yours to
+ * move" is readable at a glance — and the cursor confirms it, since the card
+ * cannot be dragged.
+ */
+.kb-chip-pipeline {
+  color: #6554c0;
+}
+
+[data-bs-theme="dark"] .kb-chip-pipeline {
+  color: #9f8fef;
+}
+
+.kb-card-pipeline {
+  cursor: default;
+}
+
+.kb-card-pipeline:active {
+  cursor: default;
+}
+
 /* --- Drawer (#7) -------------------------------------------------------
    A side panel, not a modal. The board stays visible and keeps live-updating
    behind it, which is the point: you open a card to read it *while* watching

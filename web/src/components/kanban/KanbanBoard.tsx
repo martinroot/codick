@@ -252,6 +252,11 @@ function KanbanCardImpl({
   // "dispatched" and "someone picked it up", which is the state a board
   // usually hides because it looks the same as busy.
   const claimed = Boolean(task.claim_lock);
+  // A pipeline card's column belongs to its run's executor. The server refuses
+  // manual status writes on it; not starting a drag here is the convenience
+  // half of the same rule, so the card never gives a drop target the illusion
+  // of accepting it.
+  const pipeline = task.pipeline === true;
 
   return (
     <article
@@ -260,11 +265,20 @@ function KanbanCardImpl({
         "kb-card",
         dragging && "kb-card-dragging",
         selected && "kb-card-selected",
+        pipeline && "kb-card-pipeline",
         tier && `kb-card-stale-${tier}`,
       )}
-      draggable
+      draggable={!pipeline}
       onDragEnd={onDragEnd}
-      onDragStart={(event) => onDragStart(event, task)}
+      onDragStart={(event) => {
+        // Belt to the attribute's braces: a stale render could still carry
+        // draggable=true for a card the executor has since claimed.
+        if (pipeline) {
+          event.preventDefault();
+          return;
+        }
+        onDragStart(event, task);
+      }}
       onMouseDown={(event) => {
         pressedAt.current = { x: event.clientX, y: event.clientY };
         suppressClick.current = false;
@@ -356,6 +370,20 @@ function KanbanCardImpl({
         {/* The short id, so a card can be named in a terminal or a bug report
             without going to the detail drawer for it first. */}
         <code title={task.id}>{task.id.replace(/^t_/, "")}</code>
+        {/*
+          A pipeline card is moved by its run's executor. The server refuses a
+          manual move anyway; the chip is why the card cannot be dragged — the
+          same "state, not absence" rule the claimed chip follows.
+        */}
+        {pipeline ? (
+          <span
+            className="kb-chip kb-chip-pipeline"
+            title="This card belongs to a pipeline run — its column is managed by the executor."
+          >
+            <span aria-hidden>⚙</span>
+            pipeline
+          </span>
+        ) : null}
       </div>
 
       {task.latest_summary ? (
@@ -961,6 +989,7 @@ function mockCard(
     },
     latest_summary: null,
     current_run_started_at: null,
+    pipeline: false,
     link_counts: { parents: 0, children: 0 },
     comment_count: 0,
     progress: null,
@@ -1008,6 +1037,16 @@ export const MOCK_COLUMNS: KanbanColumn[] = [
       mockCard("T-1037", "todo", "Add WIP limits per column", {
         skills: ["ux"],
         ageSeconds: 172_800,
+      }),
+      // The design preview should show the pipeline state too: its drag
+      // handle is gone and the executor chip is what explains why.
+      mockCard("T-1038", "running", "Word scenario — generate the weekly report", {
+        pipeline: true,
+        assignee: "grokwin",
+        current_step_key: "review",
+        workflow_template_id: "word-weekly",
+        latest_summary: "Step 4 of 7 (review): the reviewer is checking the draft.",
+        ageSeconds: 180,
       }),
     ],
   },

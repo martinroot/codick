@@ -244,6 +244,18 @@ export default function KanbanMainPage() {
 
       if (card.status === to) return;
 
+      // Spec section 9: the executor owns a pipeline card's column. The server
+      // refuses the write; catching it here saves the round trip and, unlike
+      // the refusal, says "pipeline" in a sentence the drag context makes
+      // sense of. The optimistic update below must never run for one.
+      if (card.pipeline) {
+        setNotice({
+          tone: "warning",
+          text: `"${card.title}" is a pipeline card — its column is owned by the pipeline executor and cannot be moved manually.`,
+        });
+        return;
+      }
+
       if (to === "done" && !hasCompletionEvidence(card)) {
         setCompletionAsk({ task: card, to });
         return;

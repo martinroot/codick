@@ -570,6 +570,20 @@ function DetailTab({
         <dl className="kb-drawer-fields">
           <dt>Status</dt>
           <dd>{task.status}</dd>
+          {/*
+            A pipeline card is run by the executor; the binding names which
+            template and step own it. Shown read-only — the drawer never
+            offers a manual column change for one, matching the board.
+          */}
+          {task.pipeline ? (
+            <>
+              <dt>Pipeline</dt>
+              <dd>
+                {task.workflow_template_id ?? "—"}
+                {task.current_step_key ? ` · step ${task.current_step_key}` : ""}
+              </dd>
+            </>
+          ) : null}
           <dt>Assignee</dt>
           <dd>{task.assignee ?? "— unassigned"}</dd>
           <dt>Priority</dt>
