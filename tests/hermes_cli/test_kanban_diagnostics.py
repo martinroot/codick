@@ -111,6 +111,39 @@ def test_stuck_in_blocked_fires_past_threshold():
     assert d.data["age_hours"] >= 48
 
 
+def test_block_loop_detected_fires_on_guard_event():
+    now = int(time.time())
+    task = _task(status="triage")
+    events = [
+        _event("blocked", ts=now - 300, reason="compile error", block_kind="failure", recurrences=1),
+        _event("unblocked", ts=now - 240),
+        _event("blocked", ts=now - 180, reason="compile error", block_kind="failure", recurrences=2),
+        _event("block_loop_detected", ts=now - 170, reason="compile error", block_kind="failure",
+               recurrences=2, limit=kb.BLOCK_RECURRENCE_LIMIT, source_status="running"),
+    ]
+    diags = kd.compute_task_diagnostics(task, events, [], now=now)
+    loop = [d for d in diags if d.kind == "block_loop_detected"]
+    assert len(loop) == 1
+    d = loop[0]
+    assert d.severity == "warning"
+    assert d.data["recurrences"] == 2
+    assert d.data["limit"] == kb.BLOCK_RECURRENCE_LIMIT
+    assert d.data["block_kind"] == "failure"
+    assert d.first_seen_at == now - 170
+    assert d.count == 1
+
+
+def test_block_loop_detected_absent_without_guard_event():
+    """A plain blocked/unblocked history below the guard limit must not fire."""
+    now = int(time.time())
+    events = [
+        _event("blocked", ts=now - 60, reason="x", block_kind="failure", recurrences=1),
+        _event("unblocked", ts=now - 30),
+    ]
+    diags = kd.compute_task_diagnostics(_task(status="blocked"), events, [], now=now)
+    assert [d for d in diags if d.kind == "block_loop_detected"] == []
+
+
 
 
 

@@ -620,43 +620,21 @@ def _rule_stuck_in_blocked(task, events, runs, now, cfg) -> list[Diagnostic]:
     )]
 
 
-def _rule_block_unblock_cycling(task, events, runs, now, cfg) -> list[Diagnostic]:
-    """>= cfg["block_cycle_threshold"] (default 3) blocked-after-unblocked
-    cycles within cfg["block_cycle_window_seconds"] (default 24h). Complements
-    ``_rule_stuck_in_blocked``, whose timer any unblock resets, so fast cyclers
-    are invisible to it.
+def _rule_block_loop_detected(task, events, runs, now, cfg) -> list[Diagnostic]:
+    """The task has tripped the block guard: ``kanban_db._route_block`` routes
+    to ``triage`` at ``BLOCK_RECURRENCE_LIMIT`` re-blocks for the same cause
+    and writes a ``block_loop_detected`` event.
 
-    ``_rule_stuck_in_blocked`` resets its timer on any ``commented`` / ``unblocked`` event, so a task that
-    cycles every few minutes is invisible to it regardless of how many times it cycles (#29747 gap 1). This
-    rule complements that one by counting block→unblock cycles in a sliding window.
+    This rule surfaces that event instead of counting block→unblock cycles
+    itself. The former ``block_unblock_cycling`` rule waited for 3
+    blocked-after-unblocked cycles in 24h, but the guard diverts the task at
+    the 2nd re-block — the third ``blocked`` event is never written, so the
+    rule could never fire. ``block_loop_detected`` is also the stronger,
+    already-written signal, and it defines the recurrence the system actually
+    acts on (same ``block_kind`` re-block), not a looser notion of "cycle".
     """
-    threshold = _positive_int(cfg.get("block_cycle_threshold"), 3)
-    window_seconds = float(cfg.get("block_cycle_window_seconds", 24 * 3600))
-    cycle_cutoff = now - window_seconds
-
-    # Walk in id (arrival) order — created_at alone can't order events that
-    # share a second. A blocked event after >= 1 unblocked since the last
-    # counted cycle is a new cycle.
-    cycles = 0
-    seen_unblock_since_last_cycle = False
-    initial_blocked_ts = 0
-    last_cycle_blocked_ts = 0
-    for ev in events:
-        ts = _event_ts(ev)
-        if ts < cycle_cutoff:
-            continue
-        kind = _event_kind(ev)
-        if kind == "blocked":
-            if initial_blocked_ts == 0:
-                initial_blocked_ts = ts
-            if seen_unblock_since_last_cycle:
-                cycles += 1
-                last_cycle_blocked_ts = ts
-                seen_unblock_since_last_cycle = False
-        elif kind == "unblocked":
-            seen_unblock_since_last_cycle = True
-
-    if cycles < threshold:
+    hits = [ev for ev in events if _event_kind(ev) == "block_loop_detected"]
+    if not hits:
         return []
 
     task_id = _task_field(task, "id")
@@ -664,18 +642,27 @@ def _rule_block_unblock_cycling(task, events, runs, now, cfg) -> list[Diagnostic
     if task_id:
         cmd = f"hermes kanban events {task_id}"
         actions.append(_cli_hint(f"Check block reasons: {cmd}", cmd, suggested=True))
+    latest = _parse_payload(hits[-1])
+    limit = latest.get("limit")
+    recurrences = latest.get("recurrences")
+    title = "Block loop detected: task routed to triage"
+    if limit is not None:
+        title += f" after {recurrences if recurrences is not None else limit} re-blocks for the same cause"
     return [Diagnostic(
-        kind="block_unblock_cycling", severity="warning",
-        title=f"Task block→unblock cycled {cycles}x in {int(window_seconds/3600)}h",
-        detail=f"This task has been blocked {cycles} times after being unblocked, suggesting the "
-               f"unblock is not addressing the root cause and the worker keeps hitting the same wall. "
-               f"Review the block reasons in the event history; a different intervention (reassign, "
-               f"change scope, archive) may be needed.",
+        kind="block_loop_detected", severity="warning",
+        title=title,
+        detail="The block guard stopped this task: it was blocked "
+               f"{recurrences if recurrences is not None else 'repeatedly'} times for the same "
+               f"cause and the guard at {limit if limit is not None else 'the recurrence limit'} "
+               "routed it to triage instead of blocking it again. The unblock did not address the "
+               "root cause — review the block reasons in the event history; a different "
+               "intervention (reassign, change scope, archive) may be needed.",
         actions=actions,
-        first_seen_at=int(initial_blocked_ts) if initial_blocked_ts else int(now),
-        last_seen_at=int(last_cycle_blocked_ts) if last_cycle_blocked_ts else int(now),
-        count=cycles,
-        data={"cycles": cycles, "window_seconds": int(window_seconds)},
+        first_seen_at=_event_ts(hits[0]),
+        last_seen_at=_event_ts(hits[-1]),
+        count=len(hits),
+        data={"recurrences": recurrences, "limit": limit,
+              "block_kind": latest.get("kind"), "reason": latest.get("reason")},
     )]
 
 
@@ -746,7 +733,7 @@ _RULES: list[RuleFn] = [
     _rule_review_dependency_deadlock,
     _rule_running_with_open_parents,
     _rule_stuck_in_blocked,
-    _rule_block_unblock_cycling,
+    _rule_block_loop_detected,
     _rule_stranded_in_ready,
 ]
 
