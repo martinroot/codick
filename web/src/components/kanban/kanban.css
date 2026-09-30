@@ -1143,3 +1143,83 @@
   margin: 0;
   font-size: 0.75rem;
 }
+
+/*
+ * The trash target.
+ *
+ * Sits above the rail's right edge rather than inside a column, because a drop
+ * target that looks like a column reads as a destination -- and this one
+ * destroys what you drop on it.
+ *
+ * Compact when idle, larger while a card is in flight: it cannot be hit by
+ * accident on a board where nobody is dragging, and it is a big target at the
+ * exact moment someone is aiming for it. `--kb-red` is the same ink the
+ * stale-age tier uses, because a card that needs deleting and a card that has
+ * been stuck are the same class of warning.
+ */
+.kb-trash {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 4;
+  border-radius: 0.75rem;
+  opacity: 0.55;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.kb-trash-open,
+.kb-trash-over {
+  opacity: 1;
+}
+
+.kb-trash-open {
+  transform: scale(1.06);
+}
+
+.kb-trash-over {
+  transform: scale(1.12);
+}
+
+.kb-trash-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--kb-line);
+  border-radius: 0.75rem;
+  background: var(--kb-card-bg);
+  color: var(--kb-muted);
+  font-size: 0.8125rem;
+  line-height: 1;
+  cursor: default;
+}
+
+.kb-trash-armed .kb-trash-button {
+  border-style: solid;
+  border-color: var(--kb-red);
+  color: var(--kb-red);
+  cursor: pointer;
+}
+
+.kb-trash-armed:hover .kb-trash-button {
+  background: color-mix(in srgb, var(--kb-red) 10%, var(--kb-card-bg));
+}
+
+.kb-trash-over .kb-trash-button {
+  background: color-mix(in srgb, var(--kb-red) 18%, var(--kb-card-bg));
+  border-style: solid;
+}
+
+.kb-trash-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.kb-trash-glyph {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.kb-trash-label {
+  white-space: nowrap;
+}

@@ -965,6 +965,32 @@ export default function KanbanMainPage() {
       <KanbanBoard
         columns={columns}
         now={serverNow}
+        onRequestDelete={(ids) => {
+          // The third entry point into one confirm. The zone resolves a drop to
+          // a single id and a click to "the selection"; both end up here, and
+          // so does the drawer. Three call sites, one dialog.
+          if (ids.length) {
+            const card = columns
+              .flatMap((c) => c.tasks)
+              .find((t) => t.id === ids[0]);
+            if (!card) return;
+            selection.setSelected(new Set(ids));
+            setDestructive({ action: { kind: "delete" }, cards: [card] });
+            return;
+          }
+          // A drop with no id on the transfer and nothing selected is a dead
+          // click. It cannot happen with a real browser drag — the DataTransfer
+          // is shared across the whole drag — but a silent no-op from a
+          // control that looked armed is the one thing this must never be.
+          if (selection.selected.size === 0) {
+            setNotice({
+              tone: "warning",
+              text: "Nothing to delete: no card is selected.",
+            });
+            return;
+          }
+          handleBulk({ kind: "delete" });
+        }}
         onCreateCard={handleCreateCard}
         onMove={(taskId, to) => {
           // Fire-and-forget: the board does not await, and `handleMove`

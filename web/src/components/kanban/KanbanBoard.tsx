@@ -22,6 +22,7 @@ import * as React from "react";
 import type { KanbanStatus, KanbanTaskCard } from "@/lib/kanban-api";
 import { Button } from "@/ui";
 import { cn } from "@/lib/utils";
+import { TrashZone } from "./TrashZone";
 import "./kanban.css";
 
 export type { KanbanStatus } from "@/lib/kanban-api";
@@ -735,6 +736,12 @@ export interface KanbanBoardProps {
   /** The payload's server clock, threaded to each card for the staleness tint. */
   now?: number | null;
   onMove?: (taskId: string, to: KanbanStatus) => void;
+  /**
+   * Asks the page to confirm and delete. The trash zone passes the ids it
+   * would destroy; an empty array means "whatever is selected". The page owns
+   * the confirm, exactly as it does for the drawer and the action bar.
+   */
+  onRequestDelete?: (taskIds: string[]) => void;
   onOpenTask?: (task: KanbanTask) => void;
   /**
    * Omit to make the board read-only: the composer and both add controls
@@ -763,6 +770,7 @@ export function KanbanBoard({
   onMove,
   onOpenTask,
   onCreateCard,
+  onRequestDelete,
   selectedIds,
   onSelectTask,
   onSelectMany,
@@ -829,6 +837,25 @@ export function KanbanBoard({
           Clear
         </button>
       </div>
+
+      {/*
+       * The trash sits outside the rail rather than inside a column, so it
+       * cannot be mistaken for a destination and so a card dragged over it is
+       * never simultaneously "being moved to Ready".
+       */}
+      {onRequestDelete ? (
+        <TrashZone
+          count={draggingId ? 1 : (selectedIds?.size ?? 0)}
+          dragging={Boolean(draggingId)}
+          onRequest={(ids) => {
+            // The zone resolves the id itself for a drop; for a click it hands
+            // back an empty list meaning "the selection", which is already
+            // what the label counted.
+            handleDragEnd();
+            onRequestDelete(ids);
+          }}
+        />
+      ) : null}
 
       <div className="kb-rail">
         {columns.map((column, columnIndex) => {
