@@ -184,6 +184,11 @@ def _task_dict(task: kanban_db.Task, *, latest_summary: Optional[str] = None,
     # Start of the current task_runs row (``tasks.started_at`` is the FIRST-EVER
     # start; after a retry the run clock must tick from the fresh run).
     d["current_run_started_at"] = current_run_started_at
+    # Pipeline discriminator (spec section 9): a card the executor owns, read off
+    # the inert forward-compat columns -- no new column, no migration. It reaches
+    # the UI through this dict alone, which is exactly where the drag guard and
+    # the "executor moves the card" chip read it.
+    d["pipeline"] = bool(task.workflow_template_id or task.current_step_key)
     return d
 
 
@@ -618,9 +623,19 @@ _STATUS_HANDLERS: dict[str, Any] = {
 
 def _apply_status(conn, task_id: str, s: str, p, unknown_detail: str) -> bool:
     """Dispatch a status verb; raises ``_StatusRejected`` (user-facing message)
-    for ``running`` or an unknown status (``unknown_detail``)."""
+    for ``running``, an unknown status (``unknown_detail``), or a pipeline card
+    (spec 9: the executor owns a pipeline card's column -- a manual move would
+    skip a review step or mark an order done, and a drag out of ``running``
+    kills the live worker via ``_set_status_direct``)."""
     if s == "running":
         raise _StatusRejected(_RUNNING_DIRECT_MSG)
+    task = kanban_db.get_task(conn, task_id)
+    if task is not None and (task.workflow_template_id or task.current_step_key):
+        raise _StatusRejected(
+            f"'{task_id}' is a pipeline card (workflow {task.workflow_template_id!r}); "
+            "its column is owned by the pipeline executor and cannot be changed "
+            "manually — use the pipeline controls (Stop / Retry step) instead"
+        )
     handler = _STATUS_HANDLERS.get(s)
     if handler is None:
         raise _StatusRejected(unknown_detail)
