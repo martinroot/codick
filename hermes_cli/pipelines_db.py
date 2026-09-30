@@ -49,6 +49,7 @@ __all__ = [
     "import_template", "get_template", "list_templates", "list_template_versions", "delete_template",
     "create_run", "get_run", "list_runs", "runs_for_card", "set_run_status", "set_run_scheduling",
     "set_run_result", "finish_run", "bump_rework_cycles", "bump_step_executions",
+    "expire_input_deadlines",
     "create_attempt", "get_attempt", "list_attempts", "start_attempt", "finish_attempt",
     "claim_attempt", "heartbeat_attempt", "release_attempt",
     "open_input_request", "get_input_request", "list_input_requests", "answer_input_request",
@@ -313,6 +314,14 @@ def _template_from_row(row: sqlite3.Row) -> ScenarioTemplate:
     )
 
 
+# "Latest" needs a total order. ``created_at`` and ``updated_at`` are integer
+# seconds, so saving two versions inside the same second leaves the choice to
+# SQLite — and the reader can then be shown the version the author just replaced.
+# ``rowid`` is monotonic with insertion, so it is the tiebreak that matches what
+# "latest" means: last written wins.
+_TEMPLATE_NEWEST_FIRST = "ORDER BY created_at DESC, updated_at DESC, rowid DESC"
+
+
 def get_template(conn: sqlite3.Connection, template_id: str, version: Optional[str] = None) -> Optional[ScenarioTemplate]:
     """The template by ``(id, version)``, or its latest version when ``version`` is None."""
     if version is not None:
@@ -321,7 +330,7 @@ def get_template(conn: sqlite3.Connection, template_id: str, version: Optional[s
         ).fetchone()
         return None if row is None else _template_from_row(row)
     row = conn.execute(
-        "SELECT * FROM scenario_templates WHERE id = ? ORDER BY created_at DESC, updated_at DESC LIMIT 1",
+        f"SELECT * FROM scenario_templates WHERE id = ? {_TEMPLATE_NEWEST_FIRST} LIMIT 1",
         (template_id,),
     ).fetchone()
     return None if row is None else _template_from_row(row)
@@ -331,7 +340,7 @@ def list_templates(conn: sqlite3.Connection) -> List[ScenarioTemplate]:
     """Every template version, newest first."""
     return [
         _template_from_row(r) for r in conn.execute(
-            "SELECT * FROM scenario_templates ORDER BY created_at DESC, updated_at DESC, id ASC"
+            f"SELECT * FROM scenario_templates {_TEMPLATE_NEWEST_FIRST}"
         ).fetchall()
     ]
 
@@ -339,7 +348,7 @@ def list_templates(conn: sqlite3.Connection) -> List[ScenarioTemplate]:
 def list_template_versions(conn: sqlite3.Connection, template_id: str) -> List[ScenarioTemplate]:
     return [
         _template_from_row(r) for r in conn.execute(
-            "SELECT * FROM scenario_templates WHERE id = ? ORDER BY created_at DESC, updated_at DESC",
+            f"SELECT * FROM scenario_templates WHERE id = ? {_TEMPLATE_NEWEST_FIRST}",
             (template_id,),
         ).fetchall()
     ]
@@ -1069,6 +1078,71 @@ def answer_input_request(
     answered = get_input_request(conn, request_id)
     assert answered is not None
     return answered
+
+
+def expire_input_deadlines(conn: sqlite3.Connection, *, now: Optional[int] = None) -> list[str]:
+    """Fail runs whose ``user_input`` wait hit its deadline.
+
+    ``waiting_input`` holds no worker, so nothing is around to notice the
+    deadline passing — the executor's rule that no transaction spans a model
+    call is also why there is no timer thread. The deadline is a stored
+    timestamp and this sweep is what acts on it; it is idempotent and safe to
+    call from a tick, a request, or a test.
+
+    Only a run with a stored deadline expires. ``wait_timeout_seconds: null``
+    means "wait as long as it takes" and must never be swept.
+    """
+    ts = now if now is not None else _now()
+    expired: list[str] = []
+    rows = conn.execute(
+        "SELECT id, current_step_id FROM pipeline_runs "
+        "WHERE status = 'waiting_input' AND deadline IS NOT NULL AND deadline <= ?",
+        (ts,),
+    ).fetchall()
+    for row in rows:
+        run_id = row["id"]
+        with write_txn(conn):
+            # Re-read under the write lock: a response may have landed between
+            # the scan and here, and an answered run must not be failed.
+            current = conn.execute(
+                "SELECT status, deadline FROM pipeline_runs WHERE id = ?", (run_id,),
+            ).fetchone()
+            if current is None or current["status"] != "waiting_input":
+                continue
+            if current["deadline"] is None or current["deadline"] > ts:
+                continue
+            closed = conn.execute(
+                "UPDATE input_requests SET status = 'expired', closed_at = ? "
+                "WHERE run_id = ? AND status = 'open'", (ts, run_id),
+            ).rowcount
+            # The UPDATE is written out rather than delegated to
+            # finish_attempt: that helper opens its own write_txn, and
+            # sqlite_util.write_txn does not nest. The event is appended with
+            # txn_open=True so the attempt failure and the run failure land in
+            # this one transaction.
+            waiting = conn.execute(
+                "SELECT id FROM step_attempts WHERE run_id = ? AND status = 'waiting_input'",
+                (run_id,),
+            ).fetchall()
+            for attempt in waiting:
+                conn.execute(
+                    "UPDATE step_attempts SET status = 'failed', error = ?, error_code = ?, ended_at = ? "
+                    "WHERE id = ?", ("input_timeout", "input_timeout", ts, attempt["id"]),
+                )
+                append_event(conn, run_id, "step.failed", step_id=row["current_step_id"],
+                             attempt_id=attempt["id"],
+                             payload={"error": "input_timeout", "error_code": "input_timeout"},
+                             txn_open=True, occurred_at=ts)
+            conn.execute(
+                "UPDATE pipeline_runs SET status = 'failed', error = ?, error_code = 'input_timeout', "
+                "updated_at = ? WHERE id = ?",
+                (f"no response by the deadline on step {row['current_step_id']!r}", ts, run_id),
+            )
+            append_event(conn, run_id, "input.expired", step_id=row["current_step_id"],
+                         payload={"requests_expired": closed, "deadline": current["deadline"]},
+                         txn_open=True, occurred_at=ts)
+        expired.append(run_id)
+    return expired
 
 
 def invalidate_input_requests(

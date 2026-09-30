@@ -206,6 +206,50 @@ class ImportResult:
 
 # --- Refs ------------------------------------------------------------------------
 
+def response_schema_errors(response: Any, schema: Optional[dict]) -> list[dict]:
+    """Validate a user_input response against the step's ``response_schema``.
+
+    Returns one entry per failure, each carrying the JSON path of the offending
+    value, so a 422 can name the field instead of saying "invalid". The caller
+    is the UI and the API alike — spec §7 requires the same code on both sides,
+    otherwise a form that validates in the browser can still be rejected by the
+    server with a different message.
+
+    An empty or absent schema accepts any object: it means the step declared no
+    shape, not that it forbids everything.
+    """
+    if not schema:
+        return []
+    try:
+        from jsonschema import Draft202012Validator
+    except Exception as exc:  # noqa: BLE001 - surfaced, never silently skipped
+        raise RuntimeError(f"jsonschema is required to validate a response: {exc}") from exc
+    if not isinstance(response, dict):
+        return [{"path": "", "message": "response must be a JSON object"}]
+    validator = Draft202012Validator(schema)
+    errors = []
+    for err in sorted(validator.iter_errors(response), key=lambda e: list(e.absolute_path)):
+        base = "$" + "".join(
+            f"[{part}]" if isinstance(part, int) else f".{part}" for part in err.absolute_path
+        )
+        # A missing required property is reported by jsonschema against the
+        # *object* that lacks it, so `{"items":[{...no qty}]}` comes back as
+        # `$.items[1]`. That is technically true and practically useless — the
+        # issue asks for the failing field's path, so expand it per property.
+        if err.validator == "required" and isinstance(err.instance, dict):
+            missing = [k for k in (err.validator_value or []) if k not in err.instance]
+            for name in missing:
+                errors.append({
+                    "path": f"{base}.{name}",
+                    "message": f"{name!r} is required",
+                    "validator": "required",
+                })
+            continue
+        errors.append({"path": base or "$", "message": err.message,
+                       "validator": str(err.validator)})
+    return errors
+
+
 def _is_ref(value: Any) -> bool:
     return isinstance(value, Mapping) and isinstance(value.get("ref"), str)
 

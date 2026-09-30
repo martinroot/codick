@@ -901,6 +901,31 @@ KANBAN_API_PREFIX = "/api/kanban"
 KANBAN_API_DEPRECATED_PREFIX = "/api/plugins/kanban"
 
 
+PIPELINES_API_PREFIX = "/api/pipelines"
+
+
+def _mount_pipelines_api_routes():
+    """Mount the pipeline run-control API in core.
+
+    Same placement logic as the Kanban API and for the same reason: run control
+    and the ``user_input`` response surface are product routes, not a plugin's.
+    #41 (Idempotency-Key) and #42 (per-run ownership) are written against this
+    prefix, so the prefix had to exist before they could.
+    """
+    from hermes_cli.web_server import app
+    try:
+        from hermes_cli.pipelines_api import router
+    except Exception as exc:
+        _log.warning("Failed to load the pipelines API: %s", exc)
+        return
+    app.include_router(
+        router,
+        prefix=PIPELINES_API_PREFIX,
+        dependencies=[Depends(_plugin_route_secret_scope)],
+    )
+    _log.info("Mounted pipelines API routes: %s/", PIPELINES_API_PREFIX)
+
+
 def _mount_kanban_api_routes():
     """Mount the Kanban board API in core, plus a deprecated alias.
 
