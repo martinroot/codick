@@ -48,8 +48,9 @@ __all__ = [
     "pipelines_data_root", "pipelines_db_path", "artifacts_root", "connect", "connect_closing",
     "import_template", "get_template", "list_templates", "list_template_versions", "delete_template",
     "create_run", "get_run", "list_runs", "runs_for_card", "set_run_status", "set_run_scheduling",
-    "set_run_result", "finish_run", "bump_rework_cycles",
+    "set_run_result", "finish_run", "bump_rework_cycles", "bump_step_executions",
     "create_attempt", "get_attempt", "list_attempts", "start_attempt", "finish_attempt",
+    "claim_attempt", "heartbeat_attempt", "release_attempt",
     "open_input_request", "get_input_request", "list_input_requests", "answer_input_request",
     "invalidate_input_requests",
     "append_event", "get_event", "list_events",
@@ -800,6 +801,22 @@ def require_active_run_status(conn: sqlite3.Connection, run_id: str, *active: st
     return run
 
 
+def bump_step_executions(conn: sqlite3.Connection, run_id: str) -> int:
+    """Count one step activation.
+
+    ``create_attempt`` already does this for steps that get an attempt. A
+    ``condition`` does not get one — it has no output to record — but spec §7
+    counts it anyway ("max_step_executions ... including conditions"), so it
+    needs its own increment rather than a fake attempt row.
+    """
+    with write_txn(conn):
+        _require_run_row(conn, run_id)
+        conn.execute("UPDATE pipeline_runs SET step_executions = step_executions + 1, updated_at = ? "
+                     "WHERE id = ?", (_now(), run_id))
+        row = conn.execute("SELECT step_executions FROM pipeline_runs WHERE id = ?", (run_id,)).fetchone()
+    return row["step_executions"]
+
+
 def bump_rework_cycles(conn: sqlite3.Connection, run_id: str) -> int:
     """Increase the rework counter (spec §7: returning for rework bumps it; the executor
     compares against ``max_rework_cycles``)."""
@@ -900,6 +917,71 @@ def finish_attempt(
                            payload={"status": status, "error_code": error_code},
                            txn_open=True, occurred_at=ts)
     return seq
+
+
+# --- Leases -------------------------------------------------------------------------
+
+def claim_attempt(
+    conn: sqlite3.Connection, attempt_id: str, owner: str, *, ttl_seconds: int = 60,
+    now: Optional[int] = None,
+) -> bool:
+    """Take the attempt's execution lease, or report that someone else holds it.
+
+    Spec §7: a lease with a heartbeat and an owner check is what stops two
+    dispatchers running one run at the same time. ``False`` means either another
+    live owner holds it, or — the case that matters on restart — the recorded
+    owner is gone and the lease has expired, in which case the caller is
+    entitled to take it.
+
+    Re-claiming a lease we already hold succeeds, so a dispatcher that lost its
+    own connection mid-step can resume rather than deadlock against its
+    previous self.
+    """
+    if not owner:
+        raise ValueError("lease owner must be a non-empty string")
+    ts = now if now is not None else _now()
+    expires = ts + int(ttl_seconds)
+    with write_txn(conn):
+        row = _require_attempt_row(conn, attempt_id)
+        held, held_until = row["lease_owner"], row["lease_expires"]
+        if held is not None and held != owner and (held_until is None or held_until > ts):
+            return False
+        conn.execute(
+            "UPDATE step_attempts SET lease_owner = ?, lease_expires = ? WHERE id = ?",
+            (owner, expires, attempt_id),
+        )
+    return True
+
+
+def heartbeat_attempt(
+    conn: sqlite3.Connection, attempt_id: str, owner: str, *, ttl_seconds: int = 60,
+    now: Optional[int] = None,
+) -> bool:
+    """Extend a lease we hold; ``False`` if we no longer hold it.
+
+    A heartbeat that returns ``False`` is the signal to stop working on the
+    step: another dispatcher has taken over, and continuing would be the exact
+    double-execution the lease exists to prevent.
+    """
+    ts = now if now is not None else _now()
+    with write_txn(conn):
+        row = _require_attempt_row(conn, attempt_id)
+        if row["lease_owner"] != owner:
+            return False
+        conn.execute("UPDATE step_attempts SET lease_expires = ? WHERE id = ?",
+                     (ts + int(ttl_seconds), attempt_id))
+    return True
+
+
+def release_attempt(conn: sqlite3.Connection, attempt_id: str, owner: str) -> bool:
+    """Drop the lease if we still hold it. ``False`` if someone else took it."""
+    with write_txn(conn):
+        row = _require_attempt_row(conn, attempt_id)
+        if row["lease_owner"] != owner:
+            return False
+        conn.execute("UPDATE step_attempts SET lease_owner = NULL, lease_expires = NULL WHERE id = ?",
+                     (attempt_id,))
+    return True
 
 
 # --- Input requests ---------------------------------------------------------------
