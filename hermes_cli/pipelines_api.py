@@ -40,6 +40,7 @@ from fastapi import (APIRouter, Body, Depends, Header, HTTPException, Query, Req
 from gateway.platforms.api_server_run_idempotency import RunIdempotencyStore
 from pydantic import BaseModel, Field
 
+from hermes_cli import pipeline_board
 from hermes_cli import pipeline_credentials as credentials
 from hermes_cli import pipelines_db as db
 from hermes_cli.pipeline_template import response_schema_errors, validate_template
@@ -255,6 +256,9 @@ def _run_detail(run_id: str) -> dict:
         "id": run.id,
         "template_id": run.template_id,
         "template_version": run.template_version,
+        # The card this run is anchored to. The board's panel needs it to move
+        # the selection across to the card it just made.
+        "card_id": run.card_id,
         "status": run.status,
         "current_step_id": run.current_step_id,
         "error": run.error,
@@ -386,8 +390,24 @@ def create_run(body: CreateRunBody, response: Response, request: Request,
             raise HTTPException(status_code=422,
                                 detail={"message": "stored template no longer validates",
                                         "errors": _template_errors(errors)})
-        run_id = db.create_run(conn, row.template, inputs=body.inputs,
-                               owner_scope=caller_scope)
+        # The card and the run are created as one operation, not a run with a
+        # card attached later: spec §9 says a card without a run, or a run
+        # without a card, is a broken pair, and this is the route the board's Run
+        # button actually calls.
+        try:
+            started = pipeline_board.start_run_with_card(
+                conn, template=row.template, inputs=body.inputs,
+                owner_scope=caller_scope, idempotency_key=None)
+        except pipeline_board.StartError as exc:
+            raise HTTPException(status_code=500, detail={"message": str(exc)}) from exc
+        except ValueError as exc:
+            # start_run_with_card re-validates; a stored template that has since
+            # stopped validating is the caller's 422, not a 500.
+            raise HTTPException(
+                status_code=422,
+                detail={"message": "template does not validate", "errors": [
+                    {"path": "$", "message": str(exc)}]}) from exc
+        run_id = started["run_id"]
         # Reserved after the run exists, following the gateway: a reservation is
         # keyed on the run it admitted, and `reserve` will not rewrite an
         # existing row, so reserving against a placeholder id would both lose the

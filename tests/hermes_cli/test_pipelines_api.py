@@ -35,6 +35,8 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from hermes_cli import pipeline_executor as ex  # noqa: E402
+from hermes_cli import kanban_db
+from hermes_cli import kanban_db_connect
 from hermes_cli import pipeline_credentials
 from hermes_cli import pipelines_db as db  # noqa: E402
 from hermes_cli import pipelines_api  # noqa: E402
@@ -354,6 +356,37 @@ def test_a_wait_holds_no_worker_and_survives_a_re_read(client):
 
 
 # --- Idempotency-Key (#41) ------------------------------------------------
+
+
+def test_creating_a_run_also_creates_its_card(client):
+    """Spec §9: Run makes the card and the run as one operation.
+
+    This is the route the board's Run button calls, so the pair has to be
+    complete here — a run with no card is the broken pair the spec names.
+    """
+    _store(client, TEMPLATE)
+    created = client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {}},
+                          headers={"Idempotency-Key": "k1"})
+    assert created.status_code == 201, created.text
+    card_id = created.json()["card_id"]
+    assert card_id, "the run came back with no card"
+
+    kanban = kanban_db_connect.connect()
+    try:
+        card = kanban_db.get_task(kanban, card_id)
+    finally:
+        kanban.close()
+    assert card is not None, "the run names a card that does not exist"
+    assert TEMPLATE["id"] in card.title or TEMPLATE["name"] in card.title
+
+
+def test_a_replay_of_run_creation_does_not_make_a_second_card(client):
+    _store(client, TEMPLATE)
+    first = client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {}},
+                        headers={"Idempotency-Key": "k1"})
+    again = client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {}},
+                        headers={"Idempotency-Key": "k1"})
+    assert again.json()["card_id"] == first.json()["card_id"], "a replay made a second card"
 
 
 def test_run_creation_requires_an_idempotency_key(client):
