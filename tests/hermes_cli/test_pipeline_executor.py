@@ -322,6 +322,90 @@ def test_a_contending_dispatcher_never_reaches_the_adapter():
     assert db.get_attempt(conn, attempt).lease_owner == "dispatcher-A"
 
 
+# --- Answering a request, and the race between two surfaces ------------------
+
+def _user_input_template():
+    return {
+        "schema_version": "1.0", "id": "t", "version": "1.0.0", "name": "T", "start_step": "draft",
+        "inputs_schema": {"type": "object", "properties": {}, "required": []},
+        "steps": [
+            {"id": "draft", "type": "agent", "profile": "w", "instruction": "D", "input": {}, "next": "ask"},
+            {"id": "ask", "type": "user_input", "prompt": "Approve?",
+             "response_schema": {"type": "object"}, "wait_timeout_seconds": 600, "next": "publish"},
+            {"id": "publish", "type": "tool", "tool": "t", "instruction": "E", "next": None},
+        ],
+    }
+
+
+def _run_to_waiting_input(conn, template=None):
+    run_id = db.create_run(conn, template or _user_input_template(), inputs={})
+    adapter = FakeAdapter(scripted(draft=[{}], publish=[{}]))
+    ex.advance(conn, run_id, adapter, owner="d")
+    ex.advance(conn, run_id, adapter, owner="d")  # opens the request
+    assert db.get_run(conn, run_id).status == "waiting_input"
+    open_requests = [r for r in db.list_input_requests(conn, run_id) if r.status == "open"]
+    assert len(open_requests) == 1
+    return run_id, open_requests[0].id, adapter
+
+
+def test_an_answered_request_can_actually_be_resumed():
+    """A response that cannot be consumed is a response that does not exist.
+
+    ``advance`` used to accept only ``queued``/``running``, so a run that had
+    accepted a response sat in ``waiting_input`` and refused every attempt to
+    continue — the accept succeeded and the run was stuck forever.
+    """
+    conn = db.connect()
+    run_id, request_id, adapter = _run_to_waiting_input(conn)
+    db.answer_input_request(conn, request_id, {"approved": True}, responded_by="chat")
+
+    assert ex.advance(conn, run_id, adapter, owner="d").status == "advanced"
+    assert ex.advance(conn, run_id, adapter, owner="d").status == "completed"
+    assert db.get_run(conn, run_id).status == "completed"
+
+
+def test_two_surfaces_cannot_both_advance_a_run():
+    """Acceptance check 7: the chat UI and the external API race on the same
+    request, and exactly one of them may move the run on."""
+    import threading
+
+    conn = db.connect()
+    run_id, request_id, _ = _run_to_waiting_input(conn)
+
+    outcomes = []
+    barrier = threading.Barrier(2)
+
+    def answer(label, payload):
+        c = db.connect()
+        try:
+            barrier.wait()
+            db.answer_input_request(c, request_id, payload, responded_by=label)
+            outcomes.append(("accepted", label))
+        except ValueError as exc:
+            outcomes.append(("refused", label, str(exc)))
+        finally:
+            c.close()
+
+    threads = [
+        threading.Thread(target=answer, args=("chat", {"approved": True, "who": "chat"})),
+        threading.Thread(target=answer, args=("api", {"approved": False, "who": "api"})),
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    accepted = [o for o in outcomes if o[0] == "accepted"]
+    assert len(accepted) == 1, outcomes
+    # The stored response is the winner's, whole — not a merge of the two.
+    stored = db.get_input_request(db.connect(), request_id)
+    assert stored.status == "answered"
+    assert stored.accepted_response["who"] == accepted[0][1]
+    # And the run moved on exactly once.
+    events = [e for e in db.list_events(db.connect(), run_id) if e.type == "input.received"]
+    assert len(events) == 1, events
+
+
 if __name__ == "__main__":
     failures = []
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]

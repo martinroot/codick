@@ -320,7 +320,11 @@ def advance(
     outcomes: a run that is waiting for a human, finished, or blocked has not
     thrown, and the caller needs to say so differently in each case.
     """
-    run = db.require_active_run_status(conn, run_id, "queued", "running")
+    # `waiting_input` is a status a run can still make progress from, not a
+    # resting state: once the request is answered, this call is what consumes
+    # the answer and moves on. Leaving it out made that path unreachable — the
+    # run accepted a response and then refused every attempt to continue.
+    run = db.require_active_run_status(conn, run_id, "queued", "running", "waiting_input")
     template = run.template_snapshot or {}
     if not isinstance(template, Mapping):
         raise ValueError(f"run {run_id} has no template snapshot")
