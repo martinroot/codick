@@ -666,12 +666,37 @@ def _rule_block_loop_detected(task, events, runs, now, cfg) -> list[Diagnostic]:
     )]
 
 
+def _assignee_is_machine_lane(assignee: str) -> Optional[bool]:
+    """Whether ``assignee`` names a real Hermes profile.
+
+    ``True``/``False`` when the profile registry is readable, ``None`` when it
+    is not — the caller then keeps the old assumption rather than guessing.
+    """
+    try:
+        from hermes_cli.profiles import normalize_profile_name, profile_exists
+    except Exception:
+        return None
+    try:
+        return bool(profile_exists(normalize_profile_name(assignee)))
+    except ValueError:
+        return False
+
+
 def _rule_stranded_in_ready(task, events, runs, now, cfg) -> list[Diagnostic]:
     """Assigned, unclaimed, ``ready`` for >= cfg["stranded_threshold_seconds"]
     (default 30 min). Deliberately age-based and identity-agnostic so it
     catches typo'd assignees, deleted profiles, and down external worker
     pools alike without a registry to curate. Unassigned tasks are excluded —
-    the dispatcher's ``skipped_unassigned`` already covers them."""
+    the dispatcher's ``skipped_unassigned`` already covers them.
+
+    One exception, and it is not a small one. An assignee that is not a Hermes
+    profile is how a *human* lane is spelled: the dispatcher reports exactly
+    this as ``skipped_nonspawnable`` and calls it "terminal lane, OK". Reading
+    the same fact as "a worker should have claimed this and did not" — at
+    ``critical``, after six thresholds — is how a board of human-queued work
+    ends up looking like an outage. Nothing is polling for these tasks and
+    nothing ever will, so the waiting is the design, not the failure.
+    """
     threshold_seconds = float(cfg.get("stranded_threshold_seconds", 30 * 60))
     if _task_field(task, "status") != "ready":
         return []
@@ -703,6 +728,31 @@ def _rule_stranded_in_ready(task, events, runs, now, cfg) -> list[Diagnostic]:
         severity = "error"
     else:
         severity = "warning"
+
+    # A non-profile assignee is a different fact with a different remedy, so
+    # it gets its own wording and its own (much lower) severity rather than
+    # being folded into "a worker failed to show up".
+    is_machine_lane = _assignee_is_machine_lane(assignee)
+    if is_machine_lane is False:
+        return [Diagnostic(
+            kind="human_lane_in_ready",
+            # A typo is worth noticing; six thresholds of it is not an outage.
+            severity="warning" if age_seconds < threshold_seconds * 6 else "error",
+            title=f"Ready for {age_str}, waiting on a human",
+            detail=f"No machine will ever claim this task: assignee {assignee!r} is not a Hermes "
+                   f"profile, so the dispatcher files it under skipped_nonspawnable — a terminal "
+                   f"lane, not a stalled worker. If you meant a worker, {assignee!r} is misspelled "
+                   f"or its profile was deleted; if you meant yourself, it is simply queued.",
+            actions=[
+                DiagnosticAction(kind="reassign", label="Reassign to a worker profile",
+                                 payload={"current_assignee": assignee}),
+                _cli_hint("List real profiles", "hermes profiles list"),
+            ],
+            first_seen_at=last_ready_ts, last_seen_at=last_ready_ts, count=1,
+            data={"ready_since": last_ready_ts, "age_seconds": int(age_seconds),
+                  "assignee": assignee, "threshold_seconds": int(threshold_seconds),
+                  "machine_lane": False},
+        )]
 
     actions = [
         DiagnosticAction(kind="reassign", label="Reassign to a different worker",
