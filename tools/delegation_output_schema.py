@@ -1,10 +1,21 @@
-"""Structured-output schema helpers for delegate_task.
+"""Structured-output schema helpers for delegate_task (and the pipeline executor).
 
 Optional per-task ``output_schema`` (a JSON Schema object): the child gets an
 OUTPUT CONTRACT block appended to its context, the parent validates the final
 answer with jsonschema, and on failure sends exactly ONE bounded retry turn
 carrying the validation errors verbatim (more retries make frontier models
 drop fields that were right the first time; the schema is never re-pasted).
+
+The contract is prompt-level, not provider-enforced: the schema is injected
+as text and the answer is re-validated after the fact. The pipeline's
+correctness rests on this validation, so ``jsonschema`` is imported at module
+level — a broken install fails loudly (ImportError) instead of silently
+skipping validation, which used to make the contract mean "no validation".
+
+Dialect policy (spec §5 — one documented version): every schema is validated
+against JSON Schema Draft 2020-12, regardless of what its ``$schema`` key
+declares. Draft-7-only keywords (tuple-form ``items``, ``dependencies``) are
+not enforced; template authors must write Draft 2020-12.
 """
 
 from __future__ import annotations
@@ -13,7 +24,14 @@ import json
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
+# Hard dependency (pyproject): no fallback path — see module docstring.
+from jsonschema.validators import Draft202012Validator
+
 logger = logging.getLogger(__name__)
+
+#: The one supported JSON Schema dialect (spec §5), pinned over the library's
+#: ``$schema``-based preference.
+SUPPORTED_DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
 
 def coerce_output_schema(raw: Any) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
@@ -32,13 +50,9 @@ def coerce_output_schema(raw: Any) -> Tuple[Optional[Dict[str, Any]], Optional[s
     if not isinstance(raw, dict):
         return None, f"output_schema must be a JSON Schema object, got {type(raw).__name__}."
     try:
-        from jsonschema.validators import validator_for  # type: ignore[import-untyped]
-        validator_for(raw).check_schema(raw)
-    except ImportError:
-        # Degrade to accepting the dict as-is so delegation still works without jsonschema.
-        logger.debug("jsonschema unavailable; skipping output_schema meta-validation")
+        Draft202012Validator.check_schema(raw)
     except Exception as exc:
-        return None, f"output_schema is not a valid JSON Schema: {exc}"
+        return None, f"output_schema is not a valid JSON Schema (Draft 2020-12): {exc}"
     return raw, None
 
 
@@ -93,12 +107,9 @@ def validate_output(text: str, schema: Dict[str, Any]) -> Tuple[bool, List[str]]
         parsed = json.loads(candidate)
     except (ValueError, TypeError) as exc:
         return False, [f"Response is not valid JSON: {exc}"]
-    try:
-        from jsonschema.validators import validator_for  # type: ignore[import-untyped]
-    except ImportError:
-        logger.debug("jsonschema unavailable; accepting parsed JSON without validation")
-        return True, []
-    validator = validator_for(schema)(schema)
+    # Pinned dialect: Draft202012Validator, never validator_for(schema) — the library would
+    # otherwise honor whatever ``$schema`` the payload declares.
+    validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(parsed), key=lambda e: list(e.absolute_path))
     rendered = [  # bound error volume for the retry prompt
         "$" + "".join(f"[{p}]" if isinstance(p, int) else f".{p}" for p in err.absolute_path) + f": {err.message}"

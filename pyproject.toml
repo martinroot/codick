@@ -56,6 +56,14 @@ dependencies = [
   "ruamel.yaml==0.18.16; python_version >= '3.14'",
   "requests==2.33.0; python_version >= '3.14'",  # CVE-2026-25645
   "jinja2==3.1.6; python_version >= '3.14'",
+  # JSON Schema validation is a correctness contract, not an enhancement:
+  # tools/delegation_output_schema.py imports it at module level (delegation
+  # output contracts, pipeline agent steps) and tools/tool_search_validation.py
+  # validates deferred tool-call args with it. A missing package used to
+  # silently disable output validation; now the import fails loudly instead.
+  # Already in the lock transitively (mcp / nemo-relay) — pinned at that
+  # version, the graph is unchanged.
+  "jsonschema==4.26.0; python_version >= '3.14'",
   # Document-to-Markdown extraction for read_file (PDF, legacy Office,
   # OpenDocument, RTF, EPUB) + typed NeedsOcrError for scanned pages.
   # Bundled in core by maintainer decision (read_file is a core tool and

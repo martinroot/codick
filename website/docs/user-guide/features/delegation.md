@@ -56,6 +56,13 @@ delegate_task(tasks=[
 
 Each task can carry an optional `output_schema`, a JSON Schema object the child's final answer must validate against. The child sees the schema up front as an output contract ("return ONLY the JSON value — no prose, no code fence"); when the answer comes back the parent validates it, and on failure sends the child exactly one bounded correction turn carrying the validation errors verbatim (the schema is not re-pasted). The task's result then gains `schema_valid` (true/false) and, on failure, `schema_errors`.
 
+Two properties of this contract worth stating exactly:
+
+- **It is prompt-level, not provider-enforced.** The schema is injected into the child's context as text and the answer is re-validated on the backend after the fact. No provider structured-output API is involved, so validation does not depend on which provider or API mode the delegation runs on.
+- **The dialect is JSON Schema Draft 2020-12.** Every schema is validated against that dialect regardless of what its `$schema` key declares; draft-07-only constructs such as tuple-form `items` or boolean-argument `exclusiveMinimum` are rejected when the schema is registered, not when an answer is graded. Template authors must write Draft 2020-12.
+
+`jsonschema` is a hard dependency (pinned in `pyproject.toml`); the output-contract module imports it at startup, so a broken install fails loudly instead of silently skipping validation.
+
 A contract miss after the retry does **not** discard the child's work: the result keeps `status: completed` with the child's raw final text in `summary`, `schema_valid: false`, the `schema_errors`, and a `schema_note` saying the text is unvalidated. The parent extracts what it needs from the raw text instead of re-running a task that may have taken an hour. Prose or a code fence around otherwise-valid JSON (object or array) is tolerated by the validator.
 
 ```python
