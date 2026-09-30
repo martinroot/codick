@@ -408,9 +408,11 @@ function DetailTab({
     <div className="kb-drawer-section">
       {/*
        * Delete lives here, alone at the top of Detail, and not in the header:
-       * `kanban_db.delete_task` is a hard DELETE with no guard, so the button
-       * that reaches it should not sit beside controls you reach for by
-       * reflex. The page owns the confirm.
+       * `kanban_db.delete_task` is a hard DELETE — irreversible, and as of
+       * #52 it also terminates a running task's worker and releases any
+       * dependent card. A button that reaches that should not sit beside
+       * controls you reach for by reflex. The page owns the confirm, which
+       * names the two consequences the server now reports.
        */}
       {onRequestDelete ? (
         <div className="kb-drawer-danger">

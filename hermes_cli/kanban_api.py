@@ -732,9 +732,32 @@ def update_task(task_id: str, payload: UpdateTaskBody, board: Optional[str] = Qu
 @router.delete("/tasks/{task_id}")
 def delete_task(task_id: str, board: Optional[str] = Query(None)):
     with _board_conn(board) as (board, conn):
+        # Read the two facts a caller cannot get from a 200: whether this was
+        # a running task, so a worker was just killed, and how many children
+        # lost a parent. `kanban_db.delete_task` terminates the worker and
+        # releases the children correctly, but a delete that silently
+        # terminates a process and silently un-gates someone else's work is
+        # the kind of thing the caller has to be able to say out loud.
+        before = kanban_db.get_task(conn, task_id)
+        if before is None:
+            raise HTTPException(status_code=404, detail=f"task {task_id} not found")
+        # `get_task` returns the `Task` dataclass, not a row — attribute
+        # access, and a subscript here compiles fine and fails at runtime.
+        was_running = before.status == "running"
+        children = [
+            row["child_id"]
+            for row in conn.execute(
+                "SELECT child_id FROM task_links WHERE parent_id = ?", (task_id,)
+            ).fetchall()
+        ]
         if not kanban_db.delete_task(conn, task_id):
             raise HTTPException(status_code=404, detail=f"task {task_id} not found")
-        return {"deleted": True, "task_id": task_id}
+        return {
+            "deleted": True,
+            "task_id": task_id,
+            "was_running": was_running,
+            "children_orphaned": len(children),
+        }
 
 
 def _parents_blocking_ready(conn: sqlite3.Connection, task_id: str) -> list:

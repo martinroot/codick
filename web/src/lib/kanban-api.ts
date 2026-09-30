@@ -461,6 +461,15 @@ export interface KanbanCreateTask {
   current_step_key?: string | null;
 }
 
+export interface KanbanDeleteResult {
+  deleted: boolean;
+  task_id: string;
+  /** The task was `running`, so its worker was terminated on the way out. */
+  was_running?: boolean;
+  /** Dependent cards that lost a parent and were released by recompute. */
+  children_orphaned?: number;
+}
+
 export interface KanbanUpdateTask {
   title?: string;
   status?: KanbanStatus;
@@ -716,8 +725,18 @@ export const kanbanApi = {
       },
     ),
 
+  /**
+   * Hard-deletes a task.
+   *
+   * The response was typed `{ok: boolean}` for the lifetime of the method,
+   * which never matched what the server sends (`{deleted, task_id}`) and went
+   * unnoticed because no caller read it. `was_running` and
+   * `children_orphaned` are the two things a 200 cannot express: the server
+   * terminated a worker, and it released someone else's dependent card. Both
+   * are worth saying rather than swallowing.
+   */
   deleteTask: (id: string, options: KanbanRequestOptions) =>
-    fetchJSON<{ ok: boolean }>(kanbanUrl(`/tasks/${encodeURIComponent(id)}`, options), {
+    fetchJSON<KanbanDeleteResult>(kanbanUrl(`/tasks/${encodeURIComponent(id)}`, options), {
       method: "DELETE",
     }),
 

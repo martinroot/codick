@@ -3946,14 +3946,45 @@ def delete_archived_task(conn: sqlite3.Connection, task_id: str) -> bool:
         return cur.rowcount == 1
 
 
-def delete_task(conn: sqlite3.Connection, task_id: str) -> bool:
-    """Hard-delete a task and its related rows in one txn; False when not found."""
+def delete_task(conn: sqlite3.Connection, task_id: str, *, signal_fn=None) -> bool:
+    """Hard-delete a task and its related rows in one txn; False when not found.
+
+    A *running* task's host-local worker is terminated first, the same way
+    :func:`archive_task` does it. Without that, deleting a running task removes
+    the row while the process it describes keeps executing and pushing work
+    against an id the database no longer has — #76196, which was found and
+    fixed on the archive path and left unfixed here. The pid, claim and
+    process fingerprint are snapshotted inside the txn so the kill is
+    contingent on THIS caller winning the delete rather than on whatever the
+    row says afterwards; the kill itself runs after commit, because
+    ``_poll_worker_exit`` can wait ~5 s and must not hold the write lock.
+
+    The workspace is reaped for the same reason :func:`archive_task` reaps it:
+    a never-completed task otherwise kept its directory forever.
+
+    Children are not blocked. ``_delete_task_relations`` removes the link rows,
+    and ``_parents_satisfied`` inner-joins ``tasks``, so a child whose parent
+    no longer exists reads as satisfied and :func:`recompute_ready` releases
+    it. Gating on a dependency that can never be met would wedge it for good,
+    and releasing it matches what archiving the parent does.
+    """
     with write_txn(conn):
+        row = conn.execute(
+            "SELECT status, claim_lock, worker_pid, worker_started_at FROM tasks WHERE id = ?",
+            (task_id,),
+        ).fetchone()
+        if row is None:
+            return False
+        was_running = row["status"] == "running"
+        prev_pid, prev_lock, prev_started = row["worker_pid"], row["claim_lock"], row["worker_started_at"]
         cur = conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
         if cur.rowcount != 1:
             return False
         _delete_task_relations(conn, task_id)
+    if was_running:
+        _terminate_reclaimed_worker(prev_pid, prev_lock, signal_fn=signal_fn, started_at=prev_started)
     recompute_ready(conn)
+    _cleanup_workspace(conn, task_id)
     return True
 
 

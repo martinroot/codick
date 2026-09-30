@@ -1223,3 +1223,24 @@
 .kb-trash-label {
   white-space: nowrap;
 }
+
+/*
+ * The part of a delete confirm that says what it will do to something other
+ * than the card being destroyed. Amber rather than red: the red heading and
+ * the danger button already carry "this is the irreversible action", and a
+ * third red block in the same dialog would be shouting about a consequence
+ * rather than stating it.
+ */
+.kb-confirm-warn {
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--kb-amber);
+  border-radius: 0 0.375rem 0.375rem 0;
+  background: color-mix(in srgb, var(--kb-amber) 8%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.kb-confirm-warn p:last-child {
+  margin-bottom: 0;
+}

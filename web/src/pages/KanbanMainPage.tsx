@@ -650,6 +650,28 @@ export default function KanbanMainPage() {
     [selection],
   );
 
+  /**
+   * What deleting this selection would do beyond destroying the cards: kill a
+   * worker, and release other people's dependent work. Read off the cards the
+   * confirm is holding, not off a live lookup, so the warning cannot describe
+   * a different set than the one being confirmed.
+   */
+  const riskyDelete = React.useMemo(() => {
+    const cards = destructive?.cards ?? [];
+    return {
+      running: cards.filter((c) => c.status === "running").length,
+      // `link_counts.children` is on the board card — `/board` computes it
+      // from `task_links`, so no extra fetch and the count cannot describe a
+      // different set than the one being confirmed. A detail-shaped card
+      // carries `link_tasks` instead, so read that when it is all there is.
+      children: cards.reduce(
+        (sum, c) =>
+          sum + (c.link_counts?.children ?? (c as { link_tasks?: { children?: unknown[] } }).link_tasks?.children?.length ?? 0),
+        0,
+      ),
+    };
+  }, [destructive]);
+
   const closeDestructive = React.useCallback(() => {
     setDestructive(null);
     setCompletionError(null);
@@ -799,7 +821,21 @@ export default function KanbanMainPage() {
         // the only irreversible action on the board.
         onRequestDelete={(task) => {
           selection.setSelected(new Set([task.id]));
-          setDestructive({ action: { kind: "delete" }, cards: [task] });
+          /*
+           * The drawer fetched `GET /tasks/{id}`, whose payload is the detail
+           * shape — `link_tasks`, no `link_counts`. The confirm reads the
+           * board card, which is where `link_counts.children` lives, so hand it
+           * that one when the card is on the board. Falling back to the drawer's
+           * own task keeps the confirm correct for a card that is filtered off
+           * the board, where `link_tasks` is all there is.
+           */
+          const fromBoard = columns
+            .flatMap((column) => column.tasks)
+            .find((t) => t.id === task.id);
+          setDestructive({
+            action: { kind: "delete" },
+            cards: [fromBoard ?? task],
+          });
         }}
         options={options}
         taskId={openTaskId}
@@ -837,7 +873,62 @@ export default function KanbanMainPage() {
                     " will be archived and hidden from the board. It is still on the server."
                   )}
                 </p>
-              ) : (
+              ) : null}
+
+              {/*
+               * The server now says what a delete actually did — a running
+               * task's worker was killed, and dependent cards were released.
+               * Those are the two consequences a count of "3 cards" hides, and
+               * they are exactly the ones that touch something other than the
+               * card being destroyed. `kanban_db.delete_task` was fixed in
+               * #52; the confirm has to name it, or the fix is invisible.
+               */}
+              {destructive.action.kind === "delete" && riskyDelete.running + riskyDelete.children > 0 ? (
+                <div className="kb-confirm-warn" role="alert">
+                  {destructive.cards.length === 1 ? (
+                    <>
+                      {riskyDelete.running ? (
+                        <p className="mb-1">
+                          <strong>This card is running.</strong> Deleting it terminates the
+                          worker attached to it.
+                        </p>
+                      ) : null}
+                      {riskyDelete.children ? (
+                        <p className="mb-1">
+                          <strong>
+                            {riskyDelete.children} card{riskyDelete.children === 1 ? "" : "s"}{" "}
+                            depend{riskyDelete.children === 1 ? "s" : ""} on it
+                          </strong>
+                          . {riskyDelete.children === 1 ? "It" : "They"} will be released and
+                          may become ready to run.
+                        </p>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      {riskyDelete.running ? (
+                        <p className="mb-1">
+                          <strong>{riskyDelete.running} of these cards {riskyDelete.running === 1 ? "is" : "are"} running.</strong>{" "}
+                          Deleting {riskyDelete.running === 1 ? "it" : "them"} terminates the
+                          attached workers.
+                        </p>
+                      ) : null}
+                      {riskyDelete.children ? (
+                        <p className="mb-1">
+                          <strong>
+                            {riskyDelete.children} card{riskyDelete.children === 1 ? "" : "s"}{" "}
+                            depend{riskyDelete.children === 1 ? "s" : ""} on these
+                          </strong>
+                          . {riskyDelete.children === 1 ? "It" : "They"} will be released and may
+                          become ready to run.
+                        </p>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              ) : null}
+
+              {destructive.cards.length > 1 ? (
                 <p className="mb-2">
                   {destructive.cards.length} cards will be{" "}
                   {destructive.action.kind === "delete" ? (
@@ -850,7 +941,7 @@ export default function KanbanMainPage() {
                     <>This cannot be undone. </>
                   )}
                 </p>
-              )}
+              ) : null}
               {/*
                * A confirm that says "3 cards" over a selection of 4 is worse
                * than no confirm, so the list is the authority on the count.
