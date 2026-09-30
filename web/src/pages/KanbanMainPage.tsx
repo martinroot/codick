@@ -31,6 +31,7 @@ import { useSearchParams } from "react-router";
 
 import { AttentionStrip } from "@/components/kanban/AttentionStrip";
 import { ConfirmDialog } from "@/components/kanban/ConfirmDialog";
+import { CreateTaskDialog } from "@/components/kanban/CreateTaskDialog";
 import {
   BulkActionBar,
   type BulkAction,
@@ -49,6 +50,7 @@ import {
 import {
   kanbanApi,
   type KanbanBoardSummary,
+  type KanbanCreateTask,
   type KanbanTaskCard,
 } from "@/lib/kanban-api";
 import { errorMessage } from "@/lib/api-error";
@@ -309,6 +311,43 @@ export default function KanbanMainPage() {
    * put the card in the column that was asked for rather than the one it
    * landed in.
    */
+  /**
+   * The full create form. `null` when closed; a `KanbanStatus` when it was
+   * opened from a column, because "file as" and the create path's two honoured
+   * initial states both start there.
+   */
+  const [createAsk, setCreateAsk] = React.useState<KanbanStatus | null | undefined>(undefined);
+
+  const submitCreate = React.useCallback(
+    async (task: KanbanCreateTask) => {
+      const { task: created } = await kanbanApi.createTask(task, options);
+      const id = created.id;
+      // `POST /tasks` answers with a 41-field task row; the board card is 44
+      // fields. The row is not a card, so the board is re-read rather than
+      // patched from the response — a create that shows a card missing its
+      // signals would be worse than one that takes a moment longer.
+      const payload = await kanbanApi.getBoard(options);
+      setColumns(payload.columns);
+      setServerNow(payload.now ?? null);
+      const placed = payload.columns
+        .flatMap((column) => column.tasks)
+        .find((candidate) => candidate.id === id);
+      setCreateAsk(undefined);
+      if (!placed) {
+        setNotice({
+          tone: "warning",
+          text: `Created as ${id} but it is not on the board. Refresh to see where it went.`,
+        });
+        return;
+      }
+      setNotice({
+        tone: "success",
+        text: `Added to ${COLUMN_TITLES[placed.status]}`,
+      });
+    },
+    [options],
+  );
+
   const handleCreateCard = React.useCallback(
     async (status: KanbanStatus, title: string): Promise<KanbanTaskCard> => {
       const { id } = await kanbanApi.createCardInStatus(status, title, options);
@@ -355,6 +394,17 @@ export default function KanbanMainPage() {
   // The bulk variant of the same question. `ids` is the whole selection and
   // `bare` the subset with no evidence — both are needed, because the summary
   // is written to all of them while only some actually required one.
+  /**
+   * A destructive action waiting to be confirmed, with the cards it covers.
+   * Held as cards, not ids: the confirm has to name what is being destroyed,
+   * and a count taken from a live selection can change between asking and
+   * answering.
+   */
+  const [destructive, setDestructive] = React.useState<{
+    action: BulkAction;
+    cards: KanbanTaskCard[];
+  } | null>(null);
+
   const [bulkCompletion, setBulkCompletion] = React.useState<{
     pending: BulkAction;
     ids: string[];
@@ -412,8 +462,21 @@ export default function KanbanMainPage() {
   );
 
   const handleBulk = React.useCallback(
-    async (action: BulkAction, evidence?: CompletionEvidence) => {
-      const ids = [...selection.selected];
+    async (
+      action: BulkAction,
+      evidence?: CompletionEvidence,
+      /**
+       * The exact ids to act on. Set only by the destructive confirm, which
+       * already decided what it is destroying. Going through
+       * `selection.setSelected` and reading it back on the next line does not
+       * work: React has not applied the state yet, so `handleBulk` sees the
+       * selection as it was *after* a concurrent refetch pruned it — the
+       * confirm would then delete fewer cards than the one it described, with
+       * no refusal to show for it.
+       */
+      confirmedIds?: string[],
+    ) => {
+      const ids = confirmedIds ?? [...selection.selected];
       if (!ids.length || bulkBusy) return;
 
       // The same contract, on the path that bypasses `handleMove`. A bulk
@@ -446,9 +509,73 @@ export default function KanbanMainPage() {
           return;
         }
       }
+      // Delete and archive both need a name and a count before they happen.
+      // Ask first, act second. `confirmedIds` being present is what the
+      // confirm hands back, and it is the only thing that lets the second
+      // entry fall through to the work.
+      if (
+        (action.kind === "delete" || action.kind === "archive") &&
+        !confirmedIds
+      ) {
+        setDestructive({
+          action,
+          cards: columns
+            .flatMap((column) => column.tasks)
+            .filter((task) => selection.selected.has(task.id)),
+        });
+        return;
+      }
       setBulkBusy(true);
       setBulkOutcome(null);
       try {
+        // There is no bulk delete endpoint. `POST /tasks/bulk` knows how to set
+        // a status, a priority and `archive`, and that is the end of it — so
+        // delete walks the ids itself, one DELETE per card, and reconciles per
+        // card exactly like the endpoint's own per-card results. A single
+        // "deleted 12 cards" over 11 successes would be a lie the board then
+        // contradicts.
+        if (action.kind === "delete") {
+          const results = await Promise.all(
+            ids.map(async (id) => {
+              try {
+                await kanbanApi.deleteTask(id, options);
+                return { id, ok: true };
+              } catch (error) {
+                return {
+                  id,
+                  ok: false,
+                  error: error instanceof Error ? error.message : String(error),
+                };
+              }
+            }),
+          );
+          const outcome = reconcile(ids, results);
+          setBulkOutcome(outcome);
+          setDestructive(null);
+          /*
+           * The bar cannot carry this report. It renders only while something
+           * is selected, and the one refusal a delete can produce is "that card
+           * is gone" — which is precisely what empties the selection and
+           * unmounts the bar. So a per-card outcome for delete goes to the
+           * page notice, which does not depend on the selection surviving.
+           */
+          if (outcome.failures.length) {
+            setNotice({
+              tone: "warning",
+              text:
+                `Deleted ${outcome.succeeded} of ${outcome.requested} — ` +
+                `${outcome.failures.length} already gone: ` +
+                outcome.failures.map((f) => `${f.id} (${f.error})`).join("; "),
+            });
+          } else {
+            setNotice({
+              tone: "success",
+              text: `Deleted ${outcome.succeeded} card${outcome.succeeded === 1 ? "" : "s"}. This cannot be undone.`,
+            });
+          }
+          await reload();
+          return;
+        }
         const body =
           action.kind === "status"
             ? evidence?.summary
@@ -502,6 +629,45 @@ export default function KanbanMainPage() {
   const handleOpenTask = React.useCallback((task: KanbanTaskCard) => {
     setOpenTaskId(task.id);
   }, []);
+
+  const reconcile = React.useCallback(
+    (ids: string[], results: { id: string; ok: boolean; error?: string }[]) => {
+      const failed = results.filter((r) => !r.ok);
+      const next = new Set(
+        selection.selected,
+      );
+      for (const r of results) {
+        if (r.ok) next.delete(r.id);
+        else next.add(r.id);
+      }
+      selection.setSelected(next);
+      return {
+        requested: ids.length,
+        succeeded: results.filter((r) => r.ok).length,
+        failures: failed.map((r) => ({ id: r.id, error: r.error ?? "refused" })),
+      };
+    },
+    [selection],
+  );
+
+  const closeDestructive = React.useCallback(() => {
+    setDestructive(null);
+    setCompletionError(null);
+    setCompletionBusy(false);
+  }, []);
+
+  const confirmDestructive = React.useCallback(async () => {
+    if (!destructive) return;
+    // Hand the held cards back as explicit ids, so the second entry into
+    // `handleBulk` walks exactly what the confirm described — including a card
+    // that has since vanished, which is the one that must come back refused.
+    await handleBulk(
+      destructive.action,
+      undefined,
+      destructive.cards.map((c) => c.id),
+    );
+    closeDestructive();
+  }, [closeDestructive, destructive, handleBulk, selection]);
 
   const closeBulkCompletion = React.useCallback(() => {
     setBulkCompletion(null);
@@ -586,6 +752,9 @@ export default function KanbanMainPage() {
               ))}
             </select>
           ) : null}
+          <Button onClick={() => setCreateAsk(null)} size="sm">
+            New task
+          </Button>
           <Button outlined size="sm" onClick={reload}>
             Refresh
           </Button>
@@ -625,6 +794,13 @@ export default function KanbanMainPage() {
       <TaskDrawer
         commentFocus={commentFocus}
         onClose={() => setOpenTaskId(null)}
+        // The same gate the bulk bar goes through, with a one-card selection.
+        // Two confirm implementations would be two chances to be wrong about
+        // the only irreversible action on the board.
+        onRequestDelete={(task) => {
+          selection.setSelected(new Set([task.id]));
+          setDestructive({ action: { kind: "delete" }, cards: [task] });
+        }}
         options={options}
         taskId={openTaskId}
       />
@@ -634,9 +810,65 @@ export default function KanbanMainPage() {
         pushing the columns down -- a selection bar that reflows the board
         makes the cards you are about to act on move under the cursor.
       */}
+      <CreateTaskDialog
+        cards={columns.flatMap((column) => column.tasks)}
+        defaultWorkspaceKind={active?.default_workspace_kind ?? null}
+        initialStatus={createAsk ?? undefined}
+        onCancel={() => setCreateAsk(undefined)}
+        onCreate={submitCreate}
+        onServerError={(message) => setNotice({ tone: "danger", text: message })}
+        open={createAsk !== undefined}
+      />
+
       <ConfirmDialog
         body={
-          bulkCompletion ? (
+          destructive ? (
+            <>
+              {destructive.cards.length === 1 ? (
+                <p className="mb-2">
+                  <strong>{destructive.cards[0]?.title}</strong>
+                  {destructive.action.kind === "delete" ? (
+                    <>
+                      {" "}
+                      and every comment, event and attachment on it will be deleted. This
+                      cannot be undone.
+                    </>
+                  ) : (
+                    " will be archived and hidden from the board. It is still on the server."
+                  )}
+                </p>
+              ) : (
+                <p className="mb-2">
+                  {destructive.cards.length} cards will be{" "}
+                  {destructive.action.kind === "delete" ? (
+                    <>deleted with all their comments, events and attachments</>
+                  ) : (
+                    <>archived and hidden from the board</>
+                  )}
+                  .{" "}
+                  {destructive.action.kind === "delete" && (
+                    <>This cannot be undone. </>
+                  )}
+                </p>
+              )}
+              {/*
+               * A confirm that says "3 cards" over a selection of 4 is worse
+               * than no confirm, so the list is the authority on the count.
+               */}
+              {destructive.cards.length > 1 ? (
+                <ul className="kb-confirm-list mb-0">
+                  {destructive.cards.slice(0, 8).map((card) => (
+                    <li key={card.id}>{card.title}</li>
+                  ))}
+                  {destructive.cards.length > 8 ? (
+                    <li className="kb-confirm-more">
+                      and {destructive.cards.length - 8} more
+                    </li>
+                  ) : null}
+                </ul>
+              ) : null}
+            </>
+          ) : bulkCompletion ? (
             bulkCompletion.label ? (
               <>
                 This card has no result recorded. The summary is stored as its result and
@@ -658,25 +890,46 @@ export default function KanbanMainPage() {
           ) : null
         }
         busy={completionBusy}
-        confirmLabel="Complete"
         error={completionError}
-        onCancel={bulkCompletion ? closeBulkCompletion : closeCompletion}
-        onConfirm={() =>
-          void (bulkCompletion ? confirmBulkCompletion() : confirmCompletion())
+        tone={destructive?.action.kind === "delete" ? "danger" : "primary"}
+        confirmLabel={
+          destructive
+            ? destructive.action.kind === "delete"
+              ? `Delete ${destructive.cards.length} card${destructive.cards.length === 1 ? "" : "s"}`
+              : `Archive ${destructive.cards.length} card${destructive.cards.length === 1 ? "" : "s"}`
+            : "Complete"
         }
-        open={completionAsk !== null || bulkCompletion !== null}
-        requireText={{
-          label: "Completion summary",
-          onChange: setCompletionSummary,
-          placeholder: "What did this actually do?",
-          value: completionSummary,
-        }}
+        onCancel={destructive ? closeDestructive : bulkCompletion ? closeBulkCompletion : closeCompletion}
+        onConfirm={() =>
+          void (destructive
+            ? confirmDestructive()
+            : bulkCompletion
+              ? confirmBulkCompletion()
+              : confirmCompletion())
+        }
+        open={
+          completionAsk !== null || bulkCompletion !== null || destructive !== null
+        }
+        requireText={
+          destructive
+            ? undefined
+            : {
+                label: "Completion summary",
+                onChange: setCompletionSummary,
+                placeholder: "What did this actually do?",
+                value: completionSummary,
+              }
+        }
         title={
-          bulkCompletion
-            ? bulkCompletion.label
-              ? `Complete "${bulkCompletion.label}"`
-              : `Complete ${bulkCompletion.ids.length} tasks`
-            : "Complete this task"
+          destructive
+            ? destructive.action.kind === "delete"
+              ? "Delete this work?"
+              : "Archive these cards?"
+            : bulkCompletion
+              ? bulkCompletion.label
+                ? `Complete "${bulkCompletion.label}"`
+                : `Complete ${bulkCompletion.ids.length} tasks`
+              : "Complete this task"
         }
       />
 

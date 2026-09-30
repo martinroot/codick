@@ -44,6 +44,12 @@ export interface TaskDrawerProps {
    * timestamp is what makes a repeat request for the same task register.
    */
   commentFocus?: { taskId: string; at: number } | null;
+  /**
+   * Asks the page to confirm and perform a delete. The drawer does not do it
+   * itself: the confirm has to be a real dialog that survives a refusal, and
+   * there is already exactly one of those in the app.
+   */
+  onRequestDelete?: (task: KanbanTaskCard) => void;
 }
 
 type Tab = "detail" | "comments" | "events" | "runs" | "files" | "log";
@@ -75,6 +81,7 @@ export function TaskDrawer({
   seed,
   onChanged,
   commentFocus,
+  onRequestDelete,
 }: TaskDrawerProps) {
   const [detail, setDetail] = React.useState<KanbanTaskDetail | null>(null);
   const [load, setLoad] = React.useState<{ phase: string; message?: string }>({
@@ -271,6 +278,7 @@ export function TaskDrawer({
               setTab={setTab}
               onChanged={reloadDetail}
               onError={(message) => setActionError(message)}
+              onRequestDelete={onRequestDelete}
               options={options}
               task={task}
             />
@@ -383,6 +391,7 @@ function DetailTab({
   options,
   onChanged,
   onError,
+  onRequestDelete,
   diagnostics,
   setTab,
 }: {
@@ -390,12 +399,34 @@ function DetailTab({
   task: KanbanTaskCard;
   options: KanbanRequestOptions;
   onChanged: () => void | Promise<void>;
+  onRequestDelete?: (task: KanbanTaskCard) => void;
   onError: (message: string) => void;
   diagnostics: KanbanDiagnostic[];
   setTab: (tab: Tab) => void;
 }) {
   return (
     <div className="kb-drawer-section">
+      {/*
+       * Delete lives here, alone at the top of Detail, and not in the header:
+       * `kanban_db.delete_task` is a hard DELETE with no guard, so the button
+       * that reaches it should not sit beside controls you reach for by
+       * reflex. The page owns the confirm.
+       */}
+      {onRequestDelete ? (
+        <div className="kb-drawer-danger">
+          <button
+            className="btn btn-sm btn-outline-danger"
+            onClick={() => onRequestDelete(task)}
+            type="button"
+          >
+            Delete this task
+          </button>
+          <span className="kb-drawer-muted">
+            Removes the card, its comments, events and attachments. No undo.
+          </span>
+        </div>
+      ) : null}
+
       {/* Recovery sits above the description: when a card is stuck, the
           question is "what do I do about it", not "what is it". */}
       {detail ? (

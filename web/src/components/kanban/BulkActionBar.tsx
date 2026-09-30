@@ -35,7 +35,8 @@ export interface BulkActionBarProps {
 export type BulkAction =
   | { kind: "status"; status: KanbanStatus }
   | { kind: "priority"; priority: number }
-  | { kind: "archive" };
+  | { kind: "archive" }
+  | { kind: "delete" };
 
 const MOVES: { status: KanbanStatus; label: string }[] = [
   { status: "todo", label: "→ To Do" },
@@ -98,12 +99,23 @@ export function BulkActionBar({
       </div>
 
       {/*
-        Delete is here on purpose and is not wired. Bulk delete of agent work
-        is irreversible, and the bar is one misclick from it. It gets a
-        confirm that names the count and spells out what it removes, and
-        until that exists the button is absent -- a control that cannot be
-        used safely should not be visible.
-      */}
+       * Delete sits last, in danger styling, and goes through a confirm that
+       * names the count. `kanban_db.delete_task` is a hard DELETE with no
+       * guard of any kind: it takes a running card, a card with children, and
+       * every comment, event and attachment row with it, and there is no undo.
+       * That is why it is the last control in the bar and why the confirm
+       * exists — the affordance sits one misclick from the only irreversible
+       * action on the board.
+       */}
+
+      <button
+        className="btn btn-sm btn-outline-danger"
+        disabled={busy}
+        onClick={() => onRun({ kind: "delete" })}
+        type="button"
+      >
+        Delete
+      </button>
 
       <button
         className="btn btn-sm btn-outline-secondary ms-auto"

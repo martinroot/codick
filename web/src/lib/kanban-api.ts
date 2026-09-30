@@ -386,6 +386,38 @@ export interface KanbanDiagnosticsResponse {
 // Writes
 // -------------------------------------------------------------------------
 
+/**
+ * Drops keys the caller left unset, and maps the two TS-facing camelCase names
+ * onto the REST field names.
+ *
+ * The reason this exists: `CreateTaskBody` is a pydantic model with no
+ * `extra="forbid"`, so a key it does not know is discarded without an error
+ * and a key it knows but set to `null` is honoured and then rejected by its own
+ * validator. `initial_status: null` produced
+ * `400 initial_status must be one of ['blocked', 'running']` — a 400 about a
+ * field the client thought it had not sent at all. An unset field must not
+ * travel as `null`; it must not travel.
+ *
+ * `initialStatus` and `triage` are renamed rather than dropped, because they
+ * are the two names the TS interface uses for fields the REST API spells
+ * differently or names plainly.
+ */
+function dropUnset<T extends object>(task: T, ...renamed: (keyof T)[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(task)) {
+    if (value === null || value === undefined) continue;
+    if (value === "" || (Array.isArray(value) && value.length === 0)) continue;
+    out[key] = value;
+  }
+  for (const key of renamed) {
+    const value = task[key];
+    if (value === null || value === undefined || value === false) continue;
+    out[key === "initialStatus" ? "initial_status" : String(key)] = value;
+    delete out[String(key)];
+  }
+  return out;
+}
+
 export interface KanbanCreateTask {
   title: string;
   /**
@@ -404,12 +436,24 @@ export interface KanbanCreateTask {
   body?: string | null;
   priority?: number;
   tenant?: string | null;
-  parent_id?: string | null;
+  /**
+   * `parents`, not `parent_id`. `CreateTaskBody` takes a list, and pydantic
+   * drops an unknown key without complaint — so the singular name this field
+   * used to have was accepted by the type checker and then silently ignored by
+   * the server, which is the most expensive possible way to be wrong about a
+   * dependency.
+   */
+  parents?: string[];
   workspace_kind?: KanbanWorkspaceKind;
   workspace_path?: string | null;
   skills?: string[];
   goal_mode?: boolean;
   goal_max_turns?: number;
+  max_runtime_seconds?: number;
+  /** Inherits the board's scoped project when unset. */
+  project_id?: string | null;
+  /** A retry with the same key does not create a second task. */
+  idempotency_key?: string | null;
   model_override?: string | null;
   provider_override?: string | null;
   reasoning_effort?: KanbanReasoningEffort | null;
@@ -607,11 +651,7 @@ export const kanbanApi = {
     fetchJSON<{ task: KanbanTaskRow; warning?: string }>(kanbanUrl("/tasks", options), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...task,
-        // `initialStatus` is the TS-facing name; the REST field is snake_case.
-        ...(task.initialStatus === "blocked" ? { initial_status: "blocked" } : {}),
-      }),
+      body: JSON.stringify(dropUnset(task, "initialStatus", "triage")),
     }),
 
   /**

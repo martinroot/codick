@@ -205,6 +205,31 @@ code { font-size: 0.875rem; }
     2px 2px;
 }
 
+/* A disabled button has to *look* disabled.
+ *
+ * Measured, not assumed: a `btn btn-primary` with `disabled` resolved to
+ * `--bs-btn-disabled-bg: #0d6efd` — the primary blue — and painted the same
+ * background as its enabled self. Bootstrap 5.3 sets that custom property to
+ * `transparent` for filled variants, and something later in the cascade wins,
+ * so the button that cannot be clicked is indistinguishable from the one that
+ * can. In the create form that is the "Create task" button, which is disabled
+ * until a title is typed: it read as ready and simply did nothing.
+ *
+ * Opacity plus the muted token rather than a new colour, so every variant
+ * (primary, danger, outline) gets it and none of them grows a one-off.
+ */
+.btn:disabled,
+.btn.disabled {
+  --bs-btn-disabled-bg: var(--bs-secondary-bg);
+  --bs-btn-disabled-color: var(--bs-secondary-color);
+  --bs-btn-disabled-border-color: var(--bs-secondary-border-color);
+  background-color: var(--bs-secondary-bg) !important;
+  border-color: var(--bs-secondary-border-color) !important;
+  color: var(--bs-secondary-color) !important;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
 /* RTL support — Arabic and any future right-to-left locale. The i18n provider
    sets `dir` on <html>; Tailwind v4's logical spacing utilities (ms-/me-,
    ps-/pe-) and logical properties then flip automatically. Scoped so the

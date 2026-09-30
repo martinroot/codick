@@ -1122,3 +1122,24 @@
     transition: none;
   }
 }
+
+/*
+ * The drawer's delete row. `--kb-red` is the same ink the stale-age tier uses,
+ * so a card that needs deleting and a card that has been stuck look like the
+ * same class of warning.
+ */
+.kb-drawer-danger {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--kb-line);
+}
+
+.kb-drawer-danger .kb-drawer-muted {
+  flex: 1 1 14rem;
+  margin: 0;
+  font-size: 0.75rem;
+}
