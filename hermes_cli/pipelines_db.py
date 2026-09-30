@@ -36,8 +36,9 @@ import sqlite3
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional
 
+from hermes_cli.pipeline_readiness import _default_tool_names, assess_readiness
 from hermes_cli.sqlite_util import add_column_if_missing, open_db, write_txn
 from hermes_constants import get_hermes_home
 
@@ -276,7 +277,8 @@ def _template_hash(snapshot: str) -> str:
 # Full import validation is the #30 format/validator's job (spec §6); the store only
 # requires the identity fields and refuses garbage that cannot identify a template.
 
-def import_template(conn: sqlite3.Connection, template: dict, *, now: Optional[int] = None) -> str:
+def import_template(conn: sqlite3.Connection, template: dict, *, now: Optional[int] = None,
+                   readiness_reader: Optional[Callable[[], Optional[set]]] = None) -> str:
     """Store (or replace) a template identified by ``(id, version)`` and return its id.
     Re-importing the same pair replaces the stored JSON — runs are unaffected, they hold
     their own snapshot."""
@@ -289,14 +291,24 @@ def import_template(conn: sqlite3.Connection, template: dict, *, now: Optional[i
     if not isinstance(version, str) or not version.strip():
         raise ValueError("template.version must be a non-empty string")
     ts = now if now is not None else _now()
+    # Readiness is computed on the way in, from the registry as it actually is
+    # (spec §6, #30, #34). It used to be a column nothing ever wrote, so every
+    # template read back as `ready` — a catalogue entry for a tool this install
+    # does not have, sold, paid for, and failed at the tool step.
+    readiness = assess_readiness(
+        template, reader=readiness_reader or _default_tool_names
+    )
     with write_txn(conn):
         conn.execute(
-            "INSERT INTO scenario_templates (id, version, name, description, json, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?) "
+            "INSERT INTO scenario_templates (id, version, name, description, json, created_at, updated_at,"
+            " readiness, readiness_detail) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
             "ON CONFLICT(id, version) DO UPDATE SET name = excluded.name, description = excluded.description, "
-            "json = excluded.json, updated_at = excluded.updated_at",
+            "json = excluded.json, updated_at = excluded.updated_at, "
+            "readiness = excluded.readiness, readiness_detail = excluded.readiness_detail",
             (template_id, version, template.get("name"), template.get("description"),
-             _dumps(template), ts, ts),
+             _dumps(template), ts, ts, readiness["readiness_status"],
+             _dumps(readiness["readiness_detail"]) if readiness["readiness_detail"] else None),
         )
     return str(template_id)
 

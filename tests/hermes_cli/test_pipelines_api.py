@@ -70,7 +70,24 @@ def _variant(template_id: str, **overrides) -> dict:
 
 
 @pytest.fixture
-def client():
+def fake_tools_registered(monkeypatch):
+    """Say that the fixture's fake tool `t` exists in this install.
+
+    `TEMPLATE` ends in a `tool` step for `t`, and since #34 readiness is computed
+    from the registry — so without this the fixture's own templates would be
+    (correctly) refused as unrunnable and every test here would be measuring the
+    readiness guard. The tests are about the API; the guard has its own file.
+
+    Patched at the reader the DB layer calls, which is the documented seam, so
+    the router is not stubbed and the store path is the real one.
+    """
+    monkeypatch.setattr(
+        db, "_default_tool_names", lambda: {"t", "terminal", "read_file"}
+    )
+
+
+@pytest.fixture
+def client(fake_tools_registered):
     """The real router, on a fresh database, on its own app.
 
     A bare ``FastAPI`` rather than ``web_server.app``: these handlers are what is
@@ -548,6 +565,38 @@ def test_a_storage_ref_that_escapes_the_root_is_refused(client):
     # independent: the route must not serve this even to the rightful owner.
     got = client.get("/api/pipelines/artifacts/art_evil/download")
     assert got.status_code == 404, got.text
+
+
+def test_a_template_needing_an_absent_tool_is_stored_as_unavailable(client):
+    """A catalogue must not sell what this install cannot run.
+
+    The DOCX question from #34, answered where it matters: a Word template whose
+    tool is not registered has to come back `unavailable` with the tool named,
+    not `ready` and a failure at the step. A readiness column nothing writes is
+    how that second outcome was guaranteed.
+    """
+    # Built from the known-valid fixture rather than hand-written: this test is
+    # about readiness, and a hand-rolled template here would be measuring template
+    # validation instead.
+    tpl = _variant("word-docx")
+    for step in tpl["steps"]:
+        if step["type"] == "tool":
+            step["tool"] = "documents.export_docx"
+    stored = _store(client, tpl)
+    assert stored["readiness_status"] == "unavailable"
+    assert stored["readiness_detail"] == [
+        "tool 'documents.export_docx' is not registered in this install"
+    ]
+    # It stays stored and listable — unavailable is a listing state, not a
+    # rejection, or an author could not see their own broken template.
+    listed = client.get("/api/pipelines/templates").json()["templates"]
+    assert any(t["id"] == "word-docx" for t in listed)
+
+
+def test_a_template_whose_tools_exist_stays_ready(client):
+    # The other side of the same coin, and the reason the check is not a
+    # nuisance: a tool that IS registered must not cost the template its listing.
+    assert _store(client, _variant("plain"))["readiness_status"] == "ready"
 
 
 def test_run_creation_requires_an_idempotency_key(client):
