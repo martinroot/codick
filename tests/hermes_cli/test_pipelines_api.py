@@ -39,7 +39,7 @@ from hermes_cli import kanban_db
 from hermes_cli import kanban_db_connect
 from hermes_cli import pipeline_credentials
 from hermes_cli import pipelines_db as db  # noqa: E402
-from hermes_cli import pipelines_api  # noqa: E402
+from hermes_cli.web_routers import pipelines as pipelines_api  # noqa: E402
 from hermes_cli.pipeline_fake_adapter import FakeAdapter, scripted  # noqa: E402
 from hermes_cli.pipelines_db import pipelines_db_path  # noqa: E402
 
@@ -90,7 +90,7 @@ def client():
     if db_path.exists():
         db_path.unlink()
     app = FastAPI()
-    app.include_router(pipelines_api.router, prefix="/api/pipelines")
+    app.include_router(pipelines_api.router)
     with TestClient(app) as c:
         c.headers.update({"Authorization": f"Bearer {mint('site-a')}"})
         yield c
@@ -387,6 +387,32 @@ def test_a_replay_of_run_creation_does_not_make_a_second_card(client):
     again = client.post("/api/pipelines/runs", json={"template_id": "ask", "inputs": {}},
                         headers={"Idempotency-Key": "k1"})
     assert again.json()["card_id"] == first.json()["card_id"], "a replay made a second card"
+
+
+def test_exactly_one_router_owns_the_pipelines_prefix():
+    """One prefix, one router.
+
+    Two modules were mounted on `/api/pipelines`, so the events route was
+    registered twice and the first registration won — the second copy was
+    unreachable, and nothing errored. This asserts the invariant rather than the
+    symptom: no other module may claim the prefix, and no route may be declared
+    twice.
+    """
+    from fastapi.routing import APIRoute
+    from hermes_cli import web_server_dashboard
+
+    assert getattr(web_server_dashboard, "PIPELINES_API_PREFIX", None) is None, (
+        "the prefix now belongs to web_routers/pipelines.py; a second definition "
+        "here is how the duplicate mount came back"
+    )
+    routes = [r for r in pipelines_api.router.routes if isinstance(r, APIRoute)]
+    seen: dict[tuple[str, str], int] = {}
+    for route in routes:
+        key = (route.path, ",".join(sorted(route.methods or ())))
+        seen[key] = seen.get(key, 0) + 1
+    duplicates = {k: n for k, n in seen.items() if n > 1}
+    assert not duplicates, f"duplicate routes in the single owner: {duplicates}"
+    assert len(routes) >= 10, "the merged surface lost routes"
 
 
 def test_run_creation_requires_an_idempotency_key(client):

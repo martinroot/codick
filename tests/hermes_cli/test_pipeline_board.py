@@ -32,14 +32,19 @@ REAL_HOME = os.path.realpath(str(Path.home() / ".hermes"))
 
 
 @pytest.fixture(autouse=True)
-def _isolated():
+def _isolated(monkeypatch):
     """Point both databases at a temp dir, and refuse to run if either is real.
 
     Set here rather than at import: the suite's conftest normalises the
     environment, so a module-level assignment does not survive to the fixture.
+
+    Through ``monkeypatch`` and not a bare ``os.environ`` write, because a bare
+    write outlives the test: the next file in the session would inherit this
+    home and read a database the fixture has just deleted. That is a
+    cross-file failure that only appears when the files run together.
     """
-    os.environ["HERMES_HOME"] = str(_TMP / "home")
-    os.environ["HERMES_KANBAN_DB"] = str(_TMP / "kanban.db")
+    monkeypatch.setenv("HERMES_HOME", str(_TMP / "home"))
+    monkeypatch.setenv("HERMES_KANBAN_DB", str(_TMP / "kanban.db"))
     pipelines = db.pipelines_db_path()
     board = os.environ["HERMES_KANBAN_DB"]
     for path in (pipelines, board):
