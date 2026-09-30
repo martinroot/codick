@@ -670,7 +670,10 @@ def _rule_block_loop_detected(task, events, runs, now, cfg) -> list[Diagnostic]:
         last_seen_at=_event_ts(hits[-1]),
         count=len(hits),
         data={"recurrences": recurrences, "limit": limit,
-              "block_kind": latest.get("kind"), "reason": latest.get("reason")},
+              # The event's key is `block_kind`, not `kind`. Reading `kind` here
+              # yielded None for every real event, so the one field that says
+              # *what* kept tripping has been silently blank since #50.
+              "block_kind": latest.get("block_kind"), "reason": latest.get("reason")},
     )]
 
 
@@ -743,14 +746,21 @@ def _rule_stranded_in_ready(task, events, runs, now, cfg) -> list[Diagnostic]:
     is_machine_lane = _assignee_is_machine_lane(assignee)
     if is_machine_lane is False:
         return [Diagnostic(
-            kind="human_lane_in_ready",
+            # Named for the fact both cases share, because the system genuinely
+            # cannot separate them: `profile_exists` is False for a misspelled
+            # assignee and for a deliberate human lane alike, and so is the
+            # dispatcher's own `skipped_nonspawnable`. Claiming to know which one
+            # it is would be a guess dressed as a diagnosis.
+            kind="no_machine_will_claim",
             # A typo is worth noticing; six thresholds of it is not an outage.
             severity="warning" if age_seconds < threshold_seconds * 6 else "error",
-            title=f"Ready for {age_str}, waiting on a human",
-            detail=f"No machine will ever claim this task: assignee {assignee!r} is not a Hermes "
-                   f"profile, so the dispatcher files it under skipped_nonspawnable — a terminal "
-                   f"lane, not a stalled worker. If you meant a worker, {assignee!r} is misspelled "
-                   f"or its profile was deleted; if you meant yourself, it is simply queued.",
+            title=f"Ready for {age_str}, no machine will claim it",
+            detail=f"Assignee {assignee!r} is not a Hermes profile, so the dispatcher files this "
+                   f"under skipped_nonspawnable and will never spawn a worker for it — it is a "
+                   f"terminal lane, not a stalled one, and nothing is polling and failing to "
+                   f"arrive. Two different things look like this: {assignee!r} is misspelled or "
+                   f"its profile was deleted, or it was always meant for a human. `hermes profiles "
+                   f"list` tells you which. Reassign to a real profile if a worker was intended.",
             actions=[
                 DiagnosticAction(kind="reassign", label="Reassign to a worker profile",
                                  payload={"current_assignee": assignee}),
