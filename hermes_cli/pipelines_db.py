@@ -145,6 +145,9 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     created_at       INTEGER NOT NULL,
     started_at       INTEGER,
     ended_at         INTEGER,
+    -- The scope that owns this run (#42). NULL is not "owned by everyone": it is
+    -- an unanswered authorisation question, and request_owns_run refuses it.
+    owner_scope      TEXT,
     updated_at       INTEGER NOT NULL
 );
 
@@ -239,6 +242,7 @@ def connect(db_path: Optional[Path] = None) -> sqlite3.Connection:
         conn.executescript(SCHEMA_SQL)
         # #30 migration: readiness columns on DBs created before the column
         # existed. The CREATE TABLE above covers fresh DBs.
+        add_column_if_missing(conn, "pipeline_runs", "owner_scope", "owner_scope TEXT")
         add_column_if_missing(conn, "scenario_templates", "readiness",
                               "readiness TEXT NOT NULL DEFAULT 'ready'")
         add_column_if_missing(conn, "scenario_templates", "readiness_detail", "readiness_detail TEXT")
@@ -672,10 +676,16 @@ def list_events(
 def create_run(
     conn: sqlite3.Connection, template: dict, *, inputs: Optional[dict] = None,
     card_id: Optional[str] = None, run_id: Optional[str] = None, now: Optional[int] = None,
+    owner_scope: Optional[str] = None,
 ) -> str:
     """Create a queued run holding an immutable snapshot of ``template`` plus its hash
     (spec §4). One card = one run; the card link lives on this side. Emits ``run.created``.
-    Later edits to ``template`` (or its stored row) cannot change this run."""
+    Later edits to ``template`` (or its stored row) cannot change this run.
+
+    ``owner_scope`` is the credential that may later read and answer this run
+    (#42). It is stamped at creation and never changed, because a run that can
+    change hands is a run whose authorisation history cannot be reasoned about.
+    """
     if not isinstance(template, dict):
         raise ValueError("template must be a JSON object")
     template_id, template_version = template.get("id"), template.get("version")
@@ -689,9 +699,10 @@ def create_run(
     with write_txn(conn):
         conn.execute(
             "INSERT INTO pipeline_runs (id, template_id, template_version, template_snapshot, template_hash, "
-            "status, inputs, card_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?)",
+            "status, inputs, card_id, owner_scope, created_at, updated_at)"
+            " VALUES (?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?)",
             (run_id, template_id, template_version, snapshot, _template_hash(snapshot),
-             _dumps(inputs), card_id, ts, ts),
+             _dumps(inputs), card_id, owner_scope, ts, ts),
         )
         append_event(conn, run_id, "run.created", payload={"template_id": template_id,
                                                            "template_version": template_version},

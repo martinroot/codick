@@ -27,23 +27,102 @@ from __future__ import annotations
 import json
 import logging
 import hashlib
+import hmac
 import json
 import sqlite3
 import time
 from contextlib import closing
 from typing import Any, Optional
 
-from fastapi import APIRouter, Body, Header, HTTPException, Query, Response
+from fastapi import (APIRouter, Body, Depends, Header, HTTPException, Query, Request,
+                      Response)
 
 from gateway.platforms.api_server_run_idempotency import RunIdempotencyStore
 from pydantic import BaseModel, Field
 
+from hermes_cli import pipeline_credentials as credentials
 from hermes_cli import pipelines_db as db
 from hermes_cli.pipeline_template import response_schema_errors, validate_template
 
 log = logging.getLogger(__name__)
 
-router = APIRouter()
+# --- per-run ownership (#42) ----------------------------------------------
+#
+# The gateway's property, kept verbatim: run state that exists without an owner
+# stamp is an unanswered authorisation question, not a run anyone may control.
+# Admitting it would make the boundary allow-all. So this refuses, and the
+# refusal is what the negative tests pin.
+#
+# Requests and artifacts are reachable only through their run, so they inherit
+# the run's owner and are not separately stamped; a request_id belonging to
+# another run is refused by the same check, which is why a forged id is not a
+# way around it.
+
+# The dashboard's own session token is one shared secret and therefore one
+# principal, so it maps to a reserved local scope. It is not a credential in
+# the table and can never be presented to another site.
+LOCAL_SCOPE = "local"
+
+
+def request_owns_run(conn: sqlite3.Connection, run_id: str, scope: Optional[str]) -> bool:
+    """Whether ``scope`` owns ``run_id``. Denies when the run has no owner."""
+    if not scope:
+        return False
+    row = conn.execute(
+        "SELECT owner_scope FROM pipeline_runs WHERE id = ?", (run_id,)).fetchone()
+    if row is None:
+        return False
+    return row["owner_scope"] is not None and hmac.compare_digest(row["owner_scope"], scope)
+
+
+def _authenticate(request: Request) -> str:
+    """Router-level: every route needs a valid credential.
+
+    Authentication is not authorisation. This only establishes *who* is asking;
+    whether that principal may touch a given run is a separate check that the
+    run-scoped routes make themselves, because that check needs the run id.
+    """
+    cached = getattr(request.state, "pipeline_scope", None)
+    if cached is None:
+        cached = _scope_for_request(request)
+        request.state.pipeline_scope = cached
+    return cached
+
+
+def _scope_for_request(request: Request) -> str:
+    """The scope this request is acting as, or a 401.
+
+    A bearer credential is the external path. The dashboard's session token is
+    accepted for the local scope only, so the SPA keeps working without being
+    able to present itself as anyone else.
+    """
+    header = request.headers.get("authorization", "")
+    if header.lower().startswith("bearer "):
+        presented = header[7:].strip()
+        conn = _connect()
+        with closing(conn):
+            credentials.ensure_schema(conn)
+            conn.commit()
+            scope = credentials.resolve_scope(conn, presented)
+        if not scope:
+            # Unknown, revoked, expired and malformed are one answer. Telling them
+            # apart is a free oracle.
+            raise HTTPException(status_code=401, detail={"message": "credential is not valid"})
+        return scope
+    from hermes_cli.web_server import _has_valid_session_token
+    if _has_valid_session_token(request):
+        return LOCAL_SCOPE
+    raise HTTPException(status_code=401, detail={"message": "no credential presented"})
+
+
+def _require_owned_run(conn: sqlite3.Connection, run_id: str, scope: str) -> None:
+    """404 for a run you do not own, not 403.
+
+    A 403 confirms the run exists, which is itself an answer about someone
+    else's data. 404 is what a caller who cannot see the run should get.
+    """
+    if not request_owns_run(conn, run_id, scope):
+        raise _not_found("run", run_id)
 
 
 def _connect() -> sqlite3.Connection:
@@ -212,6 +291,11 @@ def _run_detail(run_id: str) -> dict:
     }
 
 
+# Declared after the auth helpers, so the dependency resolves at import time,
+# and before the first route, which every route decorator needs.
+router = APIRouter(dependencies=[Depends(_authenticate)])
+
+
 # --- templates -------------------------------------------------------------
 
 
@@ -270,7 +354,8 @@ def validate_only(body: StoreTemplateBody) -> dict:
 
 
 @router.post("/runs")
-def create_run(body: CreateRunBody, response: Response, idempotency_key: str | None = Header(None)) -> dict:
+def create_run(body: CreateRunBody, response: Response, request: Request,
+               idempotency_key: str | None = Header(None)) -> dict:
     """Create a run. ``Idempotency-Key`` is required (spec §12).
 
     Required rather than optional because the alternative is a caller with no way
@@ -281,7 +366,8 @@ def create_run(body: CreateRunBody, response: Response, idempotency_key: str | N
         raise HTTPException(status_code=400,
                             detail={"message": "Idempotency-Key header is required to create a run"})
     key = idempotency_key.strip()
-    scope = "pipelines:run"
+    caller_scope = _scope_for_request(request)
+    idem_scope = "pipelines:run"
 
     conn = _connect()
     with closing(conn):
@@ -300,13 +386,14 @@ def create_run(body: CreateRunBody, response: Response, idempotency_key: str | N
             raise HTTPException(status_code=422,
                                 detail={"message": "stored template no longer validates",
                                         "errors": _template_errors(errors)})
-        run_id = db.create_run(conn, row.template, inputs=body.inputs)
+        run_id = db.create_run(conn, row.template, inputs=body.inputs,
+                               owner_scope=caller_scope)
         # Reserved after the run exists, following the gateway: a reservation is
         # keyed on the run it admitted, and `reserve` will not rewrite an
         # existing row, so reserving against a placeholder id would both lose the
         # real run id and collide on the store's UNIQUE(run_id) index the moment
         # a second key arrived. The loser is rolled back below.
-        outcome, stored = _reserve(scope, key, body.model_dump(), run_id,
+        outcome, stored = _reserve(idem_scope, key, body.model_dump(), run_id,
                                    {"status": "queued", "template_id": body.template_id})
         if outcome != "created":
             db.delete_unstarted_run(conn, run_id)
@@ -326,8 +413,72 @@ def create_run(body: CreateRunBody, response: Response, idempotency_key: str | N
 
 
 @router.get("/runs/{run_id}")
-def get_run(run_id: str) -> dict:
+def get_run(run_id: str, request: Request) -> dict:
+    scope = _scope_for_request(request)
+    conn = _connect()
+    with closing(conn):
+        _require_owned_run(conn, run_id, scope)
     return _run_detail(run_id)
+
+
+# --- credentials (#42) -----------------------------------------------------
+#
+# Operator-only, and deliberately not on the read path of a run: a credential
+# is minted by a human or a provisioning job, never fetched by a client. The
+# plaintext appears in exactly one response — the create — and there is no
+# route that returns it again, because the table stores a hash and not a secret.
+
+
+class CreateCredentialBody(BaseModel):
+    scope: str
+    label: str = ""
+    expires_at: Optional[int] = None
+
+
+def _require_local(http_request: Request) -> None:
+    if _scope_for_request(http_request) != LOCAL_SCOPE:
+        raise HTTPException(status_code=403,
+                            detail={"message": "credentials are managed by the operator"})
+
+
+@router.post("/credentials")
+def create_credential(body: CreateCredentialBody, http_request: Request) -> dict:
+    _require_local(http_request)
+    conn = _connect()
+    with closing(conn):
+        credentials.ensure_schema(conn)
+        conn.commit()
+        try:
+            credential, secret = credentials.create_credential(
+                conn, body.scope, body.label, body.expires_at)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail={"message": str(exc)}) from exc
+    # The only response that ever carries the secret.
+    return {"credential": credential._asdict(), "secret": secret}
+
+
+@router.get("/credentials")
+def list_credentials(http_request: Request) -> dict:
+    _require_local(http_request)
+    conn = _connect()
+    with closing(conn):
+        credentials.ensure_schema(conn)
+        conn.commit()
+        rows = [c._asdict() for c in credentials.list_credentials(conn)]
+    return {"credentials": rows}
+
+
+@router.delete("/credentials/{credential_id}")
+def revoke_credential(credential_id: str, http_request: Request) -> dict:
+    _require_local(http_request)
+    conn = _connect()
+    with closing(conn):
+        credentials.ensure_schema(conn)
+        conn.commit()
+        changed = credentials.revoke_credential(conn, credential_id)
+    if not changed:
+        raise _not_found("credential", credential_id)
+    return {"revoked": credential_id}
 
 
 # --- the response surface --------------------------------------------------
@@ -335,6 +486,7 @@ def get_run(run_id: str) -> dict:
 
 @router.post("/runs/{run_id}/input-requests/{request_id}/response")
 def submit_input_response(run_id: str, request_id: str, body: SubmitResponseBody,
+                          http_request: Request,
                           idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key")) -> dict:
     """Answer an open ``user_input`` request.
 
@@ -354,6 +506,14 @@ def submit_input_response(run_id: str, request_id: str, body: SubmitResponseBody
     advance the run twice because the ``status = 'open'`` compare-and-set admits
     exactly one of them, and the loser's 409 says which request already won.
     """
+    # Ownership first, and before the idempotency pre-check: a caller that does
+    # not own this run must not learn that its key was already spent, or that the
+    # request is closed, or anything else about it.
+    caller_scope = _scope_for_request(http_request)
+    _check = _connect()
+    with closing(_check):
+        _require_owned_run(_check, run_id, caller_scope)
+
     # The donor's store holds UNIQUE(run_id) across the whole table, and run
     # creation already reserved the pipeline run's own id. A response is
     # therefore reserved under a distinct, request-scoped identity.
@@ -437,11 +597,10 @@ def submit_input_response(run_id: str, request_id: str, body: SubmitResponseBody
 
 
 @router.get("/runs/{run_id}/events")
-def run_events(run_id: str, after_seq: int = Query(default=0)) -> dict:
+def run_events(run_id: str, http_request: Request, after_seq: int = Query(default=0)) -> dict:
     conn = _connect()
     with closing(conn):
-        if db.get_run(conn, run_id) is None:
-            raise _not_found("run", run_id)
+        _require_owned_run(conn, run_id, _scope_for_request(http_request))
         events = db.list_events(conn, run_id, after_seq=after_seq)
     return {
         "events": [
@@ -454,13 +613,21 @@ def run_events(run_id: str, after_seq: int = Query(default=0)) -> dict:
 
 
 @router.post("/maintenance/expire-inputs")
-def expire_inputs(now: Optional[int] = Query(default=None)) -> dict:
+def expire_inputs(http_request: Request, now: Optional[int] = Query(default=None)) -> dict:
     """Run the deadline sweep on demand.
 
     Idempotent, and safe to call from anywhere: the poll that renders the board
     calls it, so a run past its deadline stops presenting itself as waiting
     even if no dispatcher is running.
+
+    Local scope only, unlike the other routes. The sweep is not scoped to a run
+    at all — it touches every run past its deadline — so an external credential
+    has no business calling it, and a per-run ownership check could not express
+    the restriction even if it wanted to.
     """
+    if _scope_for_request(http_request) != LOCAL_SCOPE:
+        raise HTTPException(status_code=403,
+                            detail={"message": "the deadline sweep is operator-only"})
     conn = _connect()
     with closing(conn):
         expired = db.expire_input_deadlines(conn, now=now)

@@ -35,6 +35,7 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from hermes_cli import pipeline_executor as ex  # noqa: E402
+from hermes_cli import pipeline_credentials
 from hermes_cli import pipelines_db as db  # noqa: E402
 from hermes_cli import pipelines_api  # noqa: E402
 from hermes_cli.pipeline_fake_adapter import FakeAdapter, scripted  # noqa: E402
@@ -73,6 +74,11 @@ def client():
     A bare ``FastAPI`` rather than ``web_server.app``: these handlers are what is
     under test, and mounting them onto the dashboard's app would drag in plugin
     auth and every other route for no gain.
+
+    Since #42 the run routes need a scope, so the fixture yields a client bound
+    to one minted credential. Tests that need a second site mint their own, and
+    the negative tests below exist precisely to check the two cannot read each
+    other.
     """
     db_path = pipelines_db_path()
     real_home = os.path.realpath(str(Path.home() / ".hermes"))
@@ -84,13 +90,56 @@ def client():
     app = FastAPI()
     app.include_router(pipelines_api.router, prefix="/api/pipelines")
     with TestClient(app) as c:
+        c.headers.update({"Authorization": f"Bearer {mint('site-a')}"})
         yield c
+
+
+@pytest.fixture
+def as_operator(client):
+    """The same client, acting as the local operator.
+
+    The deadline sweep and credential management are operator-only (#42), so
+    those tests have to present a local scope. Yielded as a context manager so
+    the site's own header is restored afterwards and the ownership tests that
+    follow in the same function still see a site credential.
+    """
+    saved = client.headers.get("Authorization")
+    client.headers["Authorization"] = f"Bearer {mint('local')}"
+    try:
+        yield client
+    finally:
+        if saved is not None:
+            client.headers["Authorization"] = saved
+
+
+def mint(scope: str) -> str:
+    """Mint a credential directly, the way provisioning would.
+
+    Not through the API: the API's credential routes are operator-only, and the
+    operator is the local scope, which a test client does not have.
+    """
+    conn = db.connect()
+    try:
+        pipeline_credentials.ensure_schema(conn)
+        conn.commit()
+        _cred, secret = pipeline_credentials.create_credential(conn, scope)
+    finally:
+        conn.close()
+    return secret
 
 
 def _store(client, template: dict) -> dict:
     r = client.post("/api/pipelines/templates", json={"template": template})
     assert r.status_code == 200, r.text
     return r.json()
+
+
+def _create(client, key: str, template_id: str = "ask", **body) -> str:
+    """Create a run the way a caller does, returning its id."""
+    payload = {"template_id": template_id, **body}
+    r = client.post("/api/pipelines/runs", json=payload, headers={"Idempotency-Key": key})
+    assert r.status_code in (200, 201), r.text
+    return r.json()["id"]
 
 
 def _run_to_waiting(client, template: dict) -> tuple[str, str]:
@@ -109,6 +158,130 @@ def _run_to_waiting(client, template: dict) -> tuple[str, str]:
     open_reqs = [r for r in detail["input_requests"] if r["status"] == "open"]
     assert len(open_reqs) == 1, detail["input_requests"]
     return run_id, open_reqs[0]["id"]
+
+
+# --- per-run ownership (#42) -----------------------------------------------
+#
+# The issue is explicit that the positive path proves nothing about this, so
+# these sit next to the happy-path tests rather than in a separate file: a run
+# that exists, a request id from a different run, and a credential that is valid
+# but scoped elsewhere.
+
+
+def test_a_run_is_readable_by_the_scope_that_owns_it(client):
+    _store(client, TEMPLATE)
+    run_id = _create(client, "k1")
+    assert client.get(f"/api/pipelines/runs/{run_id}").status_code == 200
+
+
+def test_another_sites_credential_cannot_read_the_run(client):
+    _store(client, TEMPLATE)
+    run_id = _create(client, "k1")
+    client.headers["Authorization"] = f"Bearer {mint('site-b')}"
+    # 404, not 403: a 403 would confirm the run exists, which is itself an
+    # answer about someone else's data.
+    assert client.get(f"/api/pipelines/runs/{run_id}").status_code == 404
+    assert client.get(f"/api/pipelines/runs/{run_id}/events").status_code == 404
+
+
+def test_a_request_id_from_another_run_is_rejected(client):
+    """The forged-id path: a real, open request that belongs to a different run."""
+    run_a, request_a = _run_to_waiting(client, TEMPLATE)
+    other = _variant("ask2", response_schema={"type": "object", "required": ["z"],
+                                               "properties": {"z": {"type": "string"}}})
+    _store(client, other)
+    run_b, request_b = _run_to_waiting(client, other)
+    assert request_a != request_b
+
+    # site-b owns run_b and holds run_b's real request id, and presents it under
+    # run_a. The check is on the run, so this is refused.
+    client.headers["Authorization"] = f"Bearer {mint('site-b')}"
+    path = f"/api/pipelines/runs/{run_a}/input-requests/{request_b}/response"
+    assert client.post(path, json={"response": {"approved": True}}).status_code == 404
+    # And run_a's own request stays open: nothing was applied.
+    assert client.get(f"/api/pipelines/runs/{run_a}").status_code == 404
+
+
+def test_a_run_with_no_owner_stamp_is_refused(client):
+    """The deny-by-default property, stated as a test because it is the property.
+
+    The gateway's comment records why: run state that exists without an owner is
+    an unanswered authorisation question, not a run anyone may control. Admitting
+    it would make the boundary allow-all.
+    """
+    _store(client, TEMPLATE)
+    run_id = _create(client, "k1")
+    conn = db.connect()
+    conn.execute("UPDATE pipeline_runs SET owner_scope = NULL WHERE id = ?", (run_id,))
+    conn.commit()
+    conn.close()
+    assert client.get(f"/api/pipelines/runs/{run_id}").status_code == 404
+
+
+def test_an_unstamped_run_is_not_readable_even_by_its_creator(client):
+    _store(client, TEMPLATE)
+    run_id = _create(client, "k1")
+    conn = db.connect()
+    conn.execute("UPDATE pipeline_runs SET owner_scope = NULL WHERE id = ?", (run_id,))
+    conn.commit()
+    conn.close()
+    # Same credential that created it. Ownership is the run's stamp, not a
+    # memory of who asked.
+    assert client.get(f"/api/pipelines/runs/{run_id}").status_code == 404
+
+
+def test_no_credential_at_all_is_401(client):
+    _store(client, TEMPLATE)
+    del client.headers["Authorization"]
+    assert client.get("/api/pipelines/templates/ask").status_code == 401
+
+
+def test_a_bogus_revoked_or_malformed_credential_is_one_answer(client):
+    """They must be indistinguishable, or the response is a free oracle."""
+    _store(client, TEMPLATE)
+    for bad in ("codick_not-a-real-secret", "", "garbage"):
+        client.headers["Authorization"] = f"Bearer {bad}"
+        assert client.get("/api/pipelines/templates/ask").status_code == 401
+
+    secret = mint("site-c")
+    conn = db.connect()
+    creds = [c for c in pipeline_credentials.list_credentials(conn) if c.scope == "site-c"]
+    pipeline_credentials.revoke_credential(conn, creds[0].id)
+    conn.close()
+    client.headers["Authorization"] = f"Bearer {secret}"
+    assert client.get("/api/pipelines/templates/ask").status_code == 401
+
+
+def test_the_stored_credential_is_a_hash_not_a_secret(client):
+    _store(client, TEMPLATE)
+    secret = mint("site-d")
+    conn = db.connect()
+    rows = conn.execute("SELECT secret_hash FROM pipeline_credentials").fetchall()
+    conn.close()
+    assert rows
+    for row in rows:
+        assert secret not in row["secret_hash"]
+        assert len(row["secret_hash"]) == 64  # sha256 hex
+
+
+def test_listing_credentials_never_returns_a_secret(client, as_operator):
+    with as_operator as op:
+        listed = op.get("/api/pipelines/credentials")
+        assert listed.status_code == 200
+        keys = {k for c in listed.json()["credentials"] for k in c}
+        assert "secret" not in keys and "secret_hash" not in keys
+        assert "codick_" not in listed.text
+
+
+def test_an_external_credential_cannot_mint_another_one(client):
+    """The credential routes are operator-only; a site is not an operator."""
+    assert client.post("/api/pipelines/credentials",
+                       json={"scope": "site-e"}).status_code == 403
+
+
+def test_an_external_credential_cannot_run_the_deadline_sweep(client):
+    """The sweep touches every run, so no single site's scope can authorise it."""
+    assert client.post("/api/pipelines/maintenance/expire-inputs").status_code == 403
 
 
 # --- templates ------------------------------------------------------------
@@ -357,7 +530,7 @@ def test_a_request_from_another_run_is_404(client):
 # --- deadlines ------------------------------------------------------------
 
 
-def test_a_finite_deadline_fails_the_run_and_is_swept(client):
+def test_a_finite_deadline_fails_the_run_and_is_swept(client, as_operator):
     tpl = _variant("deadline", wait_timeout_seconds=600)
     run_id, request_id = _run_to_waiting(client, tpl)
     assert client.get(f"/api/pipelines/runs/{run_id}").json()["deadline"] is not None
@@ -365,7 +538,9 @@ def test_a_finite_deadline_fails_the_run_and_is_swept(client):
     # Nothing sweeps it yet: the wait is genuinely stored, not self-firing.
     assert client.get(f"/api/pipelines/runs/{run_id}").json()["status"] == "waiting_input"
 
-    swept = client.post(f"/api/pipelines/maintenance/expire-inputs?now={10 ** 12}").json()
+    # The sweep is operator-only (#42): it is not scoped to a run at all.
+    with as_operator as op:
+        swept = op.post(f"/api/pipelines/maintenance/expire-inputs?now={10 ** 12}").json()
     assert swept["expired"] == [run_id], swept
 
     detail = client.get(f"/api/pipelines/runs/{run_id}").json()
@@ -383,11 +558,12 @@ def test_a_finite_deadline_fails_the_run_and_is_swept(client):
     assert client.post("/api/pipelines/maintenance/expire-inputs?now=99999999999").json()["count"] == 0
 
 
-def test_a_null_wait_timeout_has_no_deadline_and_is_never_swept(client):
+def test_a_null_wait_timeout_has_no_deadline_and_is_never_swept(client, as_operator):
     tpl = _variant("forever", wait_timeout_seconds=None)
     run_id, _ = _run_to_waiting(client, tpl)
     assert client.get(f"/api/pipelines/runs/{run_id}").json()["deadline"] is None
-    swept = client.post(f"/api/pipelines/maintenance/expire-inputs?now={10 ** 12}").json()
+    with as_operator as op:
+        swept = op.post(f"/api/pipelines/maintenance/expire-inputs?now={10 ** 12}").json()
     assert swept["expired"] == [], swept
     assert client.get(f"/api/pipelines/runs/{run_id}").json()["status"] == "waiting_input"
 
