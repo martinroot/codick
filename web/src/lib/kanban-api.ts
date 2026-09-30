@@ -770,6 +770,81 @@ export const kanbanApi = {
     ),
 
   /**
+   * Attach a file to a task.
+   *
+   * Multipart through `authedFetch`, never a form `POST`: the whole reason
+   * downloads go through `downloadAttachment` is that a navigation-carried
+   * request sends no `Authorization` header and 401s in a gated deployment,
+   * and an unauthenticated form submit fails exactly the same way. The
+   * Content-Type must stay unset here — the browser writes the multipart
+   * boundary, and overwriting it 422s on the server's `File(...)` parse.
+   *
+   * `uploaded_by` rides as a form field, matching the endpoint's `Form(None)`.
+   */
+  uploadAttachment: (
+    taskId: string,
+    file: File,
+    options: KanbanRequestOptions,
+    uploadedBy?: string,
+  ) => {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    if (uploadedBy) form.append("uploaded_by", uploadedBy);
+    return fetchJSON<{ attachment: KanbanAttachment | null }>(
+      kanbanUrl(`/tasks/${encodeURIComponent(taskId)}/attachments`, options),
+      { method: "POST", body: form },
+    );
+  },
+
+  /**
+   * Delete an attachment row. The server removes the stored blob with it
+   * (`kanban_db.delete_attachment`), so a 200 here really is "gone".
+   */
+  deleteAttachment: (attachmentId: number, options: KanbanRequestOptions) =>
+    fetchJSON<{ ok: boolean; id: number }>(
+      kanbanUrl(
+        `/attachments/${encodeURIComponent(String(attachmentId))}`,
+        options,
+      ),
+      { method: "DELETE" },
+    ),
+
+  /**
+   * Add a dependency edge `parentId -> childId`.
+   *
+   * The failures are the point: 400 with the server's own sentence for a
+   * self-link, an unknown id, a running child, or a cycle, and a 404 when
+   * either endpoint does not exist. The API layer deliberately returns them
+   * as thrown `ApiError`s rather than pre-digesting them — the drawer shows
+   * the server's reason, and "would create a cycle" is not a generic error.
+   */
+  addLink: (parentId: string, childId: string, options: KanbanRequestOptions) =>
+    fetchJSON<{ ok: boolean; gated: boolean }>(kanbanUrl("/links", options), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ parent_id: parentId, child_id: childId }),
+    }),
+
+  /**
+   * Remove a dependency edge. `ok: false` is a normal answer — the edge was
+   * already gone (raced with another tab) — not an HTTP error.
+   */
+  removeLink: (
+    parentId: string,
+    childId: string,
+    options: KanbanRequestOptions,
+  ) => {
+    const search = new URLSearchParams();
+    search.set("board", options.board);
+    search.set("parent_id", parentId);
+    search.set("child_id", childId);
+    return fetchJSON<{ ok: boolean }>(
+      `${BASE_PATH}/links?${search.toString()}`,
+      { method: "DELETE" },
+    );
+  },
+
+  /**
    * Release a stuck claim — SIGTERM then SIGKILL the worker, without waiting
    * for the claim TTL. 409 when the claim has already lapsed, which by the
    * time an operator clicks is a perfectly normal race with the dispatcher.
