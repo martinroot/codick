@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { DataApiTab } from "@/components/kanban/pipeline/DataApiTab";
+import { InputChat } from "@/components/kanban/pipeline/InputChat";
 import { StepStripView } from "@/components/kanban/pipeline/StepStripView";
 import {
   buildInputs,
@@ -12,6 +13,7 @@ import {
   buildStepStrip,
   cardLabelForRun,
   isOnReview,
+  openInputRequest,
 } from "@/components/kanban/pipeline/strip";
 import {
   pipelinesApi,
@@ -60,7 +62,7 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
   const [validationErrors, setValidationErrors] = React.useState<SchemaError[]>([]);
   const [run, setRun] = React.useState<PipelineRun | null>(null);
   const [busy, setBusy] = React.useState(false);
-  const [tab, setTab] = React.useState<"steps" | "data">("steps");
+  const [tab, setTab] = React.useState<"steps" | "data" | "input">("steps");
 
   // The callbacks are held in refs and deliberately left out of the effect
   // dependencies. The page passes `onError` as an inline arrow, so its identity
@@ -178,6 +180,18 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
     () => (run && body ? buildStepStrip(body, run) : []),
     [run, body]
   );
+  const openRequest = run ? openInputRequest(run) : null;
+
+  // The server is the state, so answering re-reads the run rather than guessing
+  // what it became. The dispatcher's next step is not ours to predict.
+  const refreshRun = React.useCallback(async () => {
+    if (!run) return;
+    try {
+      setRun(await pipelinesApi.getRun(run.id));
+    } catch (err) {
+      onErrorRef.current(`Could not refresh the run: ${String(err)}`);
+    }
+  }, [run]);
 
   return (
     <div className="card mb-3">
@@ -348,9 +362,33 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
                     Data/API
                   </button>
                 </li>
+                {/* Only while a question is actually open. A tab that exists but
+                    cannot be used is a control that does nothing. */}
+                {openRequest && (
+                  <li className="nav-item">
+                    <button
+                      type="button"
+                      className={`nav-link py-0 px-2${tab === "input" ? " active" : ""}`}
+                      onClick={() => setTab("input")}
+                    >
+                      Answer
+                      <span className="badge text-bg-warning ms-1">1</span>
+                    </button>
+                  </li>
+                )}
               </ul>
             </div>
-            {tab === "steps" ? (
+            {tab === "input" && openRequest ? (
+              <InputChat
+                runId={run.id}
+                requestId={openRequest.id}
+                prompt={openRequest.prompt}
+                responseSchema={openRequest.response_schema}
+                deadline={openRequest.deadline ?? null}
+                onAnswered={refreshRun}
+                onError={onErrorRef.current}
+              />
+            ) : tab === "steps" ? (
               <StepStripView steps={steps} />
             ) : (
               <DataApiTab
