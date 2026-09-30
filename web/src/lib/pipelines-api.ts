@@ -49,14 +49,33 @@ export type InputRequestStatus =
   | "expired"
   | "cancelled";
 
+/** What the template select needs, read off the stored row. */
 export interface PipelineTemplateSummary {
   id: string;
   version: string;
-  name: string;
-  description?: string;
-  /** `ready` templates are runnable; anything else is stored but not runnable. */
+  name: string | null;
   readiness_status: "ready" | "unavailable";
-  readiness_detail?: string | null;
+  readiness_detail?: string[] | null;
+}
+
+/**
+ * The template's own JSON — the spec's document, verbatim.
+ *
+ * It is **nested under `template`**, because that is what the server sends:
+ * `ScenarioTemplate.to_dict()` renders the row (`id`, `version`, `name`,
+ * `readiness_status`, …) around a `template` field holding the document. The
+ * client does not flatten it, because a client that flattens one level it
+ * invented is a client that silently reads `undefined` from a server that never
+ * promised to flatten.
+ */
+export interface PipelineTemplateBody {
+  schema_version?: string;
+  id?: string;
+  name?: string;
+  start_step?: string;
+  inputs_schema?: Record<string, unknown>;
+  steps: PipelineStepTemplate[];
+  example_response?: unknown;
 }
 
 export interface PipelineStepTemplate {
@@ -69,15 +88,18 @@ export interface PipelineStepTemplate {
   wait_timeout_seconds?: number | null;
 }
 
+/** The stored row, as `ScenarioTemplate.to_dict()` renders it. */
 export interface PipelineTemplate {
-  schema_version: string;
   id: string;
   version: string;
-  name: string;
-  description?: string;
-  start_step: string;
-  inputs_schema?: Record<string, unknown>;
-  steps: PipelineStepTemplate[];
+  name: string | null;
+  description: string | null;
+  template: PipelineTemplateBody;
+  created_at: number;
+  updated_at: number;
+  /** `ready` templates are runnable; `unavailable` ones are stored but not runnable (#30). */
+  readiness_status: "ready" | "unavailable";
+  readiness_detail?: string[] | null;
 }
 
 export interface PipelineStepAttempt {
@@ -131,15 +153,41 @@ export interface PipelineRun {
   current_step_id: string | null;
   next_attempt_at?: number | null;
   deadline?: number | null;
+  /** The document the run was started from, so a later edit cannot rewrite history. */
+  template_snapshot?: PipelineTemplateBody | null;
+  template_hash?: string | null;
+  /** The executor's step-activation count — not a list of attempts. */
   step_executions: number;
   rework_cycles: number;
   inputs?: Record<string, unknown> | null;
   result?: unknown;
   error?: string | null;
   error_code?: string | null;
+  created_at?: number;
+  started_at?: number | null;
+  ended_at?: number | null;
+  updated_at?: number | null;
   attempts: PipelineStepAttempt[];
   input_requests: PipelineInputRequest[];
   events: PipelineRunEvent[];
+}
+
+/**
+ * The data a run has collected, in the shape the tab shows it.
+ *
+ * There is no `collected_data` field on the wire, and inventing one in the client
+ * would produce a tab that renders `null` forever. What the run actually holds is
+ * each attempt's `output` plus the run's `inputs` and `result`, so that is what
+ * this assembles — keyed by step, because a value with no step beside it cannot
+ * be traced back to the step that produced it.
+ */
+export function collectedData(run: PipelineRun): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const attempt of run.attempts ?? []) {
+    if (attempt.output === null || attempt.output === undefined) continue;
+    out[attempt.step_id] = attempt.output;
+  }
+  return out;
 }
 
 // -------------------------------------------------------------------------

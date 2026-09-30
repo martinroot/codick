@@ -25,7 +25,7 @@ import type {
   PipelineRun,
   PipelineStepAttempt,
   PipelineStepTemplate,
-  PipelineTemplate,
+  PipelineTemplateBody,
 } from "@/lib/pipelines-api";
 
 export type StripStepState = "done" | "stale" | "current" | "future" | "failed" | "skipped";
@@ -87,7 +87,7 @@ function latestAttempt(attempts: PipelineStepAttempt[], stepId: string) {
  * at "where are we" is a second thing to be wrong.
  */
 export function buildStepStrip(
-  template: Pick<PipelineTemplate, "steps" | "start_step">,
+  template: Pick<PipelineTemplateBody, "steps" | "start_step">,
   run: Pick<
     PipelineRun,
     "status" | "current_step_id" | "attempts" | "rework_cycles" | "input_requests"
@@ -114,6 +114,9 @@ export function buildStepStrip(
       // work that followed.
       state = isReview(step) && run.rework_cycles > 0 ? "stale" : "done";
     } else if (!attempt && run.status === "queued" && step.id === template.start_step) {
+      // `start_step` is optional in the body. A template that declares none gets
+      // no current step here — guessing the first one would be inventing a
+      // position the executor never reported.
       state = "current";
     } else {
       state = "future";
@@ -139,7 +142,7 @@ export function buildStepStrip(
  * it as data rather than deriving it.
  */
 export function isOnReview(
-  template: Pick<PipelineTemplate, "steps">,
+  template: Pick<PipelineTemplateBody, "steps" | "start_step">,
   run: Pick<PipelineRun, "status" | "current_step_id">
 ): boolean {
   if (run.status !== "running" || !run.current_step_id) return false;
