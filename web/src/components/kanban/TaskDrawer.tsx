@@ -489,31 +489,6 @@ function CommentsTab({
 
 type LinkSide = "parents" | "children";
 
-function linkRows(
-  detail: KanbanTaskDetail,
-  side: LinkSide,
-  caption: string,
-) {
-  const ids = detail.links?.[side] ?? [];
-  if (!ids.length) return null;
-  const titled = detail.link_tasks?.[side];
-  return (
-    <>
-      <p className="kb-drawer-muted">{caption}</p>
-      <ul className="kb-drawer-list">
-        {ids.map((id) => {
-          const row = titled?.find((t) => t.id === id);
-          return (
-            <li key={id}>
-              <code>{id.replace(/^t_/, "")}</code> {row?.title ?? "(unavailable)"}
-            </li>
-          );
-        })}
-      </ul>
-    </>
-  );
-}
-
 function DetailTab({
   detail,
   task,
@@ -631,14 +606,11 @@ function DetailTab({
             any task that had a parent, so the fallback is deliberate: an id is
             worse than a title, but it is not a blank screen.
           */}
-          {linkRows(detail, "parents", "Blocked by")}
-          {linkRows(detail, "children", "Blocks")}
           <DependenciesEditor
             cards={cards}
             detail={detail}
             options={options}
             onChanged={onChanged}
-            onError={onError}
           />
         </section>
       ) : null}
@@ -707,13 +679,11 @@ function DependenciesEditor({
   cards,
   options,
   onChanged,
-  onError,
 }: {
   detail: KanbanTaskDetail;
   cards?: KanbanTaskCard[];
   options: KanbanRequestOptions;
   onChanged: () => void | Promise<void>;
-  onError: (message: string) => void;
 }) {
   const [side, setSide] = React.useState<LinkSide>("parents");
   const [value, setValue] = React.useState("");
@@ -750,7 +720,6 @@ function DependenciesEditor({
       // The server's sentence, verbatim: "linking t_a -> t_b would create
       // a cycle" beats a generic "failed". The input keeps its text.
       setError(err instanceof Error ? err.message : String(err));
-      onError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -764,9 +733,7 @@ function DependenciesEditor({
       await kanbanApi.removeLink(linkParentId, linkChildId, options);
       await onChanged();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
-      onError(message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
     }
@@ -779,65 +746,52 @@ function DependenciesEditor({
     .filter((c) => c.id !== self)
     .map((c) => ({ id: c.id, title: c.title }));
 
-  const linkRow = (linkParentId: string, linkChildId: string, otherId: string, title: string | null) => {
-    const row = (
-      linkParentId === self
-        ? (detail.link_tasks?.children ?? [])
-        : (detail.link_tasks?.parents ?? [])
-    ).find((t) => t.id === otherId);
-    return { otherId, title: title ?? row?.title ?? null, linkParentId, linkChildId };
-  };
+  /** Title lookup with the detail's own `link_tasks`, per direction. */
+  const titleOf = (side: LinkSide, id: string) =>
+    (detail.link_tasks?.[side] ?? []).find((t) => t.id === id)?.title ?? null;
+
+  const row = (id: string, side: LinkSide, parentId: string, childId: string) => (
+    <li key={`${side}-${id}`} className="kb-deps-row">
+      <span>
+        <code>{id.replace(/^t_/, "")}</code>
+        {titleOf(side, id) ? (
+          <span className="kb-deps-title"> {titleOf(side, id)}</span>
+        ) : null}
+      </span>
+      <button
+        aria-label={`Remove dependency on ${id}`}
+        className="btn btn-sm btn-outline-danger kb-deps-remove"
+        disabled={busy}
+        onClick={() => void remove(parentId, childId)}
+        title="Remove this dependency"
+        type="button"
+      >
+        ✕
+      </button>
+    </li>
+  );
 
   return (
     <div className="kb-deps">
-      {(detail.links.parents.length || detail.links.children.length) ? (
-        <ul className="kb-drawer-list kb-deps-rows">
-          {detail.links.parents.map((id) => {
-            const { title, linkParentId, linkChildId } = linkRow(id, self, id, null);
-            return (
-              <li key={`p-${id}`} className="kb-deps-row">
-                <span>
-                  <code>{id.replace(/^t_/, "")}</code>
-                  {title ? <span className="kb-deps-title"> {title}</span> : null}
-                </span>
-                <button
-                  aria-label={`Remove dependency on ${id}`}
-                  className="btn btn-sm btn-outline-danger kb-deps-remove"
-                  disabled={busy}
-                  onClick={() => void remove(linkParentId, linkChildId)}
-                  title="Remove this dependency"
-                  type="button"
-                >
-                  ✕
-                </button>
-              </li>
-            );
-          })}
-          {detail.links.children.map((id) => {
-            const { title, linkParentId, linkChildId } = linkRow(self, id, id, null);
-            return (
-              <li key={`c-${id}`} className="kb-deps-row">
-                <span>
-                  <code>{id.replace(/^t_/, "")}</code>
-                  {title ? <span className="kb-deps-title"> {title}</span> : null}
-                </span>
-                <button
-                  aria-label={`Remove dependency ${id}`}
-                  className="btn btn-sm btn-outline-danger kb-deps-remove"
-                  disabled={busy}
-                  onClick={() => void remove(linkParentId, linkChildId)}
-                  title="Remove this dependency"
-                  type="button"
-                >
-                  ✕
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
+      {detail.links.parents.length ? (
+        <>
+          <p className="kb-drawer-muted kb-deps-caption">Blocked by</p>
+          <ul className="kb-drawer-list kb-deps-rows">
+            {detail.links.parents.map((id) => row(id, "parents", id, self))}
+          </ul>
+        </>
+      ) : null}
+      {detail.links.children.length ? (
+        <>
+          <p className="kb-drawer-muted kb-deps-caption">Blocks</p>
+          <ul className="kb-drawer-list kb-deps-rows">
+            {detail.links.children.map((id) => row(id, "children", self, id))}
+          </ul>
+        </>
+      ) : null}
+      {!detail.links.parents.length && !detail.links.children.length ? (
         <p className="kb-drawer-muted">No dependencies.</p>
-      )}
+      ) : null}
 
       {error ? (
         <p className="kb-drawer-error" role="alert">
