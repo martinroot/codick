@@ -56,7 +56,9 @@ def binding_from_config(config: Optional[Mapping[str, Any]]) -> dict:
         return {}
     binding: dict = {}
     for logical, real in raw.items():
-        lid, rid = str(logical).strip(), str(real).strip()
+        if not isinstance(logical, str) or not isinstance(real, str):
+            continue
+        lid, rid = logical.strip(), real.strip()
         if lid and rid:
             binding[lid] = rid
     return binding
