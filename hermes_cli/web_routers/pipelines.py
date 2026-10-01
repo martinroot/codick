@@ -52,6 +52,7 @@ from gateway.platforms.api_server_run_idempotency import RunIdempotencyStore
 
 from hermes_cli import pipeline_board
 from hermes_cli import pipeline_credentials as credentials
+from hermes_cli import pipeline_dispatch as dispatch
 from hermes_cli import pipelines_db as db
 from hermes_cli.pipeline_template import (response_schema_errors,  # noqa: F401
                                           validate_template)
@@ -453,6 +454,11 @@ def create_run(body: CreateRunBody, response: Response, request: Request,
             response.headers["Idempotency-Key"] = key
             return replayed
         detail = _run_detail(run_id)
+    # A newly created run starts moving on its own. The board's Run button
+    # created a run that sat in `queued` until something else called the loop,
+    # which meant every test drove it by hand and the product never did.
+    # A replay returns early above, so this is the created-run path only.
+    dispatch.ensure_driving(run_id)
     response.status_code = 201
     response.headers["Idempotency-Key"] = key
     return detail
@@ -771,6 +777,11 @@ def submit_input_response(run_id: str, request_id: str, body: SubmitResponseBody
                  body.model_dump(), reservation_id,
                  {"status": accepted.status, "accepted_response": accepted.accepted_response,
                   "responded_at": accepted.responded_at})
+    # An accepted answer is one of the two moments a run needs to be driven
+    # again. Without this the run sat answered-but-still until something else
+    # happened to call the loop, and the board's "Run" button would look broken
+    # in the one place a person is actually waiting.
+    dispatch.ensure_driving(run_id)
     return result
 
 

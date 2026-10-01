@@ -135,26 +135,53 @@ def test_readiness_bootstraps_discovery_rather_than_trusting_an_empty_registry()
     assert out.stdout.strip() == "ready", out.stdout
 
 
-def test_discovery_is_bootstrapped_only_when_the_registry_is_empty():
-    """Re-running discovery over a loaded registry would register every tool a
-    second time, so the bootstrap is conditional."""
+def test_an_incomplete_registry_is_still_completed_by_discovery(monkeypatch):
+    """Discovery runs every time, because a non-empty registry is not a complete one.
+
+    The first version bootstrapped only on an empty registry. That made the
+    verdict depend on import order: a registry that was populated but missing a
+    tool reported that tool as unregistered, and the same template was `ready`
+    or `unavailable` depending on which test had run first.
+
+    Re-running is safe because discovery re-imports its modules and `sys.modules`
+    stops an already-imported module from executing its body again — so nothing
+    registers twice. The assertion below is the point: the tool appears after
+    the call, and is still there on a second call.
+    """
     import tools.registry as registry_module
 
     calls = []
     real = registry_module.discover_builtin_tools
 
-    def counting():
+    def counting(*args, **kwargs):
         calls.append(1)
-        return real()
+        return real(*args, **kwargs)
 
-    monkey = registry_module.discover_builtin_tools
-    try:
-        registry_module.discover_builtin_tools = counting
-        # The registry is loaded by now, so no bootstrap should happen.
-        from hermes_cli.pipeline_readiness import _default_tool_names
+    monkeypatch.setattr(registry_module, "discover_builtin_tools", counting)
 
-        _default_tool_names()
-        _default_tool_names()
-    finally:
-        registry_module.discover_builtin_tools = monkey
-    assert calls == [], "a populated registry must not be rediscovered"
+    from hermes_cli.pipeline_readiness import _default_tool_names
+
+    _default_tool_names()
+    _default_tool_names()
+    assert len(calls) == 2, (
+        "discovery must run on every read: a non-empty registry is not a "
+        f"complete one, and a bootstrap-on-empty rule made the verdict depend on "
+        f"import order (saw {len(calls)} call(s) for two reads)"
+    )
+
+
+def test_repeated_discovery_does_not_disturb_the_registry(monkeypatch):
+    """The reason unconditional discovery is safe, asserted rather than assumed.
+
+    Discovery re-imports tool modules; `sys.modules` is what stops an
+    already-imported module from executing its `register()` again. If that ever
+    stopped being true, the tool list would grow on every readiness check.
+    """
+    from tools.registry import registry
+
+    from hermes_cli.pipeline_readiness import _default_tool_names
+
+    first = _default_tool_names()
+    second = _default_tool_names()
+    assert first == second, (len(first), len(second))
+    assert set(registry.get_all_tool_names()) == second

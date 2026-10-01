@@ -399,6 +399,25 @@ def _hermetic_environment(tmp_path, monkeypatch):
     monkeypatch.delenv("GMI_BASE_URL", raising=False)
 
 
+@pytest.fixture(autouse=True)
+def _no_background_pipeline_drivers():
+    """Runs do not move on their own during the test suite.
+
+    Production drives a run the moment it is created or its input request is
+    answered — that is what makes the board's Run button work. In tests it is
+    actively harmful twice over: a background thread advances a run while the
+    test is asserting on the state it just created, and it would spend a real
+    provider call. Tests that must exercise a driver (the dispatch suite) turn
+    it back on for themselves.
+    """
+    from hermes_cli import pipeline_dispatch
+
+    pipeline_dispatch.set_enabled(False)
+    yield
+    pipeline_dispatch.shutdown_drivers(timeout=5.0)
+    pipeline_dispatch.set_enabled(True)
+
+
 # Backward-compat alias — old tests reference this fixture name. Keep it
 # as a no-op wrapper so imports don't break.
 @pytest.fixture(autouse=True)

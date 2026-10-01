@@ -43,24 +43,31 @@ READINESS_UNAVAILABLE = "unavailable"
 def _default_tool_names() -> Optional[set]:
     """The registered tool names, or ``None`` when the registry cannot be read.
 
-    Discovery is bootstrapped here rather than assumed. ``discover_builtin_tools``
-    runs at ``model_tools`` import time, and a caller that has not imported that
-    — a plain script, a route that only touches the pipeline DB — sees an empty
+    Discovery is run here rather than assumed. ``discover_builtin_tools`` runs at
+    ``model_tools`` import time, and a caller that has not imported that — a
+    plain script, a route that only touches the pipeline DB — sees an empty
     registry and would report every template that needs a tool as
     ``unavailable``. That is the failure this whole module exists to prevent,
     produced by its own probe.
 
-    Bootstrapped only when the registry is empty, which is the one state that
-    means "discovery has not run": re-running discovery over an already-loaded
-    registry would register every tool a second time.
+    **Discovery runs every time, not only when the registry is empty.** An
+    earlier version bootstrapped on emptiness alone, and that made the verdict
+    depend on import order: a registry that was non-empty but *incomplete*
+    (discovery having run in a process where some tool module was not yet
+    importable) reported a registered tool as missing. Callers got a different
+    answer for the same template depending on which test ran first, which is
+    the same class of bug in the opposite direction.
+
+    Re-running is safe and cheap: discovery re-``imports`` its modules, and
+    ``sys.modules`` means an already-imported module does not execute its body
+    again, so nothing registers twice. Its per-file AST scan is memoised on
+    disk by ``(mtime_ns, size)``, so the repeat is a cache read.
     """
     from tools.registry import discover_builtin_tools, registry
 
     try:
+        discover_builtin_tools()
         names = set(registry.get_all_tool_names())
-        if not names:
-            discover_builtin_tools()
-            names = set(registry.get_all_tool_names())
     except Exception:  # noqa: BLE001 - reported as unknown, never as a verdict
         logger.debug("readiness could not read the tool registry", exc_info=True)
         return None

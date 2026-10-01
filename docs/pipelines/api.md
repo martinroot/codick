@@ -5,6 +5,18 @@ Every path below is under `/api/pipelines`. There is exactly one router for it,
 lose whichever route registers second, which is how the events feed went missing
 once already.
 
+## Who drives a run
+
+A run moves on its own. Creating one starts a driver, and answering its input
+request starts another; nothing polls and no timer is involved. A run that needs
+a person parks, the process forgets about it, and the next answer starts a fresh
+driver.
+
+If a driver dies, the run is **not** marked failed — its state is in SQLite and
+`recover` reconciles it. A dead driver is a gap in the process, not an outcome of
+the run, and reporting it as `failed` would tell an operator their scenario is
+broken when only the cranking stopped.
+
 ## Authentication and ownership
 
 Every pipeline route requires a **scoped server-side credential**. It is never
