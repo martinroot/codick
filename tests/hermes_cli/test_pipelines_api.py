@@ -814,7 +814,13 @@ def test_a_null_wait_timeout_has_no_deadline_and_is_never_swept(client, as_opera
 
 def test_polling_a_run_acts_on_a_passed_deadline(client):
     """A client that polls must not see a past-due run still claiming to wait."""
-    tpl = _variant("polled", wait_timeout_seconds=1)
+    # A long timeout on purpose: this test manufactures the past-due state with
+    # the UPDATE below, so it does not need a deadline that is one second away.
+    # With `wait_timeout_seconds=1` the request could expire inside
+    # `_run_to_waiting`, which asserts that a request is still OPEN — so the test
+    # failed whenever the suite ran slowly enough, and passed whenever it did
+    # not. That is a race in the test, not in the deadline sweep.
+    tpl = _variant("polled", wait_timeout_seconds=3600)
     run_id, _ = _run_to_waiting(client, tpl)
     conn = db.connect()
     # Move the deadline into the past rather than sleeping.

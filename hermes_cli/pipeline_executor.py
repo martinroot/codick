@@ -465,6 +465,23 @@ def _consume_input_answer(conn, run_id, step, attempt, *, lease_ttl, now) -> _Ad
         db.release_attempt(conn, attempt.id, "executor:consume")
 
 
+def _adopt_result(conn, run_id, attempt, result, *, owner) -> _AdvanceResult:
+    """Land a finished adapter result and route on.
+
+    One implementation for both callers: `recover` after a restart, and the live
+    driver collecting the turn it is still waiting for. Two copies of this is how
+    a submit path and a collect path end up disagreeing about what "completed"
+    means.
+    """
+    run_after = db.get_run(conn, run_id)
+    template = run_after.template_snapshot if run_after else {}
+    db.finish_attempt(conn, attempt.id, "completed", output=result.output or {})
+    if isinstance(template, Mapping) and find_step(template, attempt.step_id) is not None:
+        return _record_success(conn, run_id, template, find_step(template, attempt.step_id),
+                               attempt, result.output or {}, owner=owner)
+    return _AdvanceResult("completed", "adopted adapter result", step_id=attempt.step_id)
+
+
 def _run_model_step(conn, run_id, template, step, adapter, *, owner, lease_ttl, max_attempts, now) -> _AdvanceResult:
     """One activation of an ``agent`` or ``tool`` step: resolve, submit, record, route.
 
@@ -508,7 +525,26 @@ def _run_model_step(conn, run_id, template, step, adapter, *, owner, lease_ttl, 
     # live in-flight attempt is not reclaimable, and `recover` is the path that
     # reconciles one found after a restart.
     if attempt.execution_id:
-        return _AdvanceResult("in_flight", "attempt already submitted", step_id=step_id)
+        # Submitted already. If the answer is here, take it — refusing to would
+        # leave a finished turn uncollected for ever, because `advance` is the
+        # only thing the live driver calls and `recover` is a restart path. This
+        # is the same adoption `recover` uses, not a second state machine.
+        try:
+            pending = adapter.result(attempt.execution_id)
+        except Exception as exc:  # an unreachable adapter is an unknown outcome
+            db.finish_attempt(conn, attempt.id, "unknown", error=str(exc), error_code="unknown")
+            db.set_run_status(conn, run_id, "blocked", error=str(exc), error_code="unknown")
+            return _AdvanceResult("blocked", str(exc), step_id=step_id)
+        if pending is None:
+            return _AdvanceResult("in_flight", "attempt already submitted", step_id=step_id)
+        if pending.state == "completed":
+            return _adopt_result(conn, run_id, attempt, pending, owner=owner)
+        if pending.state == "cancelled":
+            db.finish_attempt(conn, attempt.id, "cancelled", error=pending.error,
+                              error_code=pending.error_code or "cancelled")
+            return _AdvanceResult("cancelled", "attempt cancelled", step_id=step_id)
+        code = pending.error_code or "adapter_error"
+        return _record_failure(conn, run_id, attempt, step, pending, max_attempts=max_attempts)
 
     try:
         try:
@@ -674,14 +710,7 @@ def recover(conn: sqlite3.Connection, adapter: "StepAdapter", *, owner: str,
                 results.append(_AdvanceResult("blocked", "adapter forgot the execution", step_id=attempt.step_id))
                 continue
             if result.state in ("completed",):
-                run_after = db.get_run(conn, run_id)
-                template = run_after.template_snapshot if run_after else {}
-                db.finish_attempt(conn, attempt.id, "completed", output=result.output or {})
-                if isinstance(template, Mapping) and find_step(template, attempt.step_id) is not None:
-                    results.append(_record_success(conn, run_id, template, find_step(template, attempt.step_id),
-                                                  attempt, result.output or {}, owner=owner))
-                else:
-                    results.append(_AdvanceResult("completed", "adopted adapter result", step_id=attempt.step_id))
+                results.append(_adopt_result(conn, run_id, attempt, result, owner=owner))
                 continue
             if result.state == "failed" or result.error:
                 code = result.error_code or "adapter_error"
