@@ -152,7 +152,10 @@ def unavailable_tools(
     if tool_names is None:
         return []
     if checker is None:
-        checker = _registry_checker()
+        # Resolved here, at call time, not at import: this is the seam a caller
+        # without credentials patches, and a bound default would be frozen into
+        # the signature before anyone gets a chance.
+        checker = default_checker()
 
     unavailable = []
     for name in required_tool_names(template):
@@ -166,8 +169,13 @@ def unavailable_tools(
     return unavailable
 
 
-def _registry_checker() -> Callable[[str], bool]:
-    """Availability straight from the registry's own cached ``check_fn``."""
+def default_checker() -> Callable[[str], bool]:
+    """Availability straight from the registry's own cached ``check_fn``.
+
+    Named as a public seam because the store layer defaults to it: with only a
+    reader seam, a caller had no way to say "registered *and* usable" without
+    standing up the real registry.
+    """
 
     def check(name: str) -> bool:
         from tools.registry import registry

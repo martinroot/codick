@@ -331,7 +331,8 @@ def _template_hash(snapshot: str) -> str:
 # requires the identity fields and refuses garbage that cannot identify a template.
 
 def import_template(conn: sqlite3.Connection, template: dict, *, now: Optional[int] = None,
-                   readiness_reader: Optional[Callable[[], Optional[set]]] = None) -> str:
+                   readiness_reader: Optional[Callable[[], Optional[set]]] = None,
+                   readiness_checker: Optional[Callable[[str], bool]] = None) -> str:
     """Store (or replace) a template identified by ``(id, version)`` and return its id.
     Re-importing the same pair replaces the stored JSON — runs are unaffected, they hold
     their own snapshot."""
@@ -348,8 +349,13 @@ def import_template(conn: sqlite3.Connection, template: dict, *, now: Optional[i
     # (spec §6, #30, #34). It used to be a column nothing ever wrote, so every
     # template read back as `ready` — a catalogue entry for a tool this install
     # does not have, sold, paid for, and failed at the tool step.
+    # Both seams, not one: a reader answers "is it registered", a checker
+    # answers "is it usable here" (#63). Injecting only the reader left a test
+    # unable to say a fake tool is available, and the only way to make its
+    # templates runnable was to stand up the real registry.
     readiness = assess_readiness(
-        template, reader=readiness_reader or _default_tool_names
+        template, reader=readiness_reader or _default_tool_names,
+        checker=readiness_checker,
     )
     with write_txn(conn):
         conn.execute(

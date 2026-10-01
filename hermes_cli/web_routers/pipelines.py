@@ -53,6 +53,7 @@ from gateway.platforms.api_server_run_idempotency import RunIdempotencyStore
 from hermes_cli import pipeline_board
 from hermes_cli import pipeline_credentials as credentials
 from hermes_cli import pipeline_dispatch as dispatch
+from hermes_cli import pipeline_usage as usage
 from hermes_cli import pipelines_db as db
 from hermes_cli.pipeline_template import (response_schema_errors,  # noqa: F401
                                           validate_template)
@@ -789,6 +790,23 @@ def submit_input_response(run_id: str, request_id: str, body: SubmitResponseBody
 #
 # A plain JSON catch-up read, not SSE: a client rebuilds after a break, dedupes
 # on ``event_id``/``seq``, and ``latest_seq`` says when it has reached the tail.
+
+
+@router.get("/runs/{run_id}/usage")
+def get_run_usage(run_id: str, http_request: Request) -> dict:
+    """What this run cost, per step and in total (#58).
+
+    ``cost_micros`` is ``None`` when the run was never measured, or when any
+    step is unmeasured and therefore unpriceable. It is not ``0``: a zero here
+    would be a claim that the run was free, which is the one thing a cost report
+    must never assert without a measurement behind it.
+
+    Ownership is checked exactly as everywhere else in this router (spec §11).
+    """
+    scope = _authenticate(http_request)
+    with closing(_connect()) as conn:
+        _require_owned_run(conn, run_id, scope)
+        return usage.run_usage(conn, run_id)
 
 
 @router.get("/runs/{run_id}/events")

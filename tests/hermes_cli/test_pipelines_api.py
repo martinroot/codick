@@ -39,6 +39,7 @@ from hermes_cli import pipeline_executor as ex  # noqa: E402
 from hermes_cli import kanban_db
 from hermes_cli import kanban_db_connect
 from hermes_cli import pipeline_credentials
+from hermes_cli import pipeline_readiness as readiness
 from hermes_cli import pipelines_db as db  # noqa: E402
 from hermes_cli.web_routers import pipelines as pipelines_api  # noqa: E402
 from hermes_cli.pipeline_fake_adapter import FakeAdapter, scripted  # noqa: E402
@@ -74,16 +75,23 @@ def _variant(template_id: str, **overrides) -> dict:
 def fake_tools_registered(monkeypatch):
     """Say that the fixture's fake tool `t` exists in this install.
 
-    `TEMPLATE` ends in a `tool` step for `t`, and since #34 readiness is computed
-    from the registry — so without this the fixture's own templates would be
-    (correctly) refused as unrunnable and every test here would be measuring the
-    readiness guard. The tests are about the API; the guard has its own file.
+    `TEMPLATE` ends in a `tool` step for `t`, and readiness is computed on the
+    way in — so without this the fixture's own templates would be (correctly)
+    refused as unrunnable and every test here would be measuring the readiness
+    guard. The tests are about the API; the guard has its own file.
 
-    Patched at the reader the DB layer calls, which is the documented seam, so
-    the router is not stubbed and the store path is the real one.
+    Since #63 readiness asks two questions, not one: is the tool *registered*
+    (the reader) and is it *usable here* (its own `check_fn`). Answering only the
+    first left `t` reported "registered but not available", and 40 tests in this
+    file failed on their own fixtures -- which is how the missing second seam
+    was found. Both are patched at the seams `import_template` exposes, so the
+    router is not stubbed and the store path stays the real one.
     """
     monkeypatch.setattr(
         db, "_default_tool_names", lambda: {"t", "terminal", "read_file"}
+    )
+    monkeypatch.setattr(
+        readiness, "default_checker", lambda: (lambda name: True)
     )
 
 
@@ -991,3 +999,52 @@ def test_one_site_cannot_retry_another_sites_run(client):
     conn = db.connect()
     assert db.get_run(conn, run_id).status == "failed", "a foreign retry must not re-arm it"
     conn.close()
+
+
+# --- usage (#58) ---------------------------------------------------------------
+
+
+def test_a_fresh_run_reports_usage_as_unknown_not_zero(client):
+    """A run nobody measured must not read as free. `None` and `0` mean opposite
+    things in a cost report, and the whole slice exists to keep them apart."""
+    _store(client, TEMPLATE)
+    run_id = _create(client, "usage-1")
+    body = client.get(f"/api/pipelines/runs/{run_id}/usage").json()
+    assert body["run_id"] == run_id
+    assert body["steps"] == []
+    assert body["cost_micros"] is None
+    assert body["cost_status"] == "unknown"
+
+
+def test_a_measured_run_reports_its_total(client):
+    from hermes_cli import pipeline_usage as usage_mod
+
+    _store(client, TEMPLATE)
+    run_id = _create(client, "usage-2")
+    conn = db.connect()
+    try:
+        attempt = db.get_attempt(conn, db.create_attempt(conn, run_id, "draft"))
+        conn.close()
+        conn = db.connect()
+        usage_mod.price_and_record(conn, run_id=run_id, attempt_id=attempt.id,
+                                   usage=usage_mod.Usage(step_id="draft", kind="model",
+                                                         input_tokens=120, output_tokens=40,
+                                                         model="m", provider="p"))
+    finally:
+        conn.close()
+    body = client.get(f"/api/pipelines/runs/{run_id}/usage").json()
+    assert len(body["steps"]) == 1
+    assert body["steps"][0]["input_tokens"] == 120
+    assert body["cost_status"] in ("estimated", "unknown")
+
+
+def test_another_sites_credential_cannot_read_the_usage(client):
+    """A cost report is a run's data like any other: same 404, same reason."""
+    _store(client, TEMPLATE)
+    run_id = _create(client, "usage-3")
+    client.headers["Authorization"] = f"Bearer {mint('site-b')}"
+    assert client.get(f"/api/pipelines/runs/{run_id}/usage").status_code == 404
+
+
+def test_usage_of_a_run_that_does_not_exist_is_404(client):
+    assert client.get("/api/pipelines/runs/run_nope/usage").status_code == 404
