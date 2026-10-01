@@ -123,6 +123,53 @@ def test_submit_refuses_without_the_three_ids():
 
 
 
+def test_the_live_agent_factory_actually_builds_an_agent(monkeypatch):
+    """The default factory used no test, and imported `AIAgent` from a module
+    that does not export it — so every agent step failed in production while the
+    suite was green, because every test injected its own factory.
+
+    The import is asserted rather than exercised: constructing a real agent needs
+    a provider, and a smoke test of the import is the part that was broken.
+    """
+    from hermes_cli import pipeline_hermes_adapter as adapter_module
+
+    factory = adapter_module._default_agent_factory
+    assert factory.__doc__, "the live path needs to say why it looks like this"
+
+    # The name must resolve where the rest of the codebase imports it from.
+    module = __import__("run_agent", fromlist=["AIAgent"])
+    assert hasattr(module, "AIAgent"), "run_agent must export AIAgent"
+
+    # Building for real must get past the import; stop at the provider.
+    # Resolution must go through the shared chokepoint, not a private helper.
+    from hermes_cli import runtime_provider
+
+    seen = {}
+
+    def fake_resolve(requested=None, target_model=None, **kwargs):
+        seen["requested"] = requested
+        seen["target_model"] = target_model
+        return {"provider": "p", "api_mode": "chat", "base_url": "http://x",
+                "api_key": "k", "credential_pool": None}
+
+    monkeypatch.setattr(runtime_provider, "resolve_runtime_provider", fake_resolve)
+
+    built = {}
+
+    class _FakeAgent:
+        def __init__(self, **kwargs):
+            built.update(kwargs)
+
+    monkeypatch.setattr("run_agent.AIAgent", _FakeAgent)
+    factory(session_id="s1", profile=None, quiet_mode=True,
+            config={"model": {"default": "m1", "provider": "prov"}})
+    assert built["session_id"] == "s1"
+    assert built["model"] == "m1", built
+    assert built["provider"] == "p", built
+    # The config's provider reaches the shared resolver as the requested one.
+    assert seen == {"requested": "prov", "target_model": "m1"}, seen
+
+
 def test_a_tool_step_is_dispatched_to_the_registry_and_never_to_the_model():
     """A `tool` step must run the tool, not ask a model to describe running it.
 

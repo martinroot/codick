@@ -165,29 +165,53 @@ def _validate_output(payload: Any, schema: Optional[Mapping[str, Any]]) -> List[
 AgentFactory = Callable[..., Any]
 
 
-def _default_agent_factory(**kwargs: Any) -> Any:  # pragma: no cover - live path
-    """Construct a real :class:`~agent.AIAgent` for one pipeline attempt."""
-    from agent import AIAgent
+def _default_agent_factory(**kwargs: Any) -> Any:
+    """Construct a real :class:`run_agent.AIAgent` for one pipeline attempt.
 
-    from hermes_cli.oneshot import resolve_runtime, select_model_choice
+    ``AIAgent`` is the facade in ``run_agent.py``; the ``agent`` package is its
+    decomposition siblings and does not export it. The live path was marked
+    ``pragma: no cover`` and imported from the wrong module, so every agent step
+    in production failed with an ImportError while the whole suite stayed green —
+    no test used this factory. It is covered now.
+    """
+    from run_agent import AIAgent
+
+    from hermes_cli.config import load_config
+    from hermes_cli.runtime_provider import resolve_runtime_provider
 
     cfg = kwargs.pop("config", None)
     if cfg is None:
-        from hermes_cli.config import load_cli_config
+        cfg = load_config()
+    session_id = kwargs.pop("session_id")
+    model = kwargs.pop("model", None)
+    requested = kwargs.pop("requested_provider", None)
+    profile = kwargs.pop("profile", None)
+    kwargs.pop("quiet_mode", None)
 
-        cfg = load_cli_config()
-    runtime = resolve_runtime(cfg, model=kwargs.pop("model", None))
-    choice = select_model_choice(cfg)
+    # Model and provider resolution go through the same two chokepoints the CLI,
+    # gateway, TUI, cron and api_server use. Reaching for a private helper (this
+    # previously called `hermes_cli.oneshot.resolve_runtime`, which does not
+    # exist) means guessing at resolution instead of sharing it — and a wrong
+    # guess fails only on the live path, where no test was looking.
+    model_cfg = cfg.get("model")
+    default_model, config_provider = "", None
+    if isinstance(model_cfg, dict):
+        default_model, config_provider = str(model_cfg.get("default") or ""), model_cfg.get("provider")
+    elif isinstance(model_cfg, str):
+        default_model = model_cfg.strip()
+    chosen = model or default_model
+    runtime = resolve_runtime_provider(
+        requested=requested or config_provider, target_model=chosen or None,
+    )
     return AIAgent(
-        api_key=runtime.get("api_key"),
-        base_url=runtime.get("base_url"),
-        provider=runtime.get("provider"),
-        requested_provider=runtime.get("requested_provider"),
-        api_mode=runtime.get("api_mode"),
-        model=choice.model,
+        platform=kwargs.pop("platform", "cli"),
         quiet_mode=True,
-        platform="cli",
-        session_id=kwargs["session_id"],
+        session_id=session_id,
+        model=chosen,
+        provider=runtime.get("provider"),
+        api_mode=runtime.get("api_mode"),
+        base_url=runtime.get("base_url"),
+        api_key=runtime.get("api_key"),
         credential_pool=runtime.get("credential_pool"),
         **kwargs.pop("agent_kwargs", {}),
     )
