@@ -501,6 +501,38 @@ def stop_run(run_id: str, request: Request) -> dict:
     return _run_detail(run_id)
 
 
+@router.post("/runs/{run_id}/retry")
+def retry_run(run_id: str, request: Request) -> dict:
+    """Re-arm a run whose step failed (spec §7, spec §14).
+
+    **Only a ``failed`` run can be retried.** A ``blocked`` run means the
+    outcome of an external call could not be established; re-running it is the
+    blind repeat of a side effect the runtime forbids, and it gets recovery
+    instead. Refusing it here is the difference between a retry button and a
+    way to double a customer's charge.
+
+    **Once only, by state rather than by a second guard.** The first call moves
+    the run to ``queued``; a second call no longer sees ``failed``, so a double
+    click cannot produce two attempts.
+
+    **409 names the state it actually found.** "Retry failed" tells a caller
+    nothing about whether the run is finished, already moving, or blocked on an
+    unknown outcome — three problems with three different answers.
+    """
+    scope = _scope_for_request(request)
+    conn = _connect()
+    with closing(conn):
+        _require_owned_run(conn, run_id, scope)
+        current = db.get_run(conn, run_id)
+        status = current.status if current is not None else None
+        retried, _step_id = db.retry_failed_step(conn, run_id, reason="retried by request")
+        if not retried:
+            raise HTTPException(
+                status_code=409,
+                detail={"message": f"only a failed run can be retried; this one is {status!r}"})
+    return _run_detail(run_id)
+
+
 @router.get("/artifacts/{artifact_id}/download")
 def download_artifact(artifact_id: str, request: Request):
     """Serve an artifact's bytes (spec §11).

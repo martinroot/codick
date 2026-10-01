@@ -47,7 +47,7 @@ from hermes_constants import get_hermes_home
 _TERMINAL_ATTEMPT_STATUSES = frozenset({"completed", "failed", "cancelled", "unknown"})
 
 __all__ = [
-    "RUN_STATUSES", "TERMINAL_RUN_STATUSES", "cancel_run", "ATTEMPT_STATUSES", "REQUEST_STATUSES",
+    "RUN_STATUSES", "TERMINAL_RUN_STATUSES", "cancel_run", "retry_failed_step", "ATTEMPT_STATUSES", "REQUEST_STATUSES",
     "KNOWN_EVENT_TYPES", "EVENT_SCHEMA_VERSION",
     "ScenarioTemplate", "PipelineRun", "StepAttempt", "InputRequest", "RunEvent", "Artifact",
     "pipelines_data_root", "pipelines_db_path", "artifacts_root", "connect", "connect_closing",
@@ -971,6 +971,53 @@ def start_attempt(conn: sqlite3.Connection, attempt_id: str, *, execution_id: Op
 def _require_step_of(conn: sqlite3.Connection, attempt_id: str) -> Optional[str]:
     row = conn.execute("SELECT step_id FROM step_attempts WHERE id = ?", (attempt_id,)).fetchone()
     return row["step_id"] if row else None
+
+
+def retry_failed_step(
+    conn: sqlite3.Connection, run_id: str, *, reason: Optional[str] = None,
+    occurred_at: Optional[int] = None,
+) -> Optional[str]:
+    """Re-arm a run whose step failed. Returns ``(retried, step_id)``.
+
+    The two are separate because they fail differently: ``retried`` is False
+    when the run was not in a retryable state, while ``step_id`` is None when a
+    run was failed before it ever reached a step. Returning the step alone would
+    make those two the same value, and the caller would report "not retryable"
+    to an operator whose run is genuinely retryable.
+
+    Spec §7's retry route. **Only ``failed``.** A ``blocked`` run means the
+    outcome of an external call could not be established, and re-running that
+    call is exactly the blind repeat of a side effect the runtime forbids —
+    recovery, not repetition, is what ``blocked`` gets.
+
+    The executor creates a fresh attempt by itself: `_pending_attempt` only
+    returns a ``queued``/``running`` attempt, and a failed step has none, so
+    re-arming is enough and inventing an attempt here would only give the
+    attempt counter a second source of truth.
+
+    Once-only falls out of the state check rather than needing its own guard:
+    the first call moves the run to ``queued`` and a second call no longer sees
+    ``failed``, so a double click cannot produce two attempts.
+
+    ``retried`` False means refused — the caller turns that into a 409 naming
+    the state it actually found, which is more useful than "retry failed".
+    """
+    ts = occurred_at if occurred_at is not None else _now()
+    with write_txn(conn):
+        run = get_run(conn, run_id)
+        if run is None or run.status != "failed":
+            return (False, None)
+        step_id = run.current_step_id
+        conn.execute(
+            "UPDATE pipeline_runs SET status = 'queued', error = NULL, error_code = NULL, "
+            "ended_at = NULL WHERE id = ?",
+            (run_id,),
+        )
+    # Outside the transaction: `append_event` opens its own, and `write_txn`
+    # does not nest. Doing this twice in one commit is exactly the mistake this
+    # comment exists to stop being repeated.
+    append_event(conn, run_id, "run.retried", step_id=step_id, payload={"reason": reason})
+    return (True, step_id)
 
 
 def cancel_run(

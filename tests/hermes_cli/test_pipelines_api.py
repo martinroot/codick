@@ -17,6 +17,7 @@ What this pins, straight from the issue:
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from contextlib import closing
@@ -910,3 +911,77 @@ def test_one_site_cannot_stop_another_sites_run(client):
 def test_stopping_an_unknown_run_is_the_same_refusal(client):
     r = client.post("/api/pipelines/runs/run_does_not_exist/stop")
     assert r.status_code in (403, 404), r.text
+
+
+# --- Retry (spec §7, spec §14) ------------------------------------------------
+
+def test_retrying_a_failed_run_re_arms_it(client):
+    _store(client, _variant("retryable"))
+    run_id = _create(client, "retry-1", template_id="retryable")
+    conn = db.connect()
+    db.finish_run(conn, run_id, "failed", error="tool said no", error_code="adapter_error")
+    conn.close()
+    r = client.post(f"/api/pipelines/runs/{run_id}/retry")
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "queued"
+
+
+def test_retrying_a_blocked_run_is_refused(client):
+    """The difference between a retry button and a way to double a side effect.
+
+    `blocked` means the outcome of an external call could not be established.
+    Running it again is the blind repeat the runtime forbids.
+    """
+    _store(client, _variant("retryable"))
+    run_id = _create(client, "retry-2", template_id="retryable")
+    conn = db.connect()
+    db.set_run_status(conn, run_id, "blocked", error="unknown", error_code="unknown")
+    conn.close()
+    r = client.post(f"/api/pipelines/runs/{run_id}/retry")
+    assert r.status_code == 409, r.text
+    conn = db.connect()
+    assert db.get_run(conn, run_id).status == "blocked"
+    conn.close()
+
+
+def test_retrying_twice_does_not_produce_two_attempts(client):
+    """Once-only by state, not by a second guard: the first call moves the run
+    to `queued`, so the second call no longer sees `failed`."""
+    _store(client, _variant("retryable"))
+    run_id = _create(client, "retry-3", template_id="retryable")
+    conn = db.connect()
+    db.finish_run(conn, run_id, "failed", error="x", error_code="adapter_error")
+    conn.close()
+    assert client.post(f"/api/pipelines/runs/{run_id}/retry").status_code == 200
+    second = client.post(f"/api/pipelines/runs/{run_id}/retry")
+    assert second.status_code == 409, second.text
+
+
+def test_the_409_names_the_state_it_actually_found(client):
+    """`retry failed` tells a caller nothing about a finished run versus a
+    blocked one — three problems with three different answers."""
+    _store(client, _variant("retryable"))
+    run_id = _create(client, "retry-4", template_id="retryable")
+    conn = db.connect()
+    db.finish_run(conn, run_id, "completed")
+    conn.close()
+    body = client.post(f"/api/pipelines/runs/{run_id}/retry").json()
+    assert "completed" in json.dumps(body)
+
+
+def test_one_site_cannot_retry_another_sites_run(client):
+    _store(client, _variant("retryable"))
+    run_id = _create(client, "retry-5", template_id="retryable")
+    conn = db.connect()
+    db.finish_run(conn, run_id, "failed", error="x", error_code="adapter_error")
+    conn.close()
+    saved = client.headers.get("Authorization")
+    client.headers["Authorization"] = f"Bearer {mint('site-b')}"
+    try:
+        r = client.post(f"/api/pipelines/runs/{run_id}/retry")
+    finally:
+        client.headers["Authorization"] = saved
+    assert r.status_code in (403, 404), r.text
+    conn = db.connect()
+    assert db.get_run(conn, run_id).status == "failed", "a foreign retry must not re-arm it"
+    conn.close()
