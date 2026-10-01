@@ -218,6 +218,43 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
     }
   }, [run]);
 
+  // Stop and Retry both end in the same place: the server decides what the run
+  // became, and the panel re-reads it. Neither button predicts an outcome —
+  // a stop does not promise the work stopped, and a retry does not promise the
+  // step will pass this time.
+  const [controlling, setControlling] = React.useState(false);
+  const control = React.useCallback(
+    async (action: "stop" | "retry") => {
+      if (!run) return;
+      setControlling(true);
+      try {
+        const next =
+          action === "stop"
+            ? await pipelinesApi.stopRun(run.id)
+            : await pipelinesApi.retryRun(run.id);
+        setRun(next);
+      } catch (err) {
+        // A 409 is the server saying the run is not in a state that action can
+        // affect. Re-read rather than showing a state we guessed.
+        onErrorRef.current(
+          action === "stop"
+            ? `Could not stop the run: ${String(err)}`
+            : `Could not retry the run: ${String(err)}`,
+        );
+        await refreshRun();
+      } finally {
+        setControlling(false);
+      }
+    },
+    [run, refreshRun, onErrorRef],
+  );
+
+  // Offered only where the server accepts them. A button that is present and
+  // always 409s is worse than an absent one: it teaches the operator that the
+  // panel does not know the run's state.
+  const canStop = !!run && ["queued", "running", "waiting_input", "on_review"].includes(run.status);
+  const canRetry = !!run && run.status === "failed";
+
   return (
     <div className="card mb-3">
       <div className="card-body py-2">
@@ -255,6 +292,28 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
           >
             {busy ? "Working…" : "Run"}
           </button>
+          {canStop && (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-danger"
+              onClick={() => void control("stop")}
+              disabled={controlling}
+              title="Stop this run. Work already in flight keeps running, but its result can no longer change this run."
+            >
+              {controlling ? "Working…" : "Stop"}
+            </button>
+          )}
+          {canRetry && (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-warning"
+              onClick={() => void control("retry")}
+              disabled={controlling}
+              title="Run the failed step again with a fresh attempt."
+            >
+              {controlling ? "Working…" : "Retry step"}
+            </button>
+          )}
         </div>
 
         {showJson && (

@@ -332,6 +332,33 @@ export const pipelinesApi = {
   },
 
   /**
+   * Stop a run.
+   *
+   * A stop is not a promise that the work stopped. A model turn already in
+   * flight keeps running until the provider returns; what is guaranteed is that
+   * its answer can no longer change this run. The server says so in the run's
+   * own state, so the button reflects the run rather than the click.
+   *
+   * Stopping a finished run is a 409, not a silent success — the caller's
+   * intent is already satisfied and a fake 200 would have a client retry a stop
+   * that can never take effect.
+   */
+  stopRun(runId: string): Promise<PipelineRun> {
+    return request(`/runs/${encodeURIComponent(runId)}/stop`, { method: "POST" });
+  },
+
+  /**
+   * Re-arm a run whose step failed.
+   *
+   * Only `failed` is retryable. A `blocked` run means the outcome of an external
+   * call could not be established, and re-running it is the blind repeat of a
+   * side effect — so it is offered recovery, not a retry button.
+   */
+  retryRun(runId: string): Promise<PipelineRun> {
+    return request(`/runs/${encodeURIComponent(runId)}/retry`, { method: "POST" });
+  },
+
+  /**
    * The run anchored to a board card.
    *
    * Without this the panel cannot re-attach: a run is created together with its
