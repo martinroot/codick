@@ -217,6 +217,63 @@ def _default_agent_factory(**kwargs: Any) -> Any:
     )
 
 
+# The agent already counts these per session. Reading them is far better than
+# estimating from text lengths, and the delta around one turn is the only
+# honest way to attribute a cost to a step: a session is reused across attempts,
+# so a cumulative reading would charge every step for every step before it.
+USAGE_COUNTERS = (
+    "session_input_tokens",
+    "session_output_tokens",
+    "session_cache_read_tokens",
+    "session_cache_write_tokens",
+)
+
+
+def read_usage(agent: Any) -> Optional[Dict[str, Any]]:
+    """The agent's own counters, or ``None`` when it does not expose them.
+
+    ``None`` means *unmeasured*, and it is carried through as such. A guess from
+    character counts would be a number that looks like a measurement and is not.
+    """
+    if agent is None:
+        return None
+    usage: Dict[str, Any] = {}
+    for name in USAGE_COUNTERS:
+        value = getattr(agent, name, None)
+        if not isinstance(value, (int, float)):
+            return None
+        usage[name.replace("session_", "").replace("_tokens", "")] = int(value)
+    status = getattr(agent, "session_cost_status", None)
+    usage["cost_status"] = status if isinstance(status, str) else "unknown"
+    estimated = getattr(agent, "session_estimated_cost_usd", None)
+    usage["estimated_cost_usd"] = (float(estimated)
+                                   if isinstance(estimated, (int, float)) else None)
+    return usage
+
+
+def usage_delta(before: Optional[Dict[str, Any]], after: Optional[Dict[str, Any]]
+                ) -> Optional[Dict[str, Any]]:
+    """What this turn cost, in the shape ``pipeline_usage`` stores.
+
+    ``None`` when either reading is missing: the alternative is zeros, and zeros
+    here mean "this step was free" rather than "we did not measure it".
+    """
+    if before is None or after is None:
+        return None
+    delta: Dict[str, Any] = {"kind": "model"}
+    for key in ("input", "output", "cache_read", "cache_write"):
+        delta[key] = int(after.get(key, 0)) - int(before.get(key, 0))
+    if delta["input"] < 0 or delta["output"] < 0:
+        # A counter that went backwards means a reset between readings, and a
+        # negative token count is worse than an absent one.
+        return None
+    # The agent's own cost status wins: it knows when a provider reported
+    # nothing, and overwriting that with our arithmetic would claim a number we
+    # did not get.
+    delta["cost_status"] = after.get("cost_status", "unknown")
+    return delta
+
+
 def attempt_session_id(run_id: str, step_id: str, attempt_id: str) -> str:
     """The one session an attempt owns — derived, never generated.
 
@@ -436,7 +493,11 @@ class HermesStepAdapter:
             # something to interrupt, which is the difference between stopping a
             # model call and only recording that we wanted to.
             execution.agent = agent
+        # Snapshot around the turn only: a session is reused across attempts, so
+        # a cumulative reading would charge this step for every step before it.
+        before_usage = read_usage(agent)
         text = self._run_turn(agent, history, idempotency_key=idempotency_key)
+        turn_usage = usage_delta(before_usage, read_usage(agent))
         if execution is not None and execution.cancelled:
             return ExecutionResult(state="cancelled", error_code="cancelled")
         if agent is not None and hasattr(agent, "close"):
@@ -461,7 +522,7 @@ class HermesStepAdapter:
                 "output did not satisfy output_schema: "
                 + "; ".join(f"{e.path}: {e.message}" for e in errors)
             )
-        return ExecutionResult(state="completed", output=payload)
+        return ExecutionResult(state="completed", output=payload, usage=turn_usage)
 
     def _run_turn(self, agent: Any, history: Sequence[dict], *, idempotency_key: Any = None) -> str:
         if agent is None or not hasattr(agent, "run_conversation"):

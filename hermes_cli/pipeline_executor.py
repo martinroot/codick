@@ -107,11 +107,16 @@ class ExecutionResult:
     def __init__(
         self, *, state: str, output: Optional[dict] = None,
         error: Optional[str] = None, error_code: Optional[str] = None,
+        usage: Optional[dict] = None,
     ) -> None:
         self.state = state
         self.output = output
         self.error = error
         self.error_code = error_code
+        # Token/cost accounting for this attempt (#58). ``None`` means the step
+        # was not measured -- a cancelled turn, or an adapter that exposes no
+        # counters -- and it is kept distinct from a measured zero.
+        self.usage = usage
 
     def __repr__(self) -> str:  # pragma: no cover - diagnostics only
         return f"ExecutionResult(state={self.state!r}, error_code={self.error_code!r})"
