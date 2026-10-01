@@ -90,6 +90,10 @@ def _sync_card(run_id: str) -> None:
         with closing(_connect()) as pipelines_conn, \
                 closing(kanban_db_connect.connect()) as card_conn:
             moved = pipeline_board.sync_card_column(pipelines_conn, card_conn, run_id)
+            attached = pipeline_board.attach_run_artifacts(pipelines_conn, card_conn, run_id)
+            if attached:
+                logger.info("pipeline run %s attached %s to its card: %s",
+                            run_id, len(attached), ", ".join(attached))
         if moved:
             logger.info("pipeline run %s moved its card to %s", run_id, moved)
     except Exception:

@@ -19,6 +19,7 @@ import os
 import sys
 import tempfile
 import time
+from pathlib import Path
 
 import pytest
 
@@ -284,3 +285,53 @@ def test_a_finished_run_leaves_its_card_in_the_column_it_earned(client):
         f"card {card_id} stored completed_at as {type(completed_at).__name__}, "
         f"not an epoch int"
     )
+
+
+def test_a_finished_run_attaches_its_deliverable_to_the_card(client):
+    """The Files tab must show what the run produced.
+
+    A run can finish, the download endpoint can answer 200, and the card still
+    show no files: the artifact lives in the pipeline store and nothing ever
+    copied it onto the card. The board is where a person looks, so an artifact
+    that never reaches the card does not exist as far as the board is concerned.
+    """
+    from hermes_cli import kanban_db as kb
+    from hermes_cli import kanban_db_connect
+
+    template = _template()
+    client.post("/api/pipelines/templates", json={"template": template})
+    created = client.post(
+        "/api/pipelines/runs",
+        json={"template_id": template["id"], "inputs": {"topic": "t", "author": "m"}},
+        headers={"Idempotency-Key": "drive-files"},
+    )
+    assert created.status_code == 201, created.text
+    run_id, card_id = created.json()["id"], created.json()["card_id"]
+
+    detail = _await_status(client, run_id, {"waiting_input"})
+    request_id = [r for r in detail["input_requests"] if r["status"] == "open"][0]["id"]
+    client.post(
+        f"/api/pipelines/runs/{run_id}/input-requests/{request_id}/response",
+        json={"response": {"ok": True}}, headers={"Idempotency-Key": "drive-files-answer"},
+    )
+    assert _await_status(client, run_id, {"completed", "failed"})["status"] == "completed"
+
+    def attachments():
+        conn = kanban_db_connect.connect()
+        try:
+            return kb.list_attachments(conn, card_id)
+        finally:
+            conn.close()
+
+    deadline = time.monotonic() + WAIT_SECONDS
+    found = []
+    while time.monotonic() < deadline:
+        found = attachments()
+        if found:
+            break
+        time.sleep(0.05)
+    assert found, f"card {card_id} finished with no files attached"
+
+    stored = Path(found[0].stored_path)
+    assert stored.is_file(), f"attachment row points at a missing file: {stored}"
+    assert stored.read_bytes(), "attached file is empty"

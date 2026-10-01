@@ -33,6 +33,7 @@ expensive thing to abandon because it may already hold a lease.
 """
 
 import logging
+import shutil
 import sqlite3
 import time
 from typing import NamedTuple, Optional
@@ -222,6 +223,61 @@ def sync_card_column(
             card_conn, run.card_id, "status_changed",
             {"from": task.status, "to": column, "source": "pipeline", "run_id": run_id})
     return column
+
+
+def attach_run_artifacts(
+    pipelines_conn: sqlite3.Connection, card_conn: sqlite3.Connection, run_id: str
+) -> list[str]:
+    """Copy a finished run's deliverables onto its card as attachments.
+
+    An artifact registered against a run lives in the pipeline artifact store and
+    is downloadable from one URL, which is not where a person looks. The card's
+    Files tab is. Without this the run finishes, the download endpoint answers
+    200, and the card still shows no files -- the deliverable exists and the
+    board does not show it.
+
+    Attaching is idempotent per (card, filename): a retry or a second sync must
+    not stack copies of the same file. Runs are attached once, after the
+    executor has committed, in the card's own database -- and a failure here is
+    not the run's failure, so the caller logs it and moves on.
+    """
+    run = db.get_run(pipelines_conn, run_id)
+    if run is None or not run.card_id:
+        return []
+    if kb.get_task(card_conn, run.card_id) is None:
+        return []
+
+    existing = {
+        att.filename for att in kb.list_attachments(card_conn, run.card_id)
+    }
+    attached: list[str] = []
+    for artifact in db.list_artifacts(pipelines_conn, run_id):
+        if artifact.filename in existing:
+            continue
+        try:
+            source = db.resolve_artifact_path(artifact.storage_ref)
+        except Exception:
+            logger.warning("artifact %s has an unusable path", artifact.id)
+            continue
+        if not source.is_file():
+            continue
+        destination = kb.task_attachments_dir(run.card_id) / artifact.filename
+        try:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+        except OSError:
+            logger.exception("could not copy artifact %s onto card %s",
+                             artifact.id, run.card_id)
+            continue
+        kb.add_attachment(
+            card_conn, run.card_id, filename=artifact.filename,
+            stored_path=str(destination.resolve()),
+            content_type=artifact.mime_type, size=artifact.size,
+            uploaded_by="pipeline",
+        )
+        existing.add(artifact.filename)
+        attached.append(artifact.filename)
+    return attached
 
 
 def find_broken_pairs(
