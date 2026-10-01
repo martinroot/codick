@@ -60,6 +60,19 @@ function Palette({ onAdd }: { onAdd: (kind: NodeKind) => void }) {
  * something that is not one, says so instead of saving a typo that fails at
  * run time.
  */
+/** "provider\0model" back apart, or nothing when the default's model stands. */
+export function pick(choice: string): ModelChoice | undefined {
+  if (!choice) return undefined;
+  const [provider, model] = choice.split("\u0000");
+  return provider && model ? { provider, model, label: choice } : undefined;
+}
+
+interface ModelChoice {
+  provider: string;
+  model: string;
+  label: string;
+}
+
 function ProfileSelect({
   value,
   profiles,
@@ -102,14 +115,21 @@ function Inspector({
   onChange,
   onDelete,
   onCreateProfile,
+  modelChoices,
+  onLoadModels,
+  busy,
 }: {
   node: Node<StepNodeData>;
   profiles: ProfileInfo[];
   onChange: (data: Partial<StepNodeData>) => void;
   onDelete: () => void;
-  onCreateProfile: (name: string) => void;
+  onCreateProfile: (name: string, choice?: ModelChoice) => void;
+  modelChoices: ModelChoice[] | null;
+  onLoadModels: () => void;
+  busy: boolean;
 }) {
   const [draft, setDraft] = React.useState<string | null>(null);
+  const [choice, setChoice] = React.useState("");
   const d = node.data;
   const set = (patch: Partial<StepNodeData>) => onChange(patch);
   return (
@@ -136,7 +156,7 @@ function Inspector({
               onCreate={() => setDraft("")}
             />
             {draft !== null && (
-              <div className="d-flex gap-1">
+              <div className="d-flex flex-column gap-1 border rounded p-2">
                 <input
                   className="form-control form-control-sm"
                   autoFocus
@@ -144,16 +164,38 @@ function Inspector({
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") onCreateProfile(draft);
                     if (e.key === "Escape") setDraft(null);
                   }}
                 />
+                {modelChoices === null ? (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={onLoadModels}
+                  >
+                    Choose a model…
+                  </button>
+                ) : (
+                  <select
+                    className="form-select form-select-sm"
+                    value={choice}
+                    onChange={(e) => setChoice(e.target.value)}
+                  >
+                    <option value="">Model from the default profile</option>
+                    {modelChoices.map((c) => (
+                      <option key={`${c.provider}\u0000${c.model}`} value={`${c.provider}\u0000${c.model}`}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <button
                   type="button"
                   className="btn btn-sm btn-primary"
-                  onClick={() => onCreateProfile(draft)}
+                  disabled={busy}
+                  onClick={() => onCreateProfile(draft, pick(choice))}
                 >
-                  Create
+                  {busy ? "Creating…" : "Create"}
                 </button>
               </div>
             )}
@@ -226,6 +268,22 @@ function Canvas() {
   const [status, setStatus] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [profiles, setProfiles] = React.useState<ProfileInfo[]>([]);
+  const [modelChoices, setModelChoices] = React.useState<ModelChoice[] | null>(null);
+
+  const loadModelChoices = React.useCallback(() => {
+    api
+      .getModelOptions()
+      .then((res) => {
+        const flat: ModelChoice[] = [];
+        for (const prov of res.providers ?? []) {
+          for (const m of prov.models ?? []) {
+            flat.push({ provider: prov.slug, model: m, label: `${prov.name} · ${m}` });
+          }
+        }
+        setModelChoices(flat);
+      })
+      .catch(() => setModelChoices([]));
+  }, []);
 
   const loadProfiles = React.useCallback(() => {
     api
@@ -281,7 +339,7 @@ function Canvas() {
    * that cannot start. Cloned from the default so it has a provider and a
    * model without asking for a key.
    */
-  const createProfile = async (raw: string) => {
+  const createProfile = async (raw: string, choice?: ModelChoice) => {
     const name = raw.trim();
     if (!name) {
       setStatus("Give the profile a name first.");
@@ -289,7 +347,19 @@ function Canvas() {
     }
     setBusy(true);
     try {
-      await api.createProfile({ name, clone_from_default: true, no_skills: true });
+      // A step names a profile and the profile owns the model, so choosing a
+      // model here is the only place it can be chosen. Cloned from the default
+      // first so the provider's credentials come with it; the model and
+      // provider are then set explicitly from the choice.
+      // `no_skills` is rejected by the server alongside any clone: the source
+      // profile decides what comes with it. Sending both made every creation
+      // fail with a mutual-exclusion error.
+      await api.createProfile({
+        name,
+        clone_from_default: true,
+        provider: choice?.provider,
+        model: choice?.model,
+      });
       loadProfiles();
       setStatus(`Created profile ${name}.`);
     } catch (err) {
@@ -399,7 +469,10 @@ function Canvas() {
             <Inspector
               node={current}
               profiles={profiles}
-              onCreateProfile={(name) => void createProfile(name)}
+              onCreateProfile={(name, picked) => void createProfile(name, picked)}
+              modelChoices={modelChoices}
+              onLoadModels={loadModelChoices}
+              busy={busy}
               onChange={(patch) =>
                 setNodes((all) =>
                   all.map((n) => {
