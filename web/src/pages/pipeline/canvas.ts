@@ -37,6 +37,9 @@ export interface StepNodeData extends Record<string, unknown> {
   kind: NodeKind;
   summary: string;
   profile?: string;
+  /** Displayed from the chosen profile, not written to the template: a step
+   *  names a profile, and the profile owns its model. */
+  model?: string;
   instruction?: string;
   tool?: string;
   seconds?: number;

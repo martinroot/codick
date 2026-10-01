@@ -13,6 +13,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
+import { api, type ProfileInfo } from "@/lib/api";
 import { pipelinesApi } from "@/lib/pipelines-api";
 import type { PipelineStepTemplate, PipelineTemplateBody } from "@/lib/pipelines-api";
 
@@ -53,15 +54,62 @@ function Palette({ onAdd }: { onAdd: (kind: NodeKind) => void }) {
   );
 }
 
+/**
+ * A profile picker for a step, not a reassignment control: this one does not
+ * write through to a card. It offers the real profiles and, when the step names
+ * something that is not one, says so instead of saving a typo that fails at
+ * run time.
+ */
+function ProfileSelect({
+  value,
+  profiles,
+  onChange,
+  onCreate,
+}: {
+  value: string;
+  profiles: ProfileInfo[];
+  onChange: (name: string) => void;
+  onCreate: () => void;
+}) {
+  const known = profiles.map((p) => p.name);
+  const orphan = Boolean(value) && !known.includes(value);
+  return (
+    <div className="d-flex gap-1">
+      <select
+        className="form-select form-select-sm"
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">Pick a profile…</option>
+        {orphan && <option value={value}>{value} (not a Hermes profile)</option>}
+        {profiles.map((p) => (
+          <option key={p.name} value={p.name}>
+            {p.name}
+            {p.model ? ` — ${p.model}` : ""}
+          </option>
+        ))}
+      </select>
+      <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onCreate}>
+        New
+      </button>
+    </div>
+  );
+}
+
 function Inspector({
   node,
+  profiles,
   onChange,
   onDelete,
+  onCreateProfile,
 }: {
   node: Node<StepNodeData>;
+  profiles: ProfileInfo[];
   onChange: (data: Partial<StepNodeData>) => void;
   onDelete: () => void;
+  onCreateProfile: (name: string) => void;
 }) {
+  const [draft, setDraft] = React.useState<string | null>(null);
   const d = node.data;
   const set = (patch: Partial<StepNodeData>) => onChange(patch);
   return (
@@ -81,13 +129,40 @@ function Inspector({
         <>
           <label className="small mb-0">
             Profile
-            <input
-              className="form-control form-control-sm"
-              placeholder="researcher, writer, word-editor…"
+            <ProfileSelect
               value={d.profile ?? ""}
-              onChange={(e) => set({ profile: e.target.value })}
+              profiles={profiles}
+              onChange={(next) => set({ profile: next })}
+              onCreate={() => setDraft("")}
             />
+            {draft !== null && (
+              <div className="d-flex gap-1">
+                <input
+                  className="form-control form-control-sm"
+                  autoFocus
+                  placeholder="researcher"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") onCreateProfile(draft);
+                    if (e.key === "Escape") setDraft(null);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  onClick={() => onCreateProfile(draft)}
+                >
+                  Create
+                </button>
+              </div>
+            )}
           </label>
+          {d.model && (
+            <div className="small text-body-secondary">
+              Runs on <code>{d.model}</code>
+            </div>
+          )}
           <label className="small mb-0">
             Instruction
             <textarea
@@ -148,8 +223,25 @@ function Canvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<StepNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selected, setSelected] = React.useState<string | null>(null);
-  const [status, setStatus] = React.useState<string>("");
+  const [status, setStatus] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+  const [profiles, setProfiles] = React.useState<ProfileInfo[]>([]);
+
+  const loadProfiles = React.useCallback(() => {
+    api
+      .getProfiles()
+      .then((res) => setProfiles(res.profiles ?? []))
+      .catch(() => setProfiles([]));
+  }, []);
+
+  React.useEffect(loadProfiles, [loadProfiles]);
+
+  /** A step names a profile; the profile owns the model. Showing the model
+   *  next to the step is what tells you what a run will actually spend. */
+  const modelFor = React.useCallback(
+    (name?: string) => profiles.find((p) => p.name === name)?.model ?? undefined,
+    [profiles],
+  );
 
   React.useEffect(() => {
     pipelinesApi
@@ -170,18 +262,42 @@ function Canvas() {
         const loaded = row.template ?? null;
         setBody(loaded);
         const { nodes: n, edges: e } = templateToNodes(loaded);
-        setNodes(n);
+        setNodes(n.map((node) => ({ ...node, data: { ...node.data, model: modelFor(node.data?.profile) } })));
         setEdges(e);
         setSelected(null);
         setStatus("");
       })
       .catch((err) => setStatus(`Could not load template: ${String(err)}`))
       .finally(() => setBusy(false));
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, modelFor]);
 
   React.useEffect(() => {
     if (templateId) load(templateId);
   }, [templateId, load]);
+
+  /**
+   * Creating a profile from inside the designer, because a pipeline step that
+   * names a profile nobody has yet is the most common way to end up with a run
+   * that cannot start. Cloned from the default so it has a provider and a
+   * model without asking for a key.
+   */
+  const createProfile = async (raw: string) => {
+    const name = raw.trim();
+    if (!name) {
+      setStatus("Give the profile a name first.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.createProfile({ name, clone_from_default: true, no_skills: true });
+      loadProfiles();
+      setStatus(`Created profile ${name}.`);
+    } catch (err) {
+      setStatus(`Could not create profile: ${String(err)}`);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const addBlock = (kind: NodeKind) => {
     const id = `${kind}_${Date.now().toString(36).slice(-4)}`;
@@ -282,9 +398,17 @@ function Canvas() {
           {current ? (
             <Inspector
               node={current}
+              profiles={profiles}
+              onCreateProfile={(name) => void createProfile(name)}
               onChange={(patch) =>
                 setNodes((all) =>
-                  all.map((n) => (n.id === current.id ? { ...n, data: { ...n.data, ...patch } } : n)),
+                  all.map((n) => {
+                    if (n.id !== current.id) return n;
+                    const next = { ...n.data, ...patch };
+                    // Choosing a profile is also choosing its model.
+                    if (patch.profile !== undefined) next.model = modelFor(patch.profile);
+                    return { ...n, data: next };
+                  }),
                 )
               }
               onDelete={() => {
