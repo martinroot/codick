@@ -167,6 +167,44 @@ def test_the_run_produces_a_docx_that_downloads_and_opens(client, tmp_path):
     assert EXPECTED_SENTENCE in text, text
 
 
+def test_two_runs_of_one_template_do_not_share_files(client):
+    """§14 check 2, file half.
+
+    Sessions and inputs are covered by the adapter tests; this is the part that
+    is easy to get wrong and invisible until two customers overwrite each
+    other's document — the storage path must be per-run, not per-template.
+    """
+    with open(SCENARIO, encoding="utf-8") as handle:
+        template = json.load(handle)
+    client.post("/api/pipelines/templates", json={"template": template})
+    conn = db.connect()
+    adapter = HermesStepAdapter(agent_factory=ScriptedAgent)
+
+    run_ids = []
+    for index in (1, 2):
+        started = client.post(
+            "/api/pipelines/runs",
+            json={"template_id": template["id"], "inputs": {"topic": f"t{index}", "author": "m"}},
+            headers={"Idempotency-Key": f"two-{index}"},
+        )
+        run_id = started.json()["id"]
+        run_ids.append(run_id)
+        runner.drive_run(conn, run_id, adapter, owner="docx")
+        request_id = [r for r in client.get(f"/api/pipelines/runs/{run_id}").json()["input_requests"]
+                      if r["status"] == "open"][0]["id"]
+        client.post(f"/api/pipelines/runs/{run_id}/input-requests/{request_id}/response",
+                    json={"response": {"ok": True}}, headers={"Idempotency-Key": f"two-a-{index}"})
+        assert runner.drive_run(conn, run_id, adapter, owner="docx").status == "completed"
+
+    storage_refs = {a.storage_ref for run_id in run_ids for a in db.list_artifacts(conn, run_id)}
+    assert len(storage_refs) == 2, storage_refs
+    for run_id in run_ids:
+        for artifact in db.list_artifacts(conn, run_id):
+            assert artifact.storage_ref.startswith(f"runs/{run_id}/"), artifact.storage_ref
+            # Each run's copy is its own file on disk, not a shared path.
+            assert (db.artifacts_root() / artifact.storage_ref).is_file()
+
+
 def test_the_tool_wrote_the_file_the_run_claims(client):
     """A declared result that names no file must not become a download.
 
