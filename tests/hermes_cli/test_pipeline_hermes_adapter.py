@@ -361,11 +361,53 @@ def test_an_unregistered_tool_is_refused_rather_than_dispatched():
     assert calls == []
 
 
-def test_the_missing_tool_named_in_the_issue_is_refused_by_name():
-    """`documents.export_docx` does not exist; the adapter must say so, not fake it."""
-    adapter = HermesStepAdapter(
-        schema_for=lambda t: None, tool_available=lambda t: False,
-    )
+def test_a_missing_tool_is_refused_by_name():
+    """An unknown tool id is refused and named, rather than half-run.
+
+    This id was `documents.export_docx` while that tool did not exist — it is
+    now built and registered, so naming it here would assert the opposite of
+    the truth, and with an injected `tool_available` the real registry would
+    still dispatch the call. An id that genuinely does not exist is what this
+    property is about.
+    """
+    adapter = HermesStepAdapter(tool_available=lambda t: False)
     with pytest.raises(AdapterError) as excinfo:
-        adapter.run_tool_step("documents.export_docx", {"body": "x"})
-    assert "documents.export_docx" in str(excinfo.value)
+        adapter.run_tool_step("documents.export_no_such_tool", {"body": "x"})
+    assert "documents.export_no_such_tool" in str(excinfo.value)
+    assert excinfo.value.error_code == "tool_missing"
+
+# --- the DOCX tool now exists (#35) ------------------------------------------
+
+def test_a_word_tool_step_reaches_the_real_registered_tool(tmp_path):
+    """The other side of the missing-tool test, and the reason that one changed.
+
+    #34 recorded that `documents.export_docx` did not exist and that the Word
+    scenario had to be `unavailable`. It exists now, so the honest assertion is
+    no longer "refused by name" — it is that a validated call reaches the real
+    handler and produces a real file the repository's own reader can open.
+    """
+    import tools.documents_export_docx_tool  # noqa: F401  (registers the tool)
+    from tools.read_extract import extract_document_text
+
+    out = tmp_path / "from-pipeline.docx"
+    adapter = HermesStepAdapter()
+    result = adapter.run_tool_step(
+        "documents.export_docx", {"body": "Written by a pipeline tool step.", "path": str(out)},
+    )
+    assert result is not None
+    assert out.exists()
+    assert "Written by a pipeline tool step." in extract_document_text(str(out))
+
+
+def test_a_word_template_is_now_ready_rather_than_unavailable():
+    """#34's second half, resolved: the catalogue can now list the Word scenario."""
+    import tools.documents_export_docx_tool  # noqa: F401
+    from hermes_cli.pipeline_readiness import assess_readiness
+
+    template = {
+        "schema_version": "1.0", "id": "word", "version": "1.0.0", "name": "Word",
+        "start_step": "publish",
+        "steps": [{"id": "publish", "type": "tool", "tool": "documents.export_docx",
+                   "instruction": "Export", "next": None}],
+    }
+    assert assess_readiness(template)["readiness_status"] == "ready"
