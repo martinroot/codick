@@ -289,8 +289,23 @@ export function describeFailure(status: number, detail: unknown): string {
   return `pipeline request failed (${status})`;
 }
 
+/**
+ * A JSON body sent without a content type leaves the wire as `text/plain`, and
+ * the server then reads the whole document as a string and answers 422 with a
+ * message that blames the payload's shape. `fetch` picks no type for a string
+ * body, so every caller that supplies its own headers -- an idempotency key,
+ * say -- has to state it. Only a string body is touched: FormData and Blob
+ * must keep the type the browser assigns them.
+ */
+function withJsonContentType(init: RequestInit): RequestInit {
+  if (typeof init.body !== "string") return init;
+  const headers = new Headers(init.headers);
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  return { ...init, headers };
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await authedFetch(`/api/pipelines${path}`, init);
+  const response = await authedFetch(`/api/pipelines${path}`, withJsonContentType(init));
   if (!response.ok) {
     let body: unknown = null;
     try {
