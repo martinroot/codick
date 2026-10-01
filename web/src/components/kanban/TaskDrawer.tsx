@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { Markdown } from "@/components/Markdown";
+import { AssigneePicker } from "@/components/kanban/AssigneePicker";
 import { DiagnosticCard } from "@/components/kanban/DiagnosticCard";
 import { RecoveryPanel } from "@/components/kanban/RecoveryPanel";
 import { ACCENTS } from "@/components/kanban/KanbanBoard";
@@ -585,7 +586,14 @@ function DetailTab({
             </>
           ) : null}
           <dt>Assignee</dt>
-          <dd>{task.assignee ?? "— unassigned"}</dd>
+          <dd>
+            <AssigneePicker
+              taskId={task.id}
+              assignee={task.assignee}
+              options={options}
+              onSaved={onChanged}
+            />
+          </dd>
           <dt>Priority</dt>
           <dd>{task.priority || "—"}</dd>
           <dt>Tenant</dt>

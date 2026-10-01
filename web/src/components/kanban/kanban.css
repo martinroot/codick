@@ -504,6 +504,20 @@
   color: var(--kb-stale-amber);
 }
 
+/* The assignee control in the task drawer. The warning reuses the same amber as
+   a card that needs an assignee, because it is the same condition seen from the
+   other side: the board knows, and now so can you do something about it. */
+.kb-assignee-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 12rem;
+}
+
+.kb-assignee-warning {
+  color: var(--kb-stale-amber);
+}
+
 .kb-chip-failures {
   color: var(--kb-stale-red);
 }
