@@ -3,6 +3,7 @@ import * as React from "react";
 import { ArtifactList } from "@/components/kanban/pipeline/ArtifactList";
 import { DataApiTab } from "@/components/kanban/pipeline/DataApiTab";
 import { InputChat } from "@/components/kanban/pipeline/InputChat";
+import PipelineGraphView from "@/components/kanban/pipeline/PipelineGraphView";
 import { StepStripView } from "@/components/kanban/pipeline/StepStripView";
 import {
   buildInputs,
@@ -60,6 +61,8 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
   const [values, setValues] = React.useState<Record<string, unknown>>({});
   const [draft, setDraft] = React.useState<string>("");
   const [showJson, setShowJson] = React.useState(false);
+  /** The template drawn as blocks: what runs, in what order, branching where it branches. */
+  const [showGraph, setShowGraph] = React.useState(false);
   const [validationErrors, setValidationErrors] = React.useState<SchemaError[]>([]);
   const [run, setRun] = React.useState<PipelineRun | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -283,6 +286,14 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
           </div>
           <button
             type="button"
+            className={`btn btn-sm ${showGraph ? "btn-secondary" : "btn-outline-secondary"}`}
+            onClick={() => setShowGraph((v) => !v)}
+            title="Show what this template does, step by step."
+          >
+            Design
+          </button>
+          <button
+            type="button"
             className="btn btn-sm btn-outline-secondary"
             onClick={() => setShowJson((v) => !v)}
           >
@@ -320,6 +331,12 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
             </button>
           )}
         </div>
+
+        {showGraph && body && (
+          <div className="mt-2">
+            <PipelineGraphView steps={body.steps} startStep={body.start_step} />
+          </div>
+        )}
 
         {showJson && (
           <div className="mt-2">

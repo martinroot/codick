@@ -78,14 +78,36 @@ export interface PipelineTemplateBody {
   example_response?: unknown;
 }
 
+export interface PipelineWhen {
+  op?: string;
+  left?: unknown;
+  right?: unknown;
+  conditions?: PipelineWhen[];
+}
+
+export interface PipelineCase {
+  when?: PipelineWhen;
+  next?: string;
+  rework?: boolean;
+}
+
 export interface PipelineStepTemplate {
   id: string;
-  type: "agent" | "tool" | "user_input" | "condition";
+  type: "agent" | "tool" | "user_input" | "condition" | "delay";
   next?: string | null;
-  /** A review is a `user_input` step; the strip needs to tell it from a question. */
+  title?: string;
+  /** The one line that says what this step is for. */
+  instruction?: string;
+  profile?: string;
+  tool?: string;
   prompt?: string;
   response_schema?: Record<string, unknown>;
   wait_timeout_seconds?: number | null;
+  /** `delay` only: seconds of wall-clock time, no model and no tool. */
+  seconds?: number;
+  retry?: { max_attempts?: number; backoff_seconds?: number };
+  cases?: PipelineCase[];
+  default?: { next?: string | null; fail?: string };
 }
 
 /** The stored row, as `ScenarioTemplate.to_dict()` renders it. */

@@ -34,6 +34,9 @@ const TYPE_ICON: Record<StripStep["type"], string | null> = {
   tool: "bi-tools",
   user_input: "bi-chat-left-text",
   condition: "bi-signpost-split",
+  // A delay does work of a sort -- it just consumes no model and no tool -- so
+  // it belongs on the strip, not silently dropped from it.
+  delay: "bi-hourglass-split",
 };
 
 export interface StepStripViewProps {
