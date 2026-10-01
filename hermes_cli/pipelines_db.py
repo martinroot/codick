@@ -177,6 +177,55 @@ CREATE TABLE IF NOT EXISTS step_attempts (
     ended_at        INTEGER
 );
 
+-- Cost accounting (#58).
+--
+-- One row per attempt that actually consumed something. `cached_input` is kept
+-- apart from `input_tokens` rather than summed in: providers bill cached reads
+-- at a different rate, so merging them here would make every price wrong in the
+-- same direction.
+--
+-- Every token column is nullable and NULL means UNKNOWN. It is never zero. A
+-- provider that reported nothing is a gap in the measurement, and a zero would
+-- be indistinguishable from a genuinely free step -- which is exactly the
+-- distinction a pricing decision rests on.
+CREATE TABLE IF NOT EXISTS step_usage (
+    id               TEXT PRIMARY KEY,
+    run_id           TEXT NOT NULL REFERENCES pipeline_runs(id) ON DELETE CASCADE,
+    attempt_id       TEXT REFERENCES step_attempts(id) ON DELETE CASCADE,
+    step_id          TEXT NOT NULL,
+    kind             TEXT NOT NULL,              -- 'model' | 'tool'
+    model            TEXT,
+    provider         TEXT,
+    input_tokens     INTEGER,
+    cached_input     INTEGER,
+    output_tokens    INTEGER,
+    tool_cost_micros INTEGER,                     -- external tool cost, integer minor units
+    rate_key         TEXT,
+    applied_rates    TEXT,                        -- JSON snapshot of the rates used
+    cost_micros      INTEGER,
+    cost_status      TEXT NOT NULL DEFAULT 'unknown',  -- 'known' | 'unknown'
+    recorded_at      INTEGER NOT NULL,
+    UNIQUE (attempt_id, kind, step_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_step_usage_run ON step_usage (run_id);
+
+-- Tariffs live here, not in the code: a rate that changes must not rewrite what
+-- last month's runs cost, which is why step_usage keeps its own snapshot.
+CREATE TABLE IF NOT EXISTS provider_rates (
+    rate_key   TEXT PRIMARY KEY,
+    provider   TEXT NOT NULL,
+    model      TEXT NOT NULL,
+    currency   TEXT NOT NULL DEFAULT 'USD',
+    input_micros      INTEGER NOT NULL,
+    cached_micros     INTEGER,
+    output_micros     INTEGER NOT NULL,
+    effective_from INTEGER NOT NULL,
+    source      TEXT,
+    note        TEXT,
+    UNIQUE (provider, model, effective_from)
+);
+
 CREATE TABLE IF NOT EXISTS input_requests (
     id                   TEXT PRIMARY KEY,
     run_id               TEXT NOT NULL REFERENCES pipeline_runs(id) ON DELETE CASCADE,
