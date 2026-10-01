@@ -123,8 +123,18 @@ def _scope_for_request(request: Request) -> str:
             # apart is a free oracle.
             raise HTTPException(status_code=401, detail={"message": "credential is not valid"})
         return scope
-    from hermes_cli.web_server import _has_valid_session_token
+    from hermes_cli.web_server import (
+        _has_valid_query_token,
+        _has_valid_session_token,
+    )
     if _has_valid_session_token(request):
+        return LOCAL_SCOPE
+    # A download link cannot carry a header: the browser navigates to it. The
+    # server already decides which paths may authenticate this way, and it had
+    # listed this one -- asking the header alone made every artifact download
+    # answer 401 and left the page looking like it had downloaded nothing.
+    # The narrow allowlist stays the single authority on *which* paths.
+    if _has_valid_query_token(request, request.url.path):
         return LOCAL_SCOPE
     raise HTTPException(status_code=401, detail={"message": "no credential presented"})
 
