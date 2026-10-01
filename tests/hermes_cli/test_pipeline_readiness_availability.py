@@ -43,6 +43,24 @@ def raises(_name):
 # --- the gap this closes ------------------------------------------------------
 
 
+def test_a_tool_the_reader_found_registered_is_never_also_called_unavailable():
+    """One verdict must not contain both halves.
+
+    The reader and the checker used to consult the registry differently: the
+    reader ran discovery and the checker did not, so a tool whose module had not
+    been imported in this process came back "registered but not available" --
+    the reader having just said it was registered. The checker now discovers too,
+    and this pins the coherence rather than the mechanism.
+    """
+    from hermes_cli.pipeline_readiness import assess_readiness
+
+    verdict = assess_readiness(
+        with_tool("documents.export_docx"),
+        tool_names={"documents.export_docx"},
+    )
+    assert verdict["readiness_status"] == "ready", verdict["readiness_detail"]
+
+
 def test_a_registered_but_unusable_tool_is_not_ready():
     result = readiness.assess_readiness(
         with_tool("image_generate"), tool_names={"image_generate"}, checker=never,

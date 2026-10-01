@@ -178,8 +178,18 @@ def default_checker() -> Callable[[str], bool]:
     """
 
     def check(name: str) -> bool:
-        from tools.registry import registry
+        from tools.registry import discover_builtin_tools, registry
 
+        if registry.get_entry(name) is None:
+            # Discovery before concluding "not available". The reader runs it too,
+            # so without this the checker could answer about a registry the reader
+            # had not populated -- and the verdict would be the self-contradicting
+            # "registered but not available" for a tool that is perfectly fine.
+            # Discovery is idempotent and already documented as cheap.
+            try:
+                discover_builtin_tools()
+            except Exception:
+                pass
         entry = registry.get_entry(name)
         if entry is None:
             return False
