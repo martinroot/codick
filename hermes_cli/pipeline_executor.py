@@ -501,14 +501,22 @@ def _record_usage(conn, run_id, attempt, result) -> None:
     from hermes_cli import pipeline_usage as usage_module
 
     delta = getattr(result, "usage", None)
-    if delta is not None and delta.get("kind", "model") != "model":
-        return
-    record = usage_module.Usage(
-        step_id=attempt.step_id, kind="model",
-        input_tokens=(delta or {}).get("input"),
-        cached_input=(delta or {}).get("cache_read"),
-        output_tokens=(delta or {}).get("output"),
-    )
+    kind = (delta or {}).get("kind", "model")
+    if kind == "tool":
+        # A tool step is recorded, never dropped: a DOCX export has no tokens
+        # but it ran, and a cost report that omits it cannot be read as a total.
+        # ``None`` here is "the tool did not say", not "the tool was free".
+        record = usage_module.Usage(
+            step_id=attempt.step_id, kind="tool",
+            tool_cost_micros=delta.get("tool_cost_micros"),
+        )
+    else:
+        record = usage_module.Usage(
+            step_id=attempt.step_id, kind="model",
+            input_tokens=(delta or {}).get("input"),
+            cached_input=(delta or {}).get("cache_read"),
+            output_tokens=(delta or {}).get("output"),
+        )
     try:
         usage_module.price_and_record(
             conn, run_id=run_id, attempt_id=attempt.id, usage=record,

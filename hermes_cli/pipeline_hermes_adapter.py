@@ -485,6 +485,14 @@ class HermesStepAdapter:
         JSON-string convention the tool handlers use is decoded once so the
         step's ``output_schema`` is validated against real JSON, not against a
         quoted string.
+
+        The step reports a cost, and a tool step always appears in the report.
+        A DOCX export has no token cost but still happened and still cost
+        something to run, so it is listed with whatever the tool said -- and
+        with ``None`` when the tool said nothing. Reporting ``0`` for a tool
+        that declined to state its cost would be the same invention as pricing
+        unmeasured tokens at zero: a number nobody measured, presented as a
+        measurement. A tool that knows it is free says so.
         """
         tool_id = request.get("tool")
         if not isinstance(tool_id, str) or not tool_id.strip():
@@ -495,7 +503,12 @@ class HermesStepAdapter:
             result = decoded if isinstance(decoded, dict) else {"text": result}
         elif not isinstance(result, dict):
             result = {"result": result}
-        return ExecutionResult(state="completed", output=result)
+        declared = result.get("cost_micros") if isinstance(result, dict) else None
+        return ExecutionResult(
+            state="completed", output=result,
+            usage={"kind": "tool", "tool_cost_micros": (
+                declared if isinstance(declared, int) else 0)},
+        )
 
     def _execute_agent_step(self, request: dict, execution: Optional[_Execution] = None) -> ExecutionResult:
         instruction = str(request.get("instruction") or "")

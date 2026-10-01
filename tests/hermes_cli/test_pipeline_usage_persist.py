@@ -121,14 +121,74 @@ def test_a_result_without_a_usage_attribute_at_all_is_handled(conn):
     assert usage.run_usage(conn, run_id)["steps"][0]["cost_status"] == "unknown"
 
 
-def test_a_tool_result_is_not_recorded_as_a_model_turn(conn):
+def test_a_tool_step_appears_in_the_report(conn):
+    """#58's explicit requirement: "A DOCX export has no token cost and should
+    still appear, with zero, rather than vanish." Omitting it would make the
+    total unreadable as a total."""
     run_id = run_for(conn)
-    attempt = attempt_for(conn, run_id)
+    attempt = attempt_for(conn, run_id, "publish")
+    executor._record_usage(conn, run_id, attempt, ExecutionResult(
+        state="completed", output={"path": "x.docx"},
+        usage={"kind": "tool", "tool_cost_micros": 0},
+    ))
+    report = usage.run_usage(conn, run_id)
+    assert len(report["steps"]) == 1
+    assert report["steps"][0]["tool_cost_micros"] == 0
+    assert report["cost_micros"] == 0, "a measured free tool costs nothing"
+
+
+def test_a_tool_that_does_not_state_its_cost_appears_as_unknown(conn):
+    """Visible, but not invented. Reporting 0 for a tool that declined to say
+    would be the same fabrication as pricing unmeasured tokens at zero."""
+    run_id = run_for(conn)
+    attempt = attempt_for(conn, run_id, "publish")
+    executor._record_usage(conn, run_id, attempt, ExecutionResult(
+        state="completed", output={"path": "x"},
+        usage={"kind": "tool", "tool_cost_micros": None},
+    ))
+    report = usage.run_usage(conn, run_id)
+    assert len(report["steps"]) == 1, "it still appears"
+    assert report["steps"][0]["cost_status"] == "unknown"
+    assert report["cost_micros"] is None
+
+
+def test_a_tool_step_with_no_usage_at_all_is_still_recorded_unknown(conn):
+    """An adapter from before #58 sends no usage for a tool step either. It must
+    appear rather than vanish."""
+    run_id = run_for(conn)
+    attempt = attempt_for(conn, run_id, "publish")
+    legacy = ExecutionResult(state="completed", output={"path": "x"})
+    del legacy.usage
+    executor._record_usage(conn, run_id, attempt, legacy)
+    report = usage.run_usage(conn, run_id)
+    assert [s["step_id"] for s in report["steps"]] == ["publish"]
+    assert report["steps"][0]["cost_status"] == "unknown"
+
+
+def test_a_model_result_is_never_recorded_as_a_tool_step(conn):
+    run_id = run_for(conn)
+    attempt = attempt_for(conn, run_id, "draft")
+    executor._record_usage(conn, run_id, attempt, ExecutionResult(
+        state="completed", output={"ok": True},
+        usage={"kind": "model", "input": 10, "output": 1, "cache_read": 0},
+    ))
+    assert usage.run_usage(conn, run_id)["steps"][0]["kind"] == "model"
+
+
+def test_a_tool_step_is_not_recorded_with_token_columns(conn):
+    """The half of the old rule that still holds. A DOCX export consumed no
+    tokens, and filling those columns would put a number there that nobody
+    measured -- and one that a reader would add up."""
+    run_id = run_for(conn)
+    attempt = attempt_for(conn, run_id, "publish")
     executor._record_usage(conn, run_id, attempt, ExecutionResult(
         state="completed", output={"ok": True},
         usage={"kind": "tool", "tool_cost_micros": 0},
     ))
-    assert usage.run_usage(conn, run_id)["steps"] == []
+    step = usage.run_usage(conn, run_id)["steps"][0]
+    assert step["input_tokens"] is None
+    assert step["output_tokens"] is None
+    assert step["cached_input"] is None
 
 
 def test_recording_the_same_attempt_twice_replaces_rather_than_adds(conn):

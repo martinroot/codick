@@ -152,6 +152,11 @@ def write_docx(
         "title": title,
         "paragraphs": len(paragraphs),
         "bytes": os.path.getsize(path),
+        # This tool writes a zip with the standard library and calls no provider,
+        # so its cost is known to be exactly nothing (#58). A tool that knows it
+        # is free says so; one that says nothing is recorded as unknown rather
+        # than assumed free, and this is what lets that distinction hold.
+        "cost_micros": 0,
     }
 
 
