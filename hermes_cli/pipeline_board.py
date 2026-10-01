@@ -34,6 +34,7 @@ expensive thing to abandon because it may already hold a lease.
 
 import logging
 import sqlite3
+import time
 from typing import NamedTuple, Optional
 
 from hermes_cli import kanban_db as kb
@@ -197,12 +198,24 @@ def sync_card_column(
     with kb.write_txn(card_conn):
         # A card that lands in Done has to say when: `completed_at` is what the
         # board reads to age a card, and a timestamp that stays NULL makes a
-        # finished run indistinguishable from one that was never started.
-        stamp = f", completed_at = datetime('now')" if column == "done" else ""
-        clear = f", completed_at = NULL" if column in ("ready", "running", "blocked") else ""
+        # finished run indistinguishable from one that was never started. It is
+        # an INTEGER epoch column and the board sorts it arithmetically, so the
+        # run's own `ended_at` is the value -- a formatted date here is a 500 on
+        # the whole board, not a cosmetic difference.
+        if column == "done":
+            done_at = run.ended_at or int(time.time())
+            extra = ", completed_at = ?"
+            params: tuple = (column, done_at, run.card_id, column)
+        elif column in ("ready", "running", "blocked"):
+            # Back out of Done without pretending the work never happened.
+            extra = ", completed_at = NULL"
+            params = (column, run.card_id, column)
+        else:
+            extra = ""
+            params = (column, run.card_id, column)
         changed = card_conn.execute(
-            f"UPDATE tasks SET status = ?{stamp}{clear} WHERE id = ? AND status != ?",
-            (column, run.card_id, column)).rowcount
+            f"UPDATE tasks SET status = ?{extra} WHERE id = ? AND status != ?",
+            params).rowcount
         if changed != 1:
             return None
         kb._append_event(

@@ -278,3 +278,9 @@ def test_a_finished_run_leaves_its_card_in_the_column_it_earned(client):
         time.sleep(0.05)
     assert column == "done", f"card {card_id} stayed in {column!r} after the run completed"
     assert completed_at, f"card {card_id} reached Done with no completed_at"
+    # INTEGER epoch seconds: the board sorts this column arithmetically, so a
+    # formatted date is not a cosmetic difference -- it is a 500 on the board.
+    assert isinstance(completed_at, int), (
+        f"card {card_id} stored completed_at as {type(completed_at).__name__}, "
+        f"not an epoch int"
+    )
