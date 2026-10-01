@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "id": "lease-agreement",
+  "version": "1.0.0",
+  "name": "Lease agreement",
+  "description": "Ask for the parties and the terms, fill a real lease agreement template, and hand back a .docx to download.",
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "source_document": {
+        "type": "string",
+        "description": "Which lease template to fill"
+      }
+    }
+  },
+  "limits": {
+    "max_rework_cycles": 0,
+    "max_step_executions": 8
+  },
+  "steps": [
+    {
+      "id": "collect",
+      "type": "user_input",
+      "title": "The lease details",
+      "prompt": "Fill in the parties, the flat and the money. The document has blanks for each of these in a fixed order.",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "contract_day": { "type": "string", "description": "Day the contract is signed, e.g. 15" },
+          "contract_month": { "type": "string", "description": "Month of signing, e.g. октября" },
+          "year": { "type": "string", "description": "The year, four digits, e.g. 2024" },
+          "landlord": { "type": "string", "description": "Landlord full name" },
+          "tenant": { "type": "string", "description": "Tenant full name" },
+          "rooms": { "type": "string", "description": "Number of rooms, e.g. 2" },
+          "city": { "type": "string", "description": "City" },
+          "street": { "type": "string", "description": "Street" },
+          "house": { "type": "string", "description": "House number" },
+          "block": { "type": "string", "description": "Building / корпус, 0 if none" },
+          "flat": { "type": "string", "description": "Flat number" },
+          "months": { "type": "string", "description": "Term in months" },
+          "start_day": { "type": "string", "description": "First day of the term" },
+          "start_month": { "type": "string", "description": "First month of the term" },
+          "end_day": { "type": "string", "description": "Last day of the term" },
+          "end_month": { "type": "string", "description": "Last month of the term" },
+          "notice_weeks": { "type": "string", "description": "Notice period in weeks" },
+          "rent_rub": { "type": "string", "description": "Monthly rent in roubles" },
+          "rent_usd": { "type": "string", "description": "Equivalent in US dollars" },
+          "payment_day": { "type": "string", "description": "Day of month the rent is due" },
+          "prepaid": { "type": "string", "description": "Rent paid in advance on signing" },
+          "deposit": { "type": "string", "description": "Refundable deposit" },
+          "landlord_passport_series": { "type": "string", "description": "Landlord passport series" },
+          "landlord_passport_no": { "type": "string", "description": "Landlord passport number" },
+          "landlord_passport_issued_by": { "type": "string", "description": "Landlord passport issued by" },
+          "landlord_address": { "type": "string", "description": "Landlord registered address, first line" },
+          "landlord_address_line2": { "type": "string", "description": "Landlord registered address, second line" },
+          "tenant_passport_series": { "type": "string", "description": "Tenant passport series" },
+          "tenant_passport_no": { "type": "string", "description": "Tenant passport number" },
+          "tenant_passport_issued_by": { "type": "string", "description": "Tenant passport issued by" },
+          "tenant_address": { "type": "string", "description": "Tenant registered address, first line" },
+          "tenant_address_line2": { "type": "string", "description": "Tenant registered address, second line" }
+        },
+        "required": [
+          "contract_day", "contract_month", "year", "landlord", "tenant", "rooms",
+          "city", "street", "house", "flat", "months",
+          "start_day", "start_month", "end_day", "end_month",
+          "notice_weeks", "rent_rub", "rent_usd", "payment_day",
+          "prepaid", "deposit"
+        ]
+      },
+      "wait_timeout_seconds": 86400,
+      "next": "compose"
+    },
+    {
+      "id": "compose",
+      "type": "agent",
+      "profile": "word-editor",
+      "title": "Lay the answers onto the blanks",
+      "instruction": "You are preparing the answers for a lease agreement template whose blanks carry no names. Produce the `values` array: one string per blank, in exactly this order, and nothing else. This lease has 36 blanks.\n\n1  signing day\n2  signing month\n3  landlord full name\n4  tenant full name\n5  number of rooms\n6  city\n7  street\n8  house number\n9  building / корпус (empty string if the address has none)\n10 flat number\n11 term in months\n12 first day of the term\n13 first month of the term\n14 the LAST TWO DIGITS of the start year\n15 last day of the term\n16 last month of the term\n17 the LAST TWO DIGITS of the end year\n18 notice period in weeks\n19 monthly rent in roubles\n20 the equivalent in US dollars\n21 day of month the rent is due\n22 rent paid in advance on signing\n23 refundable deposit\n24 the fixed words: срока аренды\n25 landlord passport series\n26 landlord passport number\n27 landlord passport issued by\n28 landlord registered address, first line\n29 landlord registered address, second line\n30 the signature line for the landlord: ____________\n31 tenant passport series\n32 tenant passport number\n33 tenant passport issued by\n34 tenant registered address, first line\n35 tenant registered address, second line\n36 the signature line for the tenant: ____________\n\nRules that decide the run: the array must have exactly 36 entries, because the filler refuses any other count rather than filling the wrong line. A year blank takes two digits, never four: take the last two of the `year` answer. Item 24 is wording, not a fact about the flat. Items 30 and 36 stay as underscores. An optional value that was not answered becomes an empty string, never the word unknown.",
+      "input": {
+        "answers": { "ref": "steps.collect.output" }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "One value per blank, in document order"
+          },
+          "count": {
+            "type": "integer",
+            "description": "How many values were produced"
+          }
+        },
+        "required": ["values", "count"]
+      },
+      "next": "fill"
+    },
+    {
+      "id": "fill",
+      "type": "tool",
+      "tool": "documents.fill_docx",
+      "title": "Fill the agreement",
+      "instruction": "Write the answers into the lease template and produce the finished .docx.",
+      "input": {
+        "source": { "ref": "inputs.source_document" },
+        "destination": "lease-agreement.docx",
+        "values": { "ref": "steps.compose.output.values" }
+      },
+      "next": null,
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "blanks": { "type": "integer" },
+          "filled": { "type": "integer" },
+          "bytes": { "type": "integer" }
+        },
+        "required": ["path", "blanks", "filled"]
+      }
+    }
+  ],
+  "start_step": "collect",
+  "result": {
+    "document": { "ref": "steps.fill.output.path" },
+    "blanks": { "ref": "steps.fill.output.blanks" }
+  }
+}
