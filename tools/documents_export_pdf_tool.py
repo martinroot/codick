@@ -26,7 +26,7 @@ from __future__ import annotations
 import json
 import os
 import zlib
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 from tools.registry import registry
 
@@ -98,13 +98,60 @@ def _wrap(text: str, *, size: float, width: float) -> List[str]:
     return lines
 
 
-def _page_stream(lines: Sequence[dict]) -> bytes:
+def _draw_ops(shapes: Sequence[dict]) -> bytes:
+    """Content-stream operators for vector shapes.
+
+    Coordinates come straight from the caller in PDF space (origin bottom-left,
+    y up). Translating "data units to page points" is the chart's job, not the
+    writer's: a renderer that cannot place a rectangle is not a renderer, and one
+    that also invents the mapping is untestable.
+    """
+    out = bytearray()
+    for shape in shapes:
+        kind = shape.get("kind")
+        if kind == "rect":
+            x, y, w, h = (float(shape[k]) for k in ("x", "y", "w", "h"))
+            out += b"q %.3f %.3f %.3f rg %.2f %.2f %.2f %.2f re f Q\n" % (
+                shape.get("fill", 0.85), shape.get("fill_g", 0.87),
+                shape.get("fill_b", 0.92), x, y, w, h,
+            )
+        elif kind == "line":
+            out += b"q %.2f w %.3f %.3f %.3f RG %.2f %.2f m %.2f %.2f l S Q\n" % (
+                shape.get("width", 1.0), shape.get("stroke", 0.2), shape.get("stroke_g", 0.25),
+                shape.get("stroke_b", 0.35), float(shape["x1"]), float(shape["y1"]),
+                float(shape["x2"]), float(shape["y2"]),
+            )
+        elif kind == "polyline":
+            points = shape.get("points") or []
+            if len(points) < 2:
+                continue
+            out += b"q %.2f w %.3f %.3f %.3f RG 1 J" % (
+                shape.get("width", 1.4), shape.get("stroke", 0.2),
+                shape.get("stroke_g", 0.25), shape.get("stroke_b", 0.35),
+            )
+            first_x, first_y = points[0]
+            out += b" %.2f %.2f m" % (float(first_x), float(first_y))
+            for px, py in points[1:]:
+                out += b" %.2f %.2f l" % (float(px), float(py))
+            out += b" S Q\n"
+        elif kind == "text":
+            size = float(shape.get("size", 9.0))
+            out += b"BT /F1 %.2f Tf %.2f %.2f Td (%s) Tj ET\n" % (
+                size, float(shape["x"]), float(shape["y"]), _escape(str(shape["text"])),
+            )
+        else:
+            raise ValueError(f"unknown shape kind {kind!r}")
+    return bytes(out)
+
+
+def _page_stream(lines: Sequence[dict], shapes: Optional[Sequence[dict]] = None) -> bytes:
     """One page's content stream.
 
     Each entry is ``{"text", "size", "gap_before"}``; y is tracked downward from
     the top margin so callers think in reading order rather than coordinates.
     """
-    parts = [b"BT\n"]
+    parts = [_draw_ops(shapes or [])]
+    parts.append(b"BT\n")
     y = PAGE_HEIGHT - MARGIN
     for item in lines:
         size = float(item.get("size", BODY_SIZE))
@@ -147,6 +194,8 @@ def paginate(
                 used = 0
                 gap = 0
             item = {"text": line, "size": block_size}
+            if block.get("shapes") and line is wrapped[0]:
+                item["shapes"] = block["shapes"]
             if gap and line is wrapped[0]:
                 item["gap_before"] = gap * size * BODY_LEADING / BODY_SIZE
                 used += gap
@@ -179,7 +228,10 @@ def build_pdf(blocks: Sequence[dict], *, title: str = "") -> bytes:
 
     kids: List[int] = []
     for page_blocks in pages:
-        raw = _page_stream(page_blocks)
+        shapes: List[dict] = []
+        for item in page_blocks:
+            shapes.extend(item.get("shapes") or [])
+        raw = _page_stream(page_blocks, shapes)
         compressed = zlib.compress(raw)
         content_num = add(
             b"<< /Length %d /Filter /FlateDecode >>\nstream\n" % len(compressed)
