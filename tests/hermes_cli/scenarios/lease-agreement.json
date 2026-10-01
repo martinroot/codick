@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "id": "lease-agreement",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "Lease agreement",
   "description": "Ask for the parties and the terms, fill a real lease agreement template, and hand back a .docx to download.",
   "inputs_schema": {
@@ -23,131 +23,163 @@
         "properties": {
           "contract_day": {
             "type": "string",
-            "description": "Day the contract is signed, e.g. 15"
+            "description": "Day the contract is signed, e.g. 15",
+            "default": "15"
           },
           "contract_month": {
             "type": "string",
-            "description": "Month of signing, e.g. октября"
+            "description": "Month of signing, e.g. октября",
+            "default": "октября"
           },
           "year": {
             "type": "string",
-            "description": "The year, four digits, e.g. 2024"
+            "description": "The year, four digits, e.g. 2024",
+            "default": "2024"
           },
           "landlord": {
             "type": "string",
-            "description": "Landlord full name"
+            "description": "Landlord full name",
+            "default": "Иванов Иван Иванович"
           },
           "tenant": {
             "type": "string",
-            "description": "Tenant full name"
+            "description": "Tenant full name",
+            "default": "Петров Пётр Петрович"
           },
           "rooms": {
             "type": "string",
-            "description": "Number of rooms, e.g. 2"
+            "description": "Number of rooms, e.g. 2",
+            "default": "2"
           },
           "city": {
             "type": "string",
-            "description": "City"
+            "description": "City",
+            "default": "Москва"
           },
           "street": {
             "type": "string",
-            "description": "Street"
+            "description": "Street",
+            "default": "Тверская"
           },
           "house": {
             "type": "string",
-            "description": "House number"
+            "description": "House number",
+            "default": "12"
           },
           "block": {
             "type": "string",
-            "description": "Building / корпус, 0 if none"
+            "description": "Building / корпус, 0 if none",
+            "default": "1"
           },
           "flat": {
             "type": "string",
-            "description": "Flat number"
+            "description": "Flat number",
+            "default": "45"
           },
           "months": {
             "type": "string",
-            "description": "Term in months"
+            "description": "Term in months",
+            "default": "12"
           },
           "start_day": {
             "type": "string",
-            "description": "First day of the term"
+            "description": "First day of the term",
+            "default": "01"
           },
           "start_month": {
             "type": "string",
-            "description": "First month of the term"
+            "description": "First month of the term",
+            "default": "ноября"
           },
           "end_day": {
             "type": "string",
-            "description": "Last day of the term"
+            "description": "Last day of the term",
+            "default": "31"
           },
           "end_month": {
             "type": "string",
-            "description": "Last month of the term"
+            "description": "Last month of the term",
+            "default": "октября"
           },
           "notice_weeks": {
             "type": "string",
-            "description": "Notice period in weeks"
+            "description": "Notice period in weeks",
+            "default": "2"
           },
           "rent_rub": {
             "type": "string",
-            "description": "Monthly rent in roubles"
+            "description": "Monthly rent in roubles",
+            "default": "45 000"
           },
           "rent_usd": {
             "type": "string",
-            "description": "Equivalent in US dollars"
+            "description": "Equivalent in US dollars",
+            "default": "500"
           },
           "payment_day": {
             "type": "string",
-            "description": "Day of month the rent is due"
+            "description": "Day of month the rent is due",
+            "default": "5"
           },
           "prepaid": {
             "type": "string",
-            "description": "Rent paid in advance on signing"
+            "description": "Rent paid in advance on signing",
+            "default": "45 000"
           },
           "deposit": {
             "type": "string",
-            "description": "Refundable deposit"
+            "description": "Refundable deposit",
+            "default": "45 000"
           },
           "landlord_passport_series": {
             "type": "string",
-            "description": "Landlord passport series"
+            "description": "Landlord passport series",
+            "default": "45 08"
           },
           "landlord_passport_no": {
             "type": "string",
-            "description": "Landlord passport number"
+            "description": "Landlord passport number",
+            "default": "123456"
           },
           "landlord_passport_issued_by": {
             "type": "string",
-            "description": "Landlord passport issued by"
+            "description": "Landlord passport issued by",
+            "default": "ГУ МВД по Москве"
           },
           "landlord_address": {
             "type": "string",
-            "description": "Landlord registered address, first line"
+            "description": "Landlord registered address, first line",
+            "default": "г. Москва, ул. Тверская"
           },
           "landlord_address_line2": {
             "type": "string",
-            "description": "Landlord registered address, second line"
+            "description": "Landlord registered address, second line",
+            "default": "д. 12, кв. 45"
           },
           "tenant_passport_series": {
             "type": "string",
-            "description": "Tenant passport series"
+            "description": "Tenant passport series",
+            "default": "45 09"
           },
           "tenant_passport_no": {
             "type": "string",
-            "description": "Tenant passport number"
+            "description": "Tenant passport number",
+            "default": "654321"
           },
           "tenant_passport_issued_by": {
             "type": "string",
-            "description": "Tenant passport issued by"
+            "description": "Tenant passport issued by",
+            "default": "ГУ МВД по Москве"
           },
           "tenant_address": {
             "type": "string",
-            "description": "Tenant registered address, first line"
+            "description": "Tenant registered address, first line",
+            "default": "г. Москва, ул. Арбат"
           },
           "tenant_address_line2": {
             "type": "string",
-            "description": "Tenant registered address, second line"
+            "description": "Tenant registered address, second line",
+            "default": "д. 7, кв. 3"
           }
         },
         "required": [

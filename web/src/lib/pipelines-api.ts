@@ -266,9 +266,12 @@ function idempotencyKey(): string {
  * says the request failed and nothing about what to change. Every dialect now
  * survives to the surface.
  */
-function describeFailure(status: number, detail: unknown): string {
+export function describeFailure(status: number, detail: unknown): string {
   if (detail && typeof detail === "object" && "message" in detail) {
-    return String((detail as { message: unknown }).message);
+    const message = String((detail as { message: unknown }).message ?? "");
+    // An empty message is not a reason. Falling through keeps the status,
+    // which is at least true, instead of rendering a blank error.
+    if (message.trim()) return message;
   }
   if (Array.isArray(detail)) {
     const parts = detail

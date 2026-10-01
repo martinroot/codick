@@ -21,7 +21,8 @@ export interface InputField {
   required: boolean;
   description: string | null;
   /** For a boolean, whether the checkbox starts ticked. */
-  defaultValue: boolean | null;
+  /** The schema's `default` for this field, or null when it declared none. */
+  defaultValue: string | number | boolean | null;
   /** For a number. */
   numericMin: number | null;
   numericMax: number | null;
@@ -85,8 +86,17 @@ export function fieldsFromInputsSchema(schema: unknown): InputField[] {
         : null;
     const hasDefault =
       prop && typeof prop === "object" && "default" in (prop as Record<string, unknown>);
-    const defaultValue =
-      kind === "boolean" && hasDefault ? Boolean((prop as Record<string, unknown>).default) : null;
+    // Any kind may carry a default, not only booleans. A string default is what
+    // lets an author ship a form that arrives filled in -- a demo or a smoke
+    // template the operator can run by pressing one button instead of typing
+    // thirty-two fields out.
+    let defaultValue: string | number | boolean | null = null;
+    if (hasDefault) {
+      const raw = (prop as Record<string, unknown>).default;
+      if (kind === "boolean") defaultValue = Boolean(raw);
+      else if (kind === "string" && typeof raw === "string") defaultValue = raw;
+      else if (kind === "number" && typeof raw === "number" && Number.isFinite(raw)) defaultValue = raw;
+    }
 
     return {
       name,
@@ -100,6 +110,23 @@ export function fieldsFromInputsSchema(schema: unknown): InputField[] {
       unsupported: kind === "unsupported",
     };
   });
+}
+
+/**
+ * Starting values for a form: whatever the schema declares as a default.
+ *
+ * Returns {} for a schema with no defaults, so callers can spread it
+ * unconditionally. Only fields that actually declared something are seeded, so
+ * this never overwrites a value the operator typed.
+ */
+export function defaultValues(fields: InputField[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const field of fields) {
+    if (field.defaultValue !== null && field.defaultValue !== undefined) {
+      out[field.name] = field.defaultValue;
+    }
+  }
+  return out;
 }
 
 /** Fields the MVP cannot render, named so the panel can say so out loud. */

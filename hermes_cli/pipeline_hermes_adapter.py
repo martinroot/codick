@@ -56,6 +56,7 @@ nothing reaches a handler that has not passed the schema gate.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import re
@@ -522,34 +523,47 @@ class HermesStepAdapter:
         history = build_attempt_history(instruction, data, output_schema=output_schema)
         idempotency_key = request.get("idempotency_key")
 
-        agent = self._agent_factory(
-            session_id=session_id,
-            profile=request.get("profile"),
-            quiet_mode=True,
-            config=self._config,
-        )
-        if execution is not None:
-            # Published before the turn starts: a cancel arriving mid-flight has
-            # something to interrupt, which is the difference between stopping a
-            # model call and only recording that we wanted to.
-            execution.agent = agent
-        # Snapshot around the turn only: a session is reused across attempts, so
-        # a cumulative reading would charge this step for every step before it.
-        before_usage = read_usage(agent)
-        text = self._run_turn(agent, history, idempotency_key=idempotency_key)
-        turn_usage = usage_delta(before_usage, read_usage(agent))
-        if execution is not None and execution.cancelled:
-            return ExecutionResult(state="cancelled", error_code="cancelled")
-        if agent is not None and hasattr(agent, "close"):
-            try:
-                agent.close()
-            except Exception:  # pragma: no cover - close is best effort
-                logger.debug("pipeline agent close failed", exc_info=True)
+        # The step runs detached from any turn, so nothing has bound this
+        # profile's secrets. Under a multiplexed host every provider read then
+        # fails closed -- "could not read this profile's OPENAI_BASE_URL" -- so a
+        # template that names a profile cannot run at all. The scope wraps the
+        # factory AND the turn: building the agent reads credentials too, and
+        # scoping only the turn would fail one step earlier with the same error.
+        with self._profile_scope(request.get("profile")):
+            agent = self._agent_factory(
+                session_id=session_id,
+                profile=request.get("profile"),
+                quiet_mode=True,
+                config=self._config,
+            )
+            if execution is not None:
+                # Published before the turn starts: a cancel arriving mid-flight
+                # has something to interrupt, which is the difference between
+                # stopping a model call and only recording that we wanted to.
+                execution.agent = agent
+            # Snapshot around the turn only: a session is reused across attempts,
+            # so a cumulative reading would charge this step for every step
+            # before it.
+            before_usage = read_usage(agent)
+            text = self._run_turn(agent, history, idempotency_key=idempotency_key)
+            turn_usage = usage_delta(before_usage, read_usage(agent))
+        # Still inside the profile's scope: closing the agent and the repair turn
+        # (a second, real model call) both read credentials, and a step that only
+        # bound its scope around the first turn fails on the retry instead -- with
+        # the same message, one step later, looking like a provider problem.
+        with self._profile_scope(request.get("profile")):
+            if execution is not None and execution.cancelled:
+                return ExecutionResult(state="cancelled", error_code="cancelled")
+            if agent is not None and hasattr(agent, "close"):
+                try:
+                    agent.close()
+                except Exception:  # pragma: no cover - close is best effort
+                    logger.debug("pipeline agent close failed", exc_info=True)
 
-        payload = extract_json_object(text)
-        if payload is None:
-            text, payload = self._repair(session_id=session_id, request=request,
-                                         history=history, text=text)
+            payload = extract_json_object(text)
+            if payload is None:
+                text, payload = self._repair(session_id=session_id, request=request,
+                                             history=history, text=text)
         if payload is None:
             # Prose is not a result. A step that cannot produce schema-conforming
             # JSON fails; it never completes with whatever the model said.
@@ -563,6 +577,27 @@ class HermesStepAdapter:
                 + "; ".join(f"{e.path}: {e.message}" for e in errors)
             )
         return ExecutionResult(state="completed", output=payload, usage=turn_usage)
+
+    @staticmethod
+    @contextlib.contextmanager
+    def _profile_scope(profile: Optional[str]):
+        """Bind ``profile``'s secrets for one step.
+
+        Falls back to a no-op when the profile cannot be resolved: an unrunnable
+        step must fail with whatever the step itself says, not with a resolver
+        error raised before the step had a chance.
+        """
+        name = (profile or "default").strip() or "default"
+        try:
+            from hermes_cli.kanban_db_dispatch import _worker_profile_scope
+            from hermes_cli.profiles import get_profile_dir
+            home = get_profile_dir(name)
+        except Exception:
+            logger.debug("pipeline step could not resolve profile %s", name, exc_info=True)
+            yield
+            return
+        with _worker_profile_scope(str(home)):
+            yield
 
     def _run_turn(self, agent: Any, history: Sequence[dict], *, idempotency_key: Any = None) -> str:
         if agent is None or not hasattr(agent, "run_conversation"):

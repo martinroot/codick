@@ -7,6 +7,7 @@ import {
 } from "@/components/kanban/pipeline/inputAssistant";
 import {
   buildInputs,
+  defaultValues,
   fieldsFromInputsSchema,
   missingRequired,
 } from "@/components/kanban/pipeline/inputForm";
@@ -51,7 +52,13 @@ export function InputChat({
   onError,
 }: InputChatProps) {
   const fields = React.useMemo(() => fieldsFromInputsSchema(responseSchema), [responseSchema]);
-  const [values, setValues] = React.useState<Record<string, unknown>>({});
+  // Seeded from the schema's defaults, so a template that ships a filled-in form
+  // (a lease, a demo) opens ready to send rather than blank. Re-seeds per
+  // request, so the next question does not inherit the previous one's answers.
+  const [values, setValues] = React.useState<Record<string, unknown>>(() => defaultValues(fields));
+  React.useEffect(() => {
+    setValues(defaultValues(fields));
+  }, [fields]);
   const [prose, setProse] = React.useState("");
   const [draft, setDraft] = React.useState<Draft | null>(null);
   const [errors, setErrors] = React.useState<SchemaError[]>([]);
