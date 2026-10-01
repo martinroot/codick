@@ -27,9 +27,12 @@ did" into "it did not work", which is a claim the system cannot support.
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 import time
 from typing import Any, Callable, Mapping, Optional, Protocol
+
+logger = logging.getLogger(__name__)
 
 from hermes_cli import pipeline_artifacts  # noqa: F401  (result publishing)
 from hermes_cli import pipelines_db as db
@@ -481,10 +484,39 @@ def _adopt_result(conn, run_id, attempt, result, *, owner) -> _AdvanceResult:
     run_after = db.get_run(conn, run_id)
     template = run_after.template_snapshot if run_after else {}
     db.finish_attempt(conn, attempt.id, "completed", output=result.output or {})
+    _record_usage(conn, run_id, attempt, result)
     if isinstance(template, Mapping) and find_step(template, attempt.step_id) is not None:
         return _record_success(conn, run_id, template, find_step(template, attempt.step_id),
                                attempt, result.output or {}, owner=owner)
     return _AdvanceResult("completed", "adopted adapter result", step_id=attempt.step_id)
+
+
+def _record_usage(conn, run_id, attempt, result) -> None:
+    """Persist this attempt's consumption (#58).
+
+    A step that produced no measurement still gets a row, marked unknown. A
+    missing row and a measured zero are different facts, and a report that
+    cannot tell them apart is the thing this whole slice exists to prevent.
+    """
+    from hermes_cli import pipeline_usage as usage_module
+
+    delta = getattr(result, "usage", None)
+    if delta is not None and delta.get("kind", "model") != "model":
+        return
+    record = usage_module.Usage(
+        step_id=attempt.step_id, kind="model",
+        input_tokens=(delta or {}).get("input"),
+        cached_input=(delta or {}).get("cache_read"),
+        output_tokens=(delta or {}).get("output"),
+    )
+    try:
+        usage_module.price_and_record(
+            conn, run_id=run_id, attempt_id=attempt.id, usage=record,
+        )
+    except Exception:
+        # Accounting must never fail a run that otherwise succeeded. A missing
+        # cost is a reporting gap; a lost artifact is a lost result.
+        logger.warning("could not record usage for %s", attempt.id, exc_info=True)
 
 
 def _run_model_step(conn, run_id, template, step, adapter, *, owner, lease_ttl, max_attempts, now) -> _AdvanceResult:

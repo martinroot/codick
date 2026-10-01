@@ -274,6 +274,33 @@ def usage_delta(before: Optional[Dict[str, Any]], after: Optional[Dict[str, Any]
     return delta
 
 
+def usage_record(
+    delta: Optional[Dict[str, Any]], *, step_id: str, model: Optional[str] = None,
+    provider: Optional[str] = None,
+) -> Optional[Any]:
+    """Turn a turn delta into a :class:`pipeline_usage.Usage`.
+
+    ``None`` in, ``None`` out -- but a **row is still worth writing**, because a
+    step that was not measured and a step that was never recorded look the same
+    in a report, and only one of them is a measurement gap. The caller writes
+    the unmeasured row; this returns ``None`` so pricing treats it as unknown
+    rather than as free.
+    """
+    from hermes_cli.pipeline_usage import Usage
+
+    if delta is None:
+        return Usage(step_id=step_id, kind="model", model=model, provider=provider)
+    return Usage(
+        step_id=step_id,
+        kind="model",
+        model=model,
+        provider=provider,
+        input_tokens=int(delta.get("input", 0) or 0),
+        cached_input=int(delta.get("cache_read", 0) or 0),
+        output_tokens=int(delta.get("output", 0) or 0),
+    )
+
+
 def attempt_session_id(run_id: str, step_id: str, attempt_id: str) -> str:
     """The one session an attempt owns — derived, never generated.
 
