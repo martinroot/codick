@@ -256,6 +256,36 @@ function idempotencyKey(): string {
   return `k-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
+/**
+ * Turn a failure body into something a person can act on.
+ *
+ * The server speaks three dialects here: our own `detail.message`, FastAPI's
+ * validation array (`detail: [{loc, msg}]`), and nothing at all. The middle one
+ * is the one that used to vanish: it has no `message` key, so a 422 naming the
+ * exact offending field collapsed into "pipeline request failed (422)" -- which
+ * says the request failed and nothing about what to change. Every dialect now
+ * survives to the surface.
+ */
+function describeFailure(status: number, detail: unknown): string {
+  if (detail && typeof detail === "object" && "message" in detail) {
+    return String((detail as { message: unknown }).message);
+  }
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((entry) => {
+        if (!entry || typeof entry !== "object") return String(entry);
+        const item = entry as { loc?: unknown; msg?: unknown };
+        const where = Array.isArray(item.loc) ? item.loc.join(".") : "";
+        const what = item.msg === undefined ? "" : String(item.msg);
+        return where ? `${where}: ${what}` : what;
+      })
+      .filter((part) => part.length > 0);
+    if (parts.length > 0) return `pipeline request failed (${status}): ${parts.join("; ")}`;
+  }
+  if (typeof detail === "string" && detail.trim()) return detail;
+  return `pipeline request failed (${status})`;
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await authedFetch(`/api/pipelines${path}`, init);
   if (!response.ok) {
@@ -266,10 +296,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       // A non-JSON error body is still an error; the status is the message.
     }
     const detail = (body as { detail?: unknown } | null)?.detail;
-    const message =
-      (detail && typeof detail === "object" && "message" in detail
-        ? String((detail as { message: unknown }).message)
-        : `pipeline request failed (${response.status})`);
+    const message = describeFailure(response.status, detail);
     throw new PipelineApiError(response.status, message, detail);
   }
   return (await response.json()) as T;

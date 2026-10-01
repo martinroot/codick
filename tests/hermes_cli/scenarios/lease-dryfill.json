@@ -1,16 +1,17 @@
 {
   "schema_version": "1.0",
   "id": "lease-dryfill",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Lease agreement (dry fill)",
   "description": "Fill the lease with literal values, to prove the artifact and the download that follow it.",
   "inputs_schema": {
     "type": "object",
-    "properties": {
-      "source_document": { "type": "string" }
-    }
+    "properties": {}
   },
-  "limits": { "max_rework_cycles": 0, "max_step_executions": 4 },
+  "limits": {
+    "max_rework_cycles": 0,
+    "max_step_executions": 4
+  },
   "steps": [
     {
       "id": "fill",
@@ -19,35 +20,82 @@
       "title": "Fill the agreement",
       "instruction": "Write the answers into the lease template and produce the finished .docx.",
       "input": {
-        "source": { "ref": "inputs.source_document" },
+        "source": "/home/grokwin/hermes-preview-home/templates/lease-agreement-template.docx",
         "destination": "lease-agreement.docx",
         "values": [
-          "15", "октября", "Иванов Иван Иванович", "Петров Пётр Петрович",
-          "2", "Москва", "Тверская", "12", "1", "45", "12", "01", "ноября", "24",
-          "31", "октября", "24", "2", "45 000", "500", "5", "45 000", "45 000",
-          "срока аренды", "45 08", "123456", "ГУ МВД по Москве",
-          "г. Москва, ул. Тверская", "д. 12, кв. 45", "____________",
-          "45 09", "654321", "ГУ МВД по Москве", "г. Москва, ул. Арбат",
-          "д. 7, кв. 3", "____________"
+          "15",
+          "октября",
+          "Иванов Иван Иванович",
+          "Петров Пётр Петрович",
+          "2",
+          "Москва",
+          "Тверская",
+          "12",
+          "1",
+          "45",
+          "12",
+          "01",
+          "ноября",
+          "24",
+          "31",
+          "октября",
+          "24",
+          "2",
+          "45 000",
+          "500",
+          "5",
+          "45 000",
+          "45 000",
+          "срока аренды",
+          "45 08",
+          "123456",
+          "ГУ МВД по Москве",
+          "г. Москва, ул. Тверская",
+          "д. 12, кв. 45",
+          "____________",
+          "45 09",
+          "654321",
+          "ГУ МВД по Москве",
+          "г. Москва, ул. Арбат",
+          "д. 7, кв. 3",
+          "____________"
         ]
       },
       "next": null,
       "output_schema": {
         "type": "object",
         "properties": {
-          "path": { "type": "string" },
-          "blanks": { "type": "integer" },
-          "filled": { "type": "integer" },
-          "bytes": { "type": "integer" }
+          "path": {
+            "type": "string"
+          },
+          "blanks": {
+            "type": "integer"
+          },
+          "filled": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          }
         },
-        "required": ["path", "blanks", "filled"]
+        "required": [
+          "path",
+          "blanks",
+          "filled"
+        ]
       }
     }
   ],
   "start_step": "fill",
   "result": {
-    "document": { "ref": "steps.fill.output.path" },
-    "blanks": { "ref": "steps.fill.output.blanks" },
-    "filled": { "ref": "steps.fill.output.filled" }
+    "document": {
+      "ref": "steps.fill.output.path"
+    },
+    "blanks": {
+      "ref": "steps.fill.output.blanks"
+    },
+    "filled": {
+      "ref": "steps.fill.output.filled"
+    }
   }
 }
