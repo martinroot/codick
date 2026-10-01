@@ -31,17 +31,40 @@ adapter's business, and reporting them here would mean guessing.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Callable, Dict, List, Mapping, Optional
+
+logger = logging.getLogger(__name__)
 
 READINESS_READY = "ready"
 READINESS_UNAVAILABLE = "unavailable"
 
 
 def _default_tool_names() -> Optional[set]:
-    """The registered tool names, or None when the registry cannot be read."""
-    from tools.registry import registry
+    """The registered tool names, or ``None`` when the registry cannot be read.
 
-    return set(registry.get_all_tool_names())
+    Discovery is bootstrapped here rather than assumed. ``discover_builtin_tools``
+    runs at ``model_tools`` import time, and a caller that has not imported that
+    — a plain script, a route that only touches the pipeline DB — sees an empty
+    registry and would report every template that needs a tool as
+    ``unavailable``. That is the failure this whole module exists to prevent,
+    produced by its own probe.
+
+    Bootstrapped only when the registry is empty, which is the one state that
+    means "discovery has not run": re-running discovery over an already-loaded
+    registry would register every tool a second time.
+    """
+    from tools.registry import discover_builtin_tools, registry
+
+    try:
+        names = set(registry.get_all_tool_names())
+        if not names:
+            discover_builtin_tools()
+            names = set(registry.get_all_tool_names())
+    except Exception:  # noqa: BLE001 - reported as unknown, never as a verdict
+        logger.debug("readiness could not read the tool registry", exc_info=True)
+        return None
+    return names
 
 
 def required_tool_names(template: Mapping[str, Any]) -> List[str]:

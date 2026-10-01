@@ -5,6 +5,9 @@ computation, and they take the registry as a set of names — the tool-step laye
 already documents that seam for the real adapter.
 """
 
+import os
+import sys
+
 import pytest
 
 from hermes_cli.pipeline_readiness import (
@@ -102,3 +105,56 @@ def test_every_missing_tool_is_reported_not_just_the_first():
 def test_a_template_with_no_steps_is_not_a_catalogue_outage():
     assert assess_readiness({"steps": []}, tool_names=set())["readiness_status"] == READINESS_READY
     assert assess_readiness({}, tool_names=set())["readiness_status"] == READINESS_READY
+
+
+def test_readiness_bootstraps_discovery_rather_than_trusting_an_empty_registry():
+    """The probe must not report a template `unavailable` because nothing
+    imported `model_tools` yet.
+
+    `discover_builtin_tools()` runs at `model_tools` import time. A caller that
+    has not imported it sees an empty registry — and a readiness check that
+    trusted that empty registry would mark every template needing a tool as
+    unavailable, which is the exact failure this module exists to prevent,
+    produced by its own probe. Run in a subprocess because this test file's
+    imports have already populated the registry.
+    """
+    import subprocess
+
+    script = (
+        "import json, sys; sys.path.insert(0, %r);"
+        "from hermes_cli.pipeline_readiness import assess_readiness;"
+        "print(assess_readiness(json.load(open(%r)))['readiness_status'])"
+        % (
+            os.path.join(os.path.dirname(__file__), "..", ".."),
+            os.path.join(os.path.dirname(__file__), "scenarios", "word-report.json"),
+        )
+    )
+    out = subprocess.run([sys.executable, "-c", script], capture_output=True,
+                         text=True, timeout=180)
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.strip() == "ready", out.stdout
+
+
+def test_discovery_is_bootstrapped_only_when_the_registry_is_empty():
+    """Re-running discovery over a loaded registry would register every tool a
+    second time, so the bootstrap is conditional."""
+    import tools.registry as registry_module
+
+    calls = []
+    real = registry_module.discover_builtin_tools
+
+    def counting():
+        calls.append(1)
+        return real()
+
+    monkey = registry_module.discover_builtin_tools
+    try:
+        registry_module.discover_builtin_tools = counting
+        # The registry is loaded by now, so no bootstrap should happen.
+        from hermes_cli.pipeline_readiness import _default_tool_names
+
+        _default_tool_names()
+        _default_tool_names()
+    finally:
+        registry_module.discover_builtin_tools = monkey
+    assert calls == [], "a populated registry must not be rediscovered"

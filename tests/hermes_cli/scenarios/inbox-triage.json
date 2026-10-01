@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "id": "inbox-triage",
+  "version": "1.0.0",
+  "name": "Inbox triage",
+  "description": "Classify an inbound request, ask for what is missing, stop. No external tools.",
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "request": {
+        "type": "string",
+        "description": "What arrived"
+      },
+      "customer": {
+        "type": "string",
+        "description": "Who sent it"
+      }
+    },
+    "required": [
+      "request"
+    ]
+  },
+  "limits": {
+    "max_rework_cycles": 1,
+    "max_step_executions": 6
+  },
+  "steps": [
+    {
+      "id": "classify",
+      "type": "agent",
+      "profile": "analyst",
+      "title": "Classify",
+      "instruction": "Classify the request and state what you need to proceed.",
+      "input": {
+        "request": {
+          "ref": "inputs.request"
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "category",
+          "missing"
+        ]
+      },
+      "retry": {
+        "max_attempts": 2
+      },
+      "next": "confirm"
+    },
+    {
+      "id": "confirm",
+      "type": "user_input",
+      "title": "Confirm",
+      "prompt": "Confirm the category and supply anything missing.",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "category"
+        ]
+      },
+      "wait_timeout_seconds": 3600,
+      "next": "summarise"
+    },
+    {
+      "id": "summarise",
+      "type": "agent",
+      "profile": "analyst",
+      "title": "Summarise",
+      "instruction": "Write a one-line summary of what was agreed.",
+      "input": {
+        "category": {
+          "ref": "steps.confirm.output.category"
+        },
+        "details": {
+          "ref": "steps.confirm.output.details",
+          "optional": true,
+          "default": ""
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary"
+        ]
+      },
+      "next": null
+    }
+  ],
+  "start_step": "classify"
+}

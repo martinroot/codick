@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.0",
+  "id": "weekly-report",
+  "version": "1.0.0",
+  "name": "Weekly report",
+  "description": "Research a topic, write a brief, ask for approval, export a .docx.",
+  "inputs_schema": {
+    "type": "object",
+    "properties": {
+      "topic": {
+        "type": "string",
+        "description": "What the report is about"
+      },
+      "author": {
+        "type": "string",
+        "description": "Who it is for"
+      }
+    },
+    "required": [
+      "topic",
+      "author"
+    ]
+  },
+  "limits": {
+    "max_rework_cycles": 2,
+    "max_step_executions": 12
+  },
+  "steps": [
+    {
+      "id": "research",
+      "type": "agent",
+      "profile": "researcher",
+      "title": "Gather facts",
+      "instruction": "Research the topic and list the facts a brief needs.",
+      "input": {
+        "topic": {
+          "ref": "inputs.topic"
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "facts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "facts"
+        ]
+      },
+      "next": "draft"
+    },
+    {
+      "id": "draft",
+      "type": "agent",
+      "profile": "writer",
+      "title": "Write the brief",
+      "instruction": "Write the brief from the facts.",
+      "input": {
+        "topic": {
+          "ref": "inputs.topic"
+        },
+        "facts": {
+          "ref": "steps.research.output.facts"
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ]
+      },
+      "next": "approve"
+    },
+    {
+      "id": "approve",
+      "type": "user_input",
+      "title": "Approve the draft?",
+      "prompt": "Does this brief look right?",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "wait_timeout_seconds": 86400,
+      "next": "gate"
+    },
+    {
+      "id": "gate",
+      "type": "condition",
+      "cases": [
+        {
+          "when": {
+            "op": "eq",
+            "left": {
+              "ref": "steps.approve.output.ok"
+            },
+            "right": true
+          },
+          "next": "publish",
+          "rework": false
+        },
+        {
+          "when": {
+            "op": "eq",
+            "left": {
+              "ref": "steps.approve.output.ok"
+            },
+            "right": false
+          },
+          "next": "research",
+          "rework": true
+        }
+      ],
+      "default": {
+        "next": "publish",
+        "rework": false
+      }
+    },
+    {
+      "id": "publish",
+      "type": "tool",
+      "tool": "documents.export_docx",
+      "title": "Export the .docx",
+      "instruction": "Write the approved brief as a Word document.",
+      "input": {
+        "body": {
+          "ref": "steps.draft.output.body"
+        },
+        "path": "weekly-report.docx",
+        "title": "Weekly report"
+      },
+      "next": null
+    }
+  ],
+  "start_step": "research"
+}
