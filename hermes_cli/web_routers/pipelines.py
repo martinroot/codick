@@ -229,8 +229,15 @@ class SubmitResponseBody(BaseModel):
 class CreateRunBody(BaseModel):
     template_id: str
     version: Optional[str] = None
-    inputs: dict[str, Any] = Field(default_factory=dict)
+    # `None` is treated as "no inputs", not rejected: a client that sends an
+    # explicit null for an empty form has not done anything wrong, and turning
+    # that into a 422 sends the author looking for a schema problem in a
+    # template that validates.
+    inputs: Optional[dict[str, Any]] = None
     title: Optional[str] = None
+
+    def resolved_inputs(self) -> dict[str, Any]:
+        return self.inputs or {}
 
 
 class StoreTemplateBody(BaseModel):
@@ -424,7 +431,7 @@ def create_run(body: CreateRunBody, response: Response, request: Request,
         # button actually calls.
         try:
             started = pipeline_board.start_run_with_card(
-                conn, template=row.template, inputs=body.inputs,
+                conn, template=row.template, inputs=body.resolved_inputs(),
                 owner_scope=caller_scope, idempotency_key=None)
         except pipeline_board.StartError as exc:
             raise HTTPException(status_code=500, detail={"message": str(exc)}) from exc
