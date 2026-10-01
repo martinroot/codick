@@ -40,6 +40,10 @@ class Element:
     w: float
     h: float
     font: Optional[float] = None
+    """A frame or axis: still checked against the box, but never counted as
+    colliding. A border is supposed to touch the marks it bounds, and an axis
+    rule running under its own bars is a chart, not a mistake."""
+    frame: bool = False
 
     @property
     def right(self) -> float:
@@ -131,6 +135,8 @@ def check_layout(
 
     for i, first in enumerate(elements):
         for second in elements[i + 1:]:
+            if first.frame or second.frame:
+                continue
             overlap = _intersection(first, second)
             if overlap is not None:
                 width, height = overlap
@@ -208,6 +214,7 @@ def elements_from_shapes(shapes: Sequence[dict], name: str) -> List[Element]:
             out.append(Element(
                 name=f"{name}.line[{index}]", x=min(x1, x2), y=min(y1, y2),
                 w=abs(x2 - x1) or 0.8, h=abs(y2 - y1) or 0.8,
+                frame=bool(shape.get("frame")),
             ))
         elif kind == "polyline":
             points = shape.get("points") or []

@@ -151,9 +151,13 @@ def _page_stream(lines: Sequence[dict], shapes: Optional[Sequence[dict]] = None)
     the top margin so callers think in reading order rather than coordinates.
     """
     parts = [_draw_ops(shapes or [])]
-    parts.append(b"BT\n")
     y = PAGE_HEIGHT - MARGIN
     for item in lines:
+        if not item["text"]:
+            # A chart-only item has drawn its own shapes already; an empty text
+            # showing operator would be noise, and an empty `Tj` is a lie about
+            # there being text there.
+            continue
         size = float(item.get("size", BODY_SIZE))
         gap = float(item.get("gap_before", 0.0))
         leading = size * (BODY_LEADING / BODY_SIZE)
@@ -164,11 +168,34 @@ def _page_stream(lines: Sequence[dict], shapes: Optional[Sequence[dict]] = None)
             raise PdfTextError(
                 f"content overflows the page at y={y:.1f}; paginate first"
             )
+        parts.append(b"BT\n")
         parts.append(b"/F1 %.2f Tf\n" % size)
         parts.append(b"1 0 0 1 %.2f %.2f Tm\n" % (MARGIN, y))
         parts.append(b"(" + _escape(str(item["text"])) + b") Tj\n")
-    parts.append(b"ET\n")
+        parts.append(b"ET\n")
     return b"".join(parts)
+
+
+def _shapes_extent(shapes: Sequence[dict]) -> float:
+    """The vertical space a chart's shapes occupy, in points."""
+    lows: List[float] = []
+    highs: List[float] = []
+    for shape in shapes:
+        kind = shape.get("kind")
+        if kind == "rect":
+            lows.append(float(shape["y"]))
+            highs.append(float(shape["y"]) + float(shape["h"]))
+        elif kind == "line":
+            lows += [float(shape["y1"]), float(shape["y2"])]
+            highs += [float(shape["y1"]), float(shape["y2"])]
+        elif kind == "polyline":
+            for px, py in shape.get("points") or []:
+                lows.append(float(py))
+                highs.append(float(py))
+        elif kind == "text":
+            lows.append(float(shape["y"]) - float(shape.get("size", 9.0)))
+            highs.append(float(shape["y"]) + float(shape.get("size", 9.0)))
+    return (max(highs) - min(lows)) if highs else 0.0
 
 
 def paginate(
@@ -188,6 +215,20 @@ def paginate(
         block_size = float(block.get("size", size))
         wrapped = _wrap(text, size=block_size, width=width)
         gap = int(float(block.get("gap_before", 0.0)) // (size * BODY_LEADING / BODY_SIZE))
+        if not wrapped and block.get("shapes"):
+            # A chart is a block with no text. It still occupies vertical space,
+            # measured from its own geometry -- an earlier version gave it a
+            # zero-width space to stand in, which the WinAnsi encoder correctly
+            # refused.
+            height = _shapes_extent(block["shapes"])
+            rows = max(1, int(height // (size * BODY_LEADING / BODY_SIZE)))
+            if used + rows > per_page:
+                pages.append([])
+                used = 0
+            pages[-1].append({"text": "", "size": block_size,
+                              "shapes": block["shapes"], "shape_height": height})
+            used += rows
+            continue
         for line in wrapped:
             if used + 1 + (gap if line is wrapped[0] else 0) > per_page:
                 pages.append([])
@@ -297,12 +338,53 @@ def write_pdf(
     }
 
 
+# A chart point carries `source` and it is required. That is the whole reason
+# the illustrated scenario is trustworthy: a model asked to draw a chart cannot
+# invent a number here, because there is nowhere to put one that does not name
+# the cell it came from. An unexplained figure has no representation at all.
+_CHART_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "type": {"type": "string", "enum": ["bar", "line"]},
+        "unit": {"type": "string", "description": "Unit shown beside each value."},
+        "series_label": {"type": "string", "description": "What is being plotted."},
+        "points": {
+            "type": "array",
+            "description": "One entry per value, in order.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "label": {"type": "string"},
+                    "value": {"type": "number"},
+                    "source": {
+                        "type": "string",
+                        "description": (
+                            "The cell this value came from, e.g. "
+                            "'revenue.csv!B2'. Required: a value nobody can trace "
+                            "back to the data cannot be drawn."
+                        ),
+                    },
+                },
+                "required": ["label", "value", "source"],
+            },
+        },
+        "domain": {
+            "type": "array",
+            "items": {"type": "number"},
+            "description": "[low, high] for a line chart. Bars always start at 0.",
+        },
+    },
+    "required": ["type", "points"],
+}
+
 EXPORT_PDF_SCHEMA = {
     "name": "documents.export_pdf",
     "description": (
-        "Render text blocks to a real PDF using only the standard library. "
-        "Text must be WinAnsi-encodable; other scripts raise rather than being "
-        "mangled. Multiple pages are produced automatically."
+        "Render text blocks, and optionally charts, to a real PDF using only the "
+        "standard library. Text must be WinAnsi-encodable; other scripts raise "
+        "rather than being mangled. Multiple pages are produced automatically. "
+        "Every chart value must name the data cell it came from, and the numbers "
+        "in the text are checked against the plotted values."
     ),
     "parameters": {
         "type": "object",
@@ -310,10 +392,111 @@ EXPORT_PDF_SCHEMA = {
             "body": {"type": "string", "description": "Text, paragraphs separated by blank lines."},
             "path": {"type": "string", "description": "Destination .pdf path."},
             "title": {"type": "string", "description": "Optional document title."},
+            "charts": {
+                "type": "array",
+                "description": "Charts to draw below the text, in order.",
+                "items": _CHART_SCHEMA,
+            },
+            "allowed_numbers": {
+                "type": "array",
+                "items": {"type": "number"},
+                "description": (
+                    "Numbers the text states that are derived rather than plotted "
+                    "-- a total, an average, a year. Anything in the text that is "
+                    "neither plotted nor listed here fails the export."
+                ),
+            },
         },
         "required": ["body", "path"],
     },
 }
+
+
+class PdfLayoutError(ValueError):
+    """The composed page does not fit, or the prose contradicts the chart."""
+
+
+def content_box() -> "Box":
+    """The area content may occupy, in PDF points."""
+    from tools import documents_layout
+
+    return documents_layout.Box(
+        x=MARGIN, y=MARGIN, w=PAGE_WIDTH - 2 * MARGIN, h=PAGE_HEIGHT - 2 * MARGIN,
+    )
+
+
+def chart_blocks(
+    specs: Sequence[dict], body: str = "", *, allowed: Optional[Sequence[float]] = None,
+) -> List[dict]:
+    """Turn chart specs into layout blocks, checking the page as they go.
+
+    Three refusals, and each replaces a document that looks fine and is not:
+
+    - a value with no source cell never becomes a shape;
+    - a chart that would not fit the content box raises, rather than being
+      silently nudged -- a page that parses with a clipped chart is the exact
+      thing a reader cannot report back to us;
+    - a number in the prose that matches neither a plotted value nor a declared
+      allowance raises, because a chart and a sentence that disagree are worse
+      than no chart.
+    """
+    from tools import documents_chart as charts
+    from tools import documents_claims as claims
+    from tools import documents_layout as layout
+
+    box = content_box()
+    blocks: List[dict] = []
+    elements: List = []
+    plotted: List[float] = []
+    cursor = box.top
+
+    for index, spec in enumerate(specs or []):
+        kind = spec.get("type", "bar")
+        points = [
+            charts.Point(
+                label=str(p.get("label", "")),
+                value=p.get("value"),
+                source=str(p.get("source", "")),
+            )
+            for p in spec.get("points", [])
+        ]
+        height = 200.0
+        cursor -= height + 16
+        kwargs = dict(
+            x=box.x, y=cursor, width=box.w, height=height,
+            unit=str(spec.get("unit", "")), series_label=str(spec.get("series_label", "")),
+        )
+        if kind == "line":
+            domain = spec.get("domain")
+            chart = charts.line_chart(
+                points,
+                domain=(float(domain[0]), float(domain[1])) if domain else None,
+                **kwargs,
+            )
+        elif kind == "bar":
+            chart = charts.bar_chart(points, **kwargs)
+        else:
+            raise PdfLayoutError(f"chart {index}: unknown type {kind!r}")
+
+        plotted.extend(value for _, value, _ in chart.plotted)
+        elements.extend(layout.elements_from_shapes(chart.shapes, f"chart{index}"))
+        blocks.append({"text": "", "size": BODY_SIZE, "gap_before": 0,
+                       "shapes": chart.shapes})
+        del chart
+
+    report = layout.check_layout(elements, box)
+    if not report.ok:
+        raise PdfLayoutError(
+            "the charts do not fit the page: " + "; ".join(
+                report.overflow + report.overlaps + report.tiny_type)
+        )
+
+    if body:
+        consistency = claims.verify_claims(body, plotted, allowed=allowed or [])
+        if not consistency.consistent:
+            consistency.raise_if_inconsistent()
+
+    return blocks
 
 
 def blocks_from_text(body: str, *, title: str = "") -> List[dict]:
@@ -328,10 +511,29 @@ def blocks_from_text(body: str, *, title: str = "") -> List[dict]:
     return blocks or [{"text": title or "", "size": BODY_SIZE}]
 
 
-def export_pdf(body: str, path: str, title: str = "") -> str:
-    """Tool handler. Returns a JSON string, the shape every handler returns."""
-    written = write_pdf(blocks_from_text(body, title=title), path, title=title)
-    return json.dumps({"success": True, **written}, ensure_ascii=False)
+def export_pdf(
+    body: str,
+    path: str,
+    title: str = "",
+    charts: Optional[Sequence[dict]] = None,
+    allowed_numbers: Optional[Sequence[float]] = None,
+) -> str:
+    """Tool handler. Returns a JSON string, the shape every handler returns.
+
+    Text and charts are checked *against each other* before anything is written,
+    so a run either produces a consistent illustrated page or says why it could
+    not. A PDF that renders a chart beside a sentence contradicting it is a
+    successful call and a wrong document.
+    """
+    blocks = blocks_from_text(body, title=title)
+    if charts:
+        blocks = blocks + chart_blocks(charts, body=body, allowed=allowed_numbers)
+    written = write_pdf(blocks, path, title=title)
+    return json.dumps({
+        "success": True,
+        "charts": len(charts or []),
+        **written,
+    }, ensure_ascii=False)
 
 
 def _pdf_available() -> bool:
@@ -347,6 +549,8 @@ registry.register(
         body=args.get("body", ""),
         path=args.get("path", ""),
         title=args.get("title", ""),
+        charts=args.get("charts"),
+        allowed_numbers=args.get("allowed_numbers"),
     ),
     check_fn=_pdf_available,
 )

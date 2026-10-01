@@ -120,8 +120,13 @@ def bar_chart(
 
     shapes: List[dict] = []
     # Axis lines.
-    shapes.append({"kind": "line", "x1": x, "y1": y, "x2": x + width, "y2": y, "width": 0.8})
-    shapes.append({"kind": "line", "x1": x, "y1": y, "x2": x, "y2": y + height, "width": 0.8})
+    # `frame`: the axes are the chart's border, and a border is *meant* to touch
+    # the marks it bounds. Without this flag the layout check reads every bar as
+    # colliding with the axis running under it.
+    shapes.append({"kind": "line", "x1": x, "y1": y, "x2": x + width, "y2": y,
+                   "width": 0.8, "frame": True})
+    shapes.append({"kind": "line", "x1": x, "y1": y, "x2": x, "y2": y + height,
+                   "width": 0.8, "frame": True})
 
     slot = width / len(points)
     bar_w = slot * 0.62
@@ -203,8 +208,10 @@ def line_chart(
         return y + (value - low) / (high - low) * height
 
     shapes: List[dict] = [
-        {"kind": "line", "x1": x, "y1": y, "x2": x + width, "y2": y, "width": 0.8},
-        {"kind": "line", "x1": x, "y1": y, "x2": x, "y2": y + height, "width": 0.8},
+        {"kind": "line", "x1": x, "y1": y, "x2": x + width, "y2": y,
+         "width": 0.8, "frame": True},
+        {"kind": "line", "x1": x, "y1": y, "x2": x, "y2": y + height,
+         "width": 0.8, "frame": True},
     ]
     step = width / max(1, len(points) - 1) if len(points) > 1 else width / 2
     coords = [(x + step * i, to_px(float(p.value))) for i, p in enumerate(points)]
