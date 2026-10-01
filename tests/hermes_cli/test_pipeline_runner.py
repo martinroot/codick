@@ -98,6 +98,65 @@ def test_the_loop_drives_a_run_to_completion():
     assert db.get_run(conn, run_id).status == "completed"
 
 
+def test_a_live_attempt_is_never_submitted_twice():
+    """A lease you already hold may be re-claimed, so the lease does not stop this.
+
+    That re-claim is deliberate — it lets a dispatcher resume after losing its
+    own connection — and it is exactly what let a second `advance` submit the
+    same attempt again. Two Hermes turns then interleaved on one session, the
+    transcript interleaved with them, and the step never completed. Seen live as
+    three concurrent turns on one `session_id`.
+    """
+    conn = db.connect()
+    run_id = db.create_run(conn, TWO_STEP, inputs={"topic": "kanban"})
+    submitted = []
+
+    class SlowAdapter(FakeAdapter):
+        def submit(self, request):
+            submitted.append(request["attempt_id"])
+            return super().submit(request)
+
+    adapter = SlowAdapter(scripted(draft=[{"body": "x"}], second=[{"url": "u"}]))
+    runner.drive_run(conn, run_id, adapter, owner="runner-1")
+
+    # One submission per attempt. A repeat is a second turn on the same session.
+    assert len(submitted) == len(set(submitted)), submitted
+    assert db.get_run(conn, run_id).status == "completed"
+
+
+def test_the_driver_waits_for_a_submitted_turn_rather_than_leaving_it_orphaned():
+    """A driver that returns mid-turn strands a `running` attempt forever.
+
+    Nothing else collects the answer: `recover` is a restart path, not a
+    poller. The observed symptom was a run that sat on `running` for ten
+    minutes with an attempt nobody would ever read.
+    """
+    import threading
+
+    conn = db.connect()
+    run_id = db.create_run(conn, TWO_STEP, inputs={"topic": "kanban"})
+
+    release = threading.Event()
+
+    class SlowAdapter(FakeAdapter):
+        def submit(self, request):
+            execution_id = super().submit(request)
+            timer = threading.Timer(0.4, release.set)
+            timer.start()
+            return execution_id
+
+        def result(self, execution_id):
+            # Hold the answer until the driver has demonstrably waited for it.
+            if not release.is_set():
+                release.wait(2.0)
+            return super().result(execution_id)
+
+    adapter = SlowAdapter(scripted(draft=[{"body": "x"}], second=[{"url": "u"}]))
+    report = runner.drive_run(conn, run_id, adapter, owner="runner-1", in_flight_timeout=5.0)
+    assert report.status == "completed", (report.status, report.details)
+    assert release.is_set(), "the driver returned before the turn landed"
+
+
 def test_the_loop_stops_at_a_person_and_says_so():
     """The property that matters most: it must not spin against a human."""
     conn = db.connect()

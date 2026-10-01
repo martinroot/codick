@@ -37,6 +37,11 @@ def _isolated_home(monkeypatch, tmp_path):
     home = tmp_path / ".hermes"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
+    # The walk ends in a real `documents.export_docx`, and the scenario gives it
+    # a relative path. Without this the document lands in whatever directory the
+    # suite was started from — which is how a generated `weekly-report.docx` got
+    # committed to the repository by a `git add -A`.
+    monkeypatch.chdir(tmp_path)
 
 
 def _mint(scope: str) -> str:

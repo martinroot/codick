@@ -492,8 +492,23 @@ def _run_model_step(conn, run_id, template, step, adapter, *, owner, lease_ttl, 
                       error=f"retry.max_attempts ({max_attempts}) reached", error_code="retry_exhausted")
         return _AdvanceResult("failed", "retry_exhausted", step_id=step_id)
 
+    # Contention first: a lease held by *someone else* is the more specific and
+    # more actionable answer, and it is the existing contract.
     if not db.claim_attempt(conn, attempt.id, owner, ttl_seconds=lease_ttl, now=now):
         return _AdvanceResult("contended", "another dispatcher holds the lease", step_id=step_id)
+
+    # Then the case the lease cannot catch. An attempt that already carries an
+    # execution_id has been submitted and its result has not been collected yet.
+    # The lease does not stop a re-submit, because re-claiming a lease you already
+    # hold deliberately succeeds — it is what lets a dispatcher resume after
+    # losing its own connection. So the same owner could submit the same attempt
+    # again, starting a SECOND Hermes turn for it on the same session: two turns
+    # interleave on one session, the transcript interleaves with them, and the
+    # step never completes. Reclaiming is for a DEAD owner whose lease expired; a
+    # live in-flight attempt is not reclaimable, and `recover` is the path that
+    # reconciles one found after a restart.
+    if attempt.execution_id:
+        return _AdvanceResult("in_flight", "attempt already submitted", step_id=step_id)
 
     try:
         try:

@@ -30,6 +30,7 @@ ceiling and this is the belt.
 from __future__ import annotations
 
 import sqlite3
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, List, Optional
 
@@ -91,12 +92,45 @@ def db_get_run(conn: sqlite3.Connection, run_id: str) -> Any:
     return db.get_run(conn, run_id)
 
 
+def _await_in_flight(conn, run_id, adapter, *, timeout: float, now=None, poll: float = 0.5) -> bool:
+    """Wait for the submitted turn to land. ``True`` if it did.
+
+    Polls the adapter rather than the database: the adapter owns the execution
+    and is the only thing that knows the answer. A ``None`` result means "still
+    running" — and, per the adapter's own contract, also "this process never made
+    that execution", which is the restart case `recover` exists for. Treating the
+    two identically here is deliberate: the bounded wait gives up either way and
+    the run's own state stays the record.
+    """
+    from hermes_cli import pipelines_db as db
+
+    deadline = time.monotonic() + max(0.0, timeout)
+    while True:
+        run = db.get_run(conn, run_id)
+        if run is None or run.current_step_id is None:
+            return True
+        live = [a for a in db.list_attempts(conn, run_id)
+                if a.step_id == run.current_step_id and a.status in ("running", "queued", "waiting_input")]
+        if not live or not live[-1].execution_id:
+            return True
+        try:
+            result = adapter.result(live[-1].execution_id)
+        except Exception:  # an unreachable adapter is an unknown outcome, not a crash
+            return False
+        if result is not None:
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(poll)
+
+
 def drive_run(
     conn: sqlite3.Connection,
     run_id: str,
     adapter: StepAdapter,
     *,
     owner: str,
+    in_flight_timeout: float = 900.0,
     lease_ttl: int = DEFAULT_LEASE_TTL,
     max_steps: int = 64,
     adapter_factory: Optional[Callable[[], StepAdapter]] = None,
@@ -141,6 +175,19 @@ def drive_run(
         if outcome.status in PARKING_STATUSES:
             report.stop_reason = f"parked: {outcome.status}"
             return report
+
+        if outcome.status == "in_flight":
+            # The turn is already submitted and its answer is not here yet. This
+            # driver owns the run, so it waits for the answer rather than
+            # returning: nothing else would collect it, and a run whose driver
+            # exits mid-turn is a run that stops forever with a `running`
+            # attempt nobody will ever read. Bounded, because a provider that
+            # never answers must not pin a thread for ever — the attempt stays
+            # `running` and `recover` is the path for it.
+            if not _await_in_flight(conn, run_id, adapter, timeout=in_flight_timeout, now=now):
+                report.stop_reason = "in flight, not collected"
+                return report
+            continue
 
         snapshot = _run_snapshot(conn, run_id)
         if snapshot == previous:
