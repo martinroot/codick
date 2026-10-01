@@ -32,6 +32,7 @@ import { useSearchParams } from "react-router";
 import { AttentionStrip } from "@/components/kanban/AttentionStrip";
 import { ConfirmDialog } from "@/components/kanban/ConfirmDialog";
 import { PipelinePanel } from "@/components/kanban/pipeline/PipelinePanel";
+import PipelineDesigner from "@/pages/pipeline/PipelineDesigner";
 import { CreateTaskDialog } from "@/components/kanban/CreateTaskDialog";
 import {
   BulkActionBar,
@@ -754,6 +755,9 @@ export default function KanbanMainPage() {
     }
   }, [closeCompletion, completionAsk, completionSummary, handleMove]);
 
+  /** Board or the pipeline designer; the header pill tabs are the switch. */
+  const [view, setView] = React.useState<"board" | "design">("board");
+
   const total = columns.reduce((sum, column) => sum + column.tasks.length, 0);
   const active = boards.find((b) => b.slug === board);
 
@@ -761,6 +765,30 @@ export default function KanbanMainPage() {
     <div className="d-flex flex-column gap-3">
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="d-flex align-items-center gap-2">
+          <ul className="nav nav-pills nav-sm gap-1" role="tablist">
+            <li className="nav-item" role="presentation">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={view === "board"}
+                className={`nav-link py-1 px-2 ${view === "board" ? "active" : ""}`}
+                onClick={() => setView("board")}
+              >
+                Board
+              </button>
+            </li>
+            <li className="nav-item" role="presentation">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={view === "design"}
+                className={`nav-link py-1 px-2 ${view === "design" ? "active" : ""}`}
+                onClick={() => setView("design")}
+              >
+                Design pipeline
+              </button>
+            </li>
+          </ul>
           <h1 className="h4 mb-0">{active?.name ?? "Kanban Desk — Main"}</h1>
           <span className="badge text-bg-secondary">
             {total} cards · {KANBAN_COLUMNS.length} columns
@@ -819,7 +847,9 @@ export default function KanbanMainPage() {
         <p className="text-body-secondary small mb-0">Loading the board…</p>
       ) : null}
 
-      {load.phase === "ready" && total === 0 ? (
+      {view === "design" ? <PipelineDesigner /> : null}
+
+      {view === "board" && load.phase === "ready" && total === 0 ? (
         <p className="text-body-secondary small mb-0">
           This board is empty. Create a card with the + on a column, or check
           you are looking at the right board.
