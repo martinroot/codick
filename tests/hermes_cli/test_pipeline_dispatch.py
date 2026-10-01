@@ -231,3 +231,50 @@ def test_a_driver_that_raises_leaves_the_run_recoverable_not_failed(client):
         ).status == "waiting_input"
     finally:
         dispatch._default_adapter = lambda: HermesStepAdapter(agent_factory=CountingAgent)
+
+def test_a_finished_run_leaves_its_card_in_the_column_it_earned(client):
+    """A completed run must not leave its card sitting in Blocked.
+
+    The card is born in `blocked` because `ready` is derived rather than set,
+    so a run that completes without ever moving its card reads as blocked
+    forever -- including one that produced an artifact. The board is the run's
+    only public face; the run's own status is not on the card.
+    """
+    from hermes_cli import kanban_db as kb
+    from hermes_cli import kanban_db_connect
+
+    template = _template()
+    client.post("/api/pipelines/templates", json={"template": template})
+    created = client.post(
+        "/api/pipelines/runs",
+        json={"template_id": template["id"], "inputs": {"topic": "t", "author": "m"}},
+        headers={"Idempotency-Key": "drive-card"},
+    )
+    assert created.status_code == 201, created.text
+    card_id = created.json()["card_id"]
+    run_id = created.json()["id"]
+
+    detail = _await_status(client, run_id, {"waiting_input"})
+    request_id = [r for r in detail["input_requests"] if r["status"] == "open"][0]["id"]
+    client.post(
+        f"/api/pipelines/runs/{run_id}/input-requests/{request_id}/response",
+        json={"response": {"ok": True}}, headers={"Idempotency-Key": "drive-card-answer"},
+    )
+    final = _await_status(client, run_id, {"completed", "failed"})
+    assert final["status"] == "completed", final
+
+    deadline = time.monotonic() + WAIT_SECONDS
+    column, completed_at = None, None
+    while time.monotonic() < deadline:
+        conn = kanban_db_connect.connect()
+        try:
+            task = kb.get_task(conn, card_id)
+        finally:
+            conn.close()
+        column = task.status if task else None
+        completed_at = task.completed_at if task else None
+        if column == "done" and completed_at:
+            break
+        time.sleep(0.05)
+    assert column == "done", f"card {card_id} stayed in {column!r} after the run completed"
+    assert completed_at, f"card {card_id} reached Done with no completed_at"

@@ -71,6 +71,31 @@ def _default_adapter():
     return build_default_adapter()
 
 
+def _sync_card(run_id: str) -> None:
+    """Put the run's card in the column its final status calls for.
+
+    The card is born in ``blocked`` because ``ready`` is derived and never set
+    explicitly, so without this the card sits in Blocked for the whole life of
+    the run -- including after it completed successfully, which is exactly what
+    a run that finished with an artifact looks like when the board still says
+    Blocked.
+
+    This runs after the executor has committed, in a second database, and its
+    failure is deliberately not the run's failure: a card that failed to move is
+    a board inconsistency a later sync repairs, not a lost result.
+    """
+    from hermes_cli import kanban_db_connect, pipeline_board
+
+    try:
+        with closing(_connect()) as pipelines_conn, \
+                closing(kanban_db_connect.connect()) as card_conn:
+            moved = pipeline_board.sync_card_column(pipelines_conn, card_conn, run_id)
+        if moved:
+            logger.info("pipeline run %s moved its card to %s", run_id, moved)
+    except Exception:
+        logger.exception("could not sync the card for pipeline run %s", run_id)
+
+
 def _drive(run_id: str, owner: str, adapter_factory: Callable[[], object]) -> None:
     from hermes_cli import pipeline_runner as runner
 
@@ -82,6 +107,7 @@ def _drive(run_id: str, owner: str, adapter_factory: Callable[[], object]) -> No
                 "pipeline run %s drove to %s in %d step(s): %s",
                 run_id, report.status, report.steps, report.stop_reason,
             )
+            _sync_card(run_id)
     except Exception:
         # A driver that dies must not look like a run that failed: the run's own
         # state is in SQLite, and `recover` reconciles it. Logging is the whole

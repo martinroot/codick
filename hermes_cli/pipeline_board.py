@@ -195,8 +195,13 @@ def sync_card_column(
     # run done, so manual column changes are rejected for pipeline cards. That
     # check belongs where a human's drag lands, not in the executor's own sync.
     with kb.write_txn(card_conn):
+        # A card that lands in Done has to say when: `completed_at` is what the
+        # board reads to age a card, and a timestamp that stays NULL makes a
+        # finished run indistinguishable from one that was never started.
+        stamp = f", completed_at = datetime('now')" if column == "done" else ""
+        clear = f", completed_at = NULL" if column in ("ready", "running", "blocked") else ""
         changed = card_conn.execute(
-            "UPDATE tasks SET status = ? WHERE id = ? AND status != ?",
+            f"UPDATE tasks SET status = ?{stamp}{clear} WHERE id = ? AND status != ?",
             (column, run.card_id, column)).rowcount
         if changed != 1:
             return None
