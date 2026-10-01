@@ -147,8 +147,27 @@
         "path": "weekly-report.docx",
         "title": "Weekly report"
       },
-      "next": null
+      "next": null,
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
     }
   ],
-  "start_step": "research"
+  "start_step": "research",
+  "result": {
+    "document": {
+      "ref": "steps.publish.output.path"
+    }
+  }
 }

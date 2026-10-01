@@ -152,6 +152,25 @@ An `optional` ref is allowed **only** with an explicit `default`. Everywhere
 else, missing data is a step error — silently substituting nothing would turn a
 scenario's data mistake into a wrong result.
 
+## The deliverable
+
+A template may declare what the run *produces*:
+
+```json
+"result": {"document": {"ref": "steps.export.output.artifact_ref"}}
+```
+
+On completion those refs are resolved, and any value that is a string naming an
+existing file of a servable type is copied into the run's artifact directory and
+registered. The run's result then carries `artifact_id`, `filename` and a
+`path` pointing at the protected download route — never a filesystem path, which
+is what spec §11 forbids.
+
+A declared value that is not a file — a verdict, a sentence — is passed through
+unchanged, so `{"verdict": true}` stays `{"verdict": true}` and never becomes an
+empty artifact. A template that declares no `result` keeps returning the full
+map of step outputs, as before.
+
 ## Readiness
 
 Importing a template assesses it against this install:

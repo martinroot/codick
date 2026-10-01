@@ -8,6 +8,7 @@ conversation, and a command arriving in a JSON field.
 
 from __future__ import annotations
 
+import json
 import threading
 import time
 
@@ -118,6 +119,51 @@ def test_submit_refuses_without_the_three_ids():
     with pytest.raises(AdapterError) as excinfo:
         adapter.submit({"step_id": "draft"})
     assert excinfo.value.error_code == "contract_invalid"
+
+
+
+
+def test_a_tool_step_is_dispatched_to_the_registry_and_never_to_the_model():
+    """A `tool` step must run the tool, not ask a model to describe running it.
+
+    `run_tool_step` existed, was correct, and had no production caller: every
+    step went to `_execute_agent_step`, so a template's `tool` field was never
+    dispatched and the step "succeeded" with whatever the model said about
+    running it. This pins the branch that makes the method reachable, and that
+    no agent is constructed for a tool step at all.
+    """
+    from hermes_cli import pipeline_hermes_adapter as adapter_module
+
+    calls = []
+    built = []
+
+    def dispatch(name, arguments):
+        calls.append((name, arguments))
+        return json.dumps({"path": "out.docx", "bytes": 1234})
+
+    def factory(**kwargs):
+        built.append(kwargs)
+        raise AssertionError("a tool step must not construct an agent")
+
+    adapter = adapter_module.HermesStepAdapter(
+        agent_factory=factory, dispatcher=dispatch,
+        schema_for=lambda tool_id: {"type": "object", "properties": {"path": {"type": "string"}},
+                                    "required": ["path"]},
+        tool_available=lambda tool_id: True,
+        semantics_reader=lambda tool_id: {"retry_safe": True, "cancellable": True},
+    )
+    execution_id = adapter.submit({
+        "run_id": "run-1", "step_id": "publish", "attempt_id": "att-1",
+        "type": "tool", "tool": "documents.export_docx",
+        "input": {"path": "out.docx"},
+    })
+    result = _await(adapter, execution_id)
+    assert result.state == "completed", (result.state, result.error)
+    # The handler's JSON string is decoded, so the step's output is real JSON
+    # and not a quoted blob the executor's output_schema check would reject.
+    assert result.output == {"path": "out.docx", "bytes": 1234}, result.output
+    assert calls == [("documents.export_docx", {"path": "out.docx"})], calls
+    assert built == [], "the agent factory was called for a tool step"
 
 
 # --- the agent gets the task and its data, not a transcript ---------------------

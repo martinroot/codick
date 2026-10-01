@@ -31,6 +31,7 @@ import sqlite3
 import time
 from typing import Any, Callable, Mapping, Optional, Protocol
 
+from hermes_cli import pipeline_artifacts  # noqa: F401  (result publishing)
 from hermes_cli import pipelines_db as db
 from hermes_cli.pipeline_template import CONDITION_OPS
 
@@ -394,14 +395,26 @@ def _run_user_input(conn, run_id, step, *, owner, lease_ttl, now) -> _AdvanceRes
     makes the run resumable when the answer lands.
     """
     step_id = step.get("id")
-    attempt = _pending_attempt(conn, run_id, step_id)
+    # Unlike an agent step, a `waiting_input` attempt is NOT superseded here: it
+    # is the carrier of the open request, so replacing it would orphan the
+    # answer. `_pending_attempt` deliberately excludes it (a technical retry
+    # should be a new attempt), which is right for agents and wrong for this
+    # step — hence the explicit live set rather than a change to that helper.
+    parked = [a for a in db.list_attempts(conn, run_id)
+              if a.step_id == step_id and a.status in ("queued", "running", "waiting_input")]
+    attempt = parked[-1] if parked else None
     if attempt is None:
         attempt_id = db.create_attempt(conn, run_id, step_id, input_snapshot=step.get("prompt"))
         attempt = db.get_attempt(conn, attempt_id)
         assert attempt is not None
 
+    # Scoped to the attempt, not the step: a rework return gives this step a
+    # fresh attempt, and that attempt must ask again. Filtering by step_id made
+    # the new attempt inherit the previous iteration's answer, so a rejected
+    # review was silently "answered" by the refusal that triggered the rework,
+    # and the run looped until it hit max_step_executions.
     existing = [r for r in db.list_input_requests(conn, run_id)
-                if r.step_id == step_id and r.status in ("open", "answered")]
+                if r.attempt_id == attempt.id and r.status in ("open", "answered")]
     if existing:
         # Already waiting, or answered but not yet consumed — do not open a
         # second request for the same step.
@@ -432,8 +445,10 @@ def _run_user_input(conn, run_id, step, *, owner, lease_ttl, now) -> _AdvanceRes
 
 def _consume_input_answer(conn, run_id, step, attempt, *, lease_ttl, now) -> _AdvanceResult:
     """Take the accepted answer as the step's output and move on."""
+    # Attempt-scoped for the same reason as `_run_user_input`'s `existing`: an
+    # answer belongs to the attempt that asked for it.
     answered = [r for r in db.list_input_requests(conn, run_id)
-                if r.step_id == attempt.step_id and r.status == "answered"]
+                if r.attempt_id == attempt.id and r.status == "answered"]
     response = answered[-1].accepted_response if answered else None
     if not db.claim_attempt(conn, attempt.id, "executor:consume", ttl_seconds=lease_ttl, now=now):
         return _AdvanceResult("contended", "lease held elsewhere", step_id=attempt.step_id)
@@ -493,6 +508,9 @@ def _run_model_step(conn, run_id, template, step, adapter, *, owner, lease_ttl, 
         request = {
             "run_id": run_id, "step_id": step_id, "attempt_id": attempt.id,
             "profile": step.get("profile"), "type": step.get("type"),
+            # The tool id is what makes a `tool` step a tool step; the request
+            # carried only `type`, so the adapter had nothing to dispatch.
+            "tool": step.get("tool"),
             "instruction": step.get("instruction"), "input": resolved_input,
             "output_schema": step.get("output_schema"),
             "idempotency_key": attempt.idempotency_key,
@@ -524,7 +542,8 @@ def _run_model_step(conn, run_id, template, step, adapter, *, owner, lease_ttl, 
                 max_attempts=max_attempts,
             )
         # --- transaction closed again ---
-        return _record_success(conn, run_id, template, step, attempt, result.output, now=now)
+        return _record_success(conn, run_id, template, step, attempt, result.output, now=now,
+                              owner=owner)
     finally:
         db.release_attempt(conn, attempt.id, owner)
 
@@ -549,7 +568,8 @@ def _record_failure(conn, run_id, attempt, step, exc: AdapterError, *, max_attem
     return _AdvanceResult("failed", code, step_id=attempt.step_id)
 
 
-def _record_success(conn, run_id, template, step, attempt, output, *, now=None) -> _AdvanceResult:
+def _record_success(conn, run_id, template, step, attempt, output, *, now=None,
+                   owner=None) -> _AdvanceResult:
     """Land a completed step and route on, in as few transactions as possible."""
     db.finish_attempt(conn, attempt.id, "completed",
                       output=output if isinstance(output, dict) else {}, occurred_at=now)
@@ -569,8 +589,16 @@ def _record_success(conn, run_id, template, step, attempt, output, *, now=None) 
         db.finish_run(conn, run_id, "failed", error=decision.fail, error_code="condition_default_fail")
         return _AdvanceResult("failed", "condition default fail", step_id=step.get("id"))
     if not decision.step_id:
-        db.set_run_result(conn, run_id, outputs)
-        db.finish_run(conn, run_id, "completed", result=outputs, occurred_at=now)
+        # A declared `result` (spec §7) is what the run *delivers*; publishing it
+        # is what makes a completed run downloadable. Undeclared templates keep
+        # the full output map they have always returned.
+        result = pipeline_artifacts.resolve_declared_result(
+            conn, run_id, template, inputs, outputs, owner=owner, resolve_refs=resolve_refs,
+        )
+        if result is None:
+            result = outputs
+        db.set_run_result(conn, run_id, result)
+        db.finish_run(conn, run_id, "completed", result=result, occurred_at=now)
         return _AdvanceResult("completed", "run finished", step_id=step.get("id"))
     db.set_run_scheduling(conn, run_id, current_step_id=decision.step_id)
     return _AdvanceResult("advanced", decision.reason, step_id=step.get("id"))
@@ -636,7 +664,7 @@ def recover(conn: sqlite3.Connection, adapter: "StepAdapter", *, owner: str,
                 db.finish_attempt(conn, attempt.id, "completed", output=result.output or {})
                 if isinstance(template, Mapping) and find_step(template, attempt.step_id) is not None:
                     results.append(_record_success(conn, run_id, template, find_step(template, attempt.step_id),
-                                                  attempt, result.output or {}))
+                                                  attempt, result.output or {}, owner=owner))
                 else:
                     results.append(_AdvanceResult("completed", "adopted adapter result", step_id=attempt.step_id))
                 continue

@@ -334,7 +334,14 @@ class HermesStepAdapter:
 
     def _run_attempt(self, execution: _Execution, request: dict) -> None:
         try:
-            execution.result = self._execute_agent_step(request, execution)
+            # A `tool` step executes a registered tool. Without this branch it
+            # fell through to the agent turn, so a template's `tool` field was
+            # never dispatched and `run_tool_step` had no production caller —
+            # the step "ran" as a model call that happened to be told about it.
+            if request.get("type") == "tool":
+                execution.result = self._execute_tool_step(request)
+            else:
+                execution.result = self._execute_agent_step(request, execution)
         except UnknownOutcome:
             # Deliberately not recorded as a failure: we do not know whether the
             # side effect happened, and the executor has a distinct path for
@@ -361,6 +368,26 @@ class HermesStepAdapter:
         )
 
     # -- the agent turn ----------------------------------------------------------
+
+    def _execute_tool_step(self, request: dict) -> ExecutionResult:
+        """Dispatch a ``tool`` step's registered tool and shape its output.
+
+        No model, no session, no repair turn: the tool's own result is the
+        step's result, and prose is not something a tool can return here. The
+        JSON-string convention the tool handlers use is decoded once so the
+        step's ``output_schema`` is validated against real JSON, not against a
+        quoted string.
+        """
+        tool_id = request.get("tool")
+        if not isinstance(tool_id, str) or not tool_id.strip():
+            raise ContractError("a tool step needs a registered tool id")
+        result = self.run_tool_step(tool_id, request.get("input") or {})
+        if isinstance(result, str):
+            decoded = extract_json_object(result)
+            result = decoded if isinstance(decoded, dict) else {"text": result}
+        elif not isinstance(result, dict):
+            result = {"result": result}
+        return ExecutionResult(state="completed", output=result)
 
     def _execute_agent_step(self, request: dict, execution: Optional[_Execution] = None) -> ExecutionResult:
         instruction = str(request.get("instruction") or "")
