@@ -42,8 +42,12 @@ from hermes_cli.pipeline_readiness import _default_tool_names, assess_readiness
 from hermes_cli.sqlite_util import add_column_if_missing, open_db, write_txn
 from hermes_constants import get_hermes_home
 
+#: Once an attempt has reached one of these, nothing rewrites it. Stop is what
+#: makes them reachable before the adapter answers.
+_TERMINAL_ATTEMPT_STATUSES = frozenset({"completed", "failed", "cancelled", "unknown"})
+
 __all__ = [
-    "RUN_STATUSES", "TERMINAL_RUN_STATUSES", "ATTEMPT_STATUSES", "REQUEST_STATUSES",
+    "RUN_STATUSES", "TERMINAL_RUN_STATUSES", "cancel_run", "ATTEMPT_STATUSES", "REQUEST_STATUSES",
     "KNOWN_EVENT_TYPES", "EVENT_SCHEMA_VERSION",
     "ScenarioTemplate", "PipelineRun", "StepAttempt", "InputRequest", "RunEvent", "Artifact",
     "pipelines_data_root", "pipelines_db_path", "artifacts_root", "connect", "connect_closing",
@@ -969,6 +973,52 @@ def _require_step_of(conn: sqlite3.Connection, attempt_id: str) -> Optional[str]
     return row["step_id"] if row else None
 
 
+def cancel_run(
+    conn: sqlite3.Connection, run_id: str, *, reason: Optional[str] = None,
+    occurred_at: Optional[int] = None,
+) -> bool:
+    """Stop a run: no further steps, and in-flight attempts stop counting.
+
+    Spec §14 check 9, first half. Two things happen here and both matter: the
+    run reaches a terminal status so :func:`~hermes_cli.pipeline_executor.advance`
+    refuses it (it only admits ``queued``/``running``/``waiting_input``), and
+    every attempt that is still live becomes ``cancelled`` — which is what makes
+    the late result harmless, because ``finish_attempt`` will not rewrite a
+    terminal attempt.
+
+    Returns ``False`` when the run was already terminal. Cancelling a finished
+    run is not an error and not a success: the caller's intent is already
+    satisfied, and saying otherwise would have it retry.
+    """
+    ts = occurred_at if occurred_at is not None else _now()
+    with write_txn(conn):
+        run = get_run(conn, run_id)
+        if run is None:
+            return False
+        if run.status in TERMINAL_RUN_STATUSES:
+            return False
+        conn.execute(
+            "UPDATE pipeline_runs SET status = 'cancelled', error = ?, error_code = 'cancelled', "
+            "ended_at = ? WHERE id = ?",
+            (reason, ts, run_id),
+        )
+        conn.execute(
+            "UPDATE step_attempts SET status = 'cancelled', error_code = 'cancelled', ended_at = ? "
+            "WHERE run_id = ? AND status IN ('queued', 'running', 'waiting_input')",
+            (ts, run_id),
+        )
+        # An open request goes with it. A run that is stopped while waiting for
+        # a person would otherwise keep presenting itself as waiting, and the
+        # answer that finally arrived would be recorded against a dead run.
+        conn.execute(
+            "UPDATE input_requests SET status = 'cancelled', closed_at = ? "
+            "WHERE run_id = ? AND status = 'open'",
+            (ts, run_id),
+        )
+    append_event(conn, run_id, "run.cancelled", payload={"reason": reason})
+    return True
+
+
 def finish_attempt(
     conn: sqlite3.Connection, attempt_id: str, status: str, *, output: Optional[dict] = None,
     error: Optional[str] = None, error_code: Optional[str] = None, occurred_at: Optional[int] = None,
@@ -981,6 +1031,14 @@ def finish_attempt(
     ts = occurred_at if occurred_at is not None else _now()
     with write_txn(conn):
         row = _require_attempt_row(conn, attempt_id)
+        # A terminal attempt is final. This is the guard acceptance check 9
+        # needs and it lives here on purpose: a model call that was already in
+        # flight when the user pressed Stop still reports its result, and every
+        # late path (success, failure, unknown, restart reconciliation) ends at
+        # this one call. Checking "is the run cancelled?" at each call site would
+        # be four checks and four chances to add a fifth later.
+        if row["status"] in _TERMINAL_ATTEMPT_STATUSES:
+            return 0
         conn.execute(
             "UPDATE step_attempts SET status = ?, output = ?, error = ?, error_code = ?, ended_at = ? WHERE id = ?",
             (status, _dumps(output), error, error_code, ts, attempt_id),

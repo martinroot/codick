@@ -73,6 +73,11 @@ class DriveReport:
         return f"DriveReport(status={self.status!r}, steps={self.steps}, stop_reason={self.stop_reason!r})"
 
 
+def _current_status(conn: sqlite3.Connection, run_id: str) -> Optional[str]:
+    run = db_get_run(conn, run_id)
+    return getattr(run, "status", None)
+
+
 def _run_snapshot(conn: sqlite3.Connection, run_id: str) -> tuple[Optional[str], Optional[str]]:
     run = db_get_run(conn, run_id)
     if run is None:
@@ -115,7 +120,18 @@ def drive_run(
     stalled = 0
 
     for _ in range(max_steps):
-        outcome = advance(conn, run_id, adapter, owner=owner, lease_ttl=lease_ttl, now=now)
+        try:
+            outcome = advance(conn, run_id, adapter, owner=owner, lease_ttl=lease_ttl, now=now)
+        except ValueError:
+            # Somebody stopped the run between the check and the call. That is
+            # an outcome, not a crash: a runner that dies on a cancelled run
+            # takes the dispatcher with it and reports a failure nobody caused.
+            status = _current_status(conn, run_id)
+            if status == "cancelled":
+                report.status = "cancelled"
+                report.stop_reason = "cancelled by another caller"
+                return report
+            raise
         report.steps += 1
         report.status = outcome.status
         report.step_id = outcome.step_id or report.step_id

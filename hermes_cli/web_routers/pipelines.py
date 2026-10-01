@@ -467,6 +467,40 @@ def get_run(run_id: str, request: Request) -> dict:
     return _run_detail(run_id)
 
 
+@router.post("/runs/{run_id}/stop")
+def stop_run(run_id: str, request: Request) -> dict:
+    """Stop a run (spec §7, spec §14 check 9).
+
+    Two things happen and both are the point. The run reaches ``cancelled``, so
+    ``advance`` refuses it — it only admits ``queued``/``running``/
+    ``waiting_input`` — and every attempt still live becomes ``cancelled`` too,
+    which is what makes the result of a call that was already in flight harmless:
+    ``finish_attempt`` will not rewrite a terminal attempt.
+
+    **A stop is not a promise that the external work stopped.** A model turn
+    already running keeps running until the provider returns; what is guaranteed
+    is that its answer cannot change this run. Saying otherwise in the response
+    would be a claim the system cannot support.
+
+    **Stopping a finished run is 409, not a silent success.** The caller's
+    intent is already satisfied and pretending otherwise would have a client
+    retry a stop that can never take effect.
+
+    Ownership is checked first, so a caller cannot discover a foreign run's
+    status by trying to stop it.
+    """
+    scope = _scope_for_request(request)
+    conn = _connect()
+    with closing(conn):
+        _require_owned_run(conn, run_id, scope)
+        cancelled = db.cancel_run(conn, run_id, reason="stopped by request")
+    if not cancelled:
+        raise HTTPException(
+            status_code=409,
+            detail={"message": "run has already finished and cannot be stopped"})
+    return _run_detail(run_id)
+
+
 @router.get("/artifacts/{artifact_id}/download")
 def download_artifact(artifact_id: str, request: Request):
     """Serve an artifact's bytes (spec §11).

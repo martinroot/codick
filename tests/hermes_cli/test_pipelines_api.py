@@ -854,3 +854,59 @@ def test_an_unavailable_template_is_409_not_runnable(client):
                     headers={"Idempotency-Key": "k1"})
     assert r.status_code == 409, r.text
     assert r.json()["detail"]["readiness"] == "unavailable"
+
+
+# --- Stop (spec §14 check 9) ------------------------------------------------
+
+def test_stopping_a_run_cancels_it(client):
+    _store(client, _variant("stoppable"))
+    run_id = _create(client, "stop-1", template_id="stoppable")
+    r = client.post(f"/api/pipelines/runs/{run_id}/stop")
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "cancelled"
+
+
+def test_a_stopped_run_stops_admitting_answers(client):
+    """Stopping while a run waits for a person closes that door too."""
+    run_id, request_id = _run_to_waiting(client, _variant("ask"))
+    assert client.post(f"/api/pipelines/runs/{run_id}/stop").status_code == 200
+    conn = db.connect()
+    try:
+        assert db.get_run(conn, run_id).status == "cancelled"
+        # The request is cancelled with it, so an answer cannot restart anything.
+        stored = db.get_input_request(conn, request_id)
+        assert stored.status == "cancelled"
+    finally:
+        conn.close()
+
+
+def test_stopping_a_finished_run_is_409_not_a_silent_success(client):
+    """A client must not be invited to retry a stop that can never take effect."""
+    _store(client, _variant("stoppable"))
+    run_id = _create(client, "stop-2", template_id="stoppable")
+    conn = db.connect()
+    db.set_run_status(conn, run_id, "completed")
+    conn.close()
+    r = client.post(f"/api/pipelines/runs/{run_id}/stop")
+    assert r.status_code == 409, r.text
+
+
+def test_one_site_cannot_stop_another_sites_run(client):
+    """Ownership is checked before the stop, or this route is a status oracle."""
+    _store(client, _variant("stoppable"))
+    run_id = _create(client, "stop-3", template_id="stoppable")
+    saved = client.headers.get("Authorization")
+    client.headers["Authorization"] = f"Bearer {mint('site-b')}"
+    try:
+        r = client.post(f"/api/pipelines/runs/{run_id}/stop")
+    finally:
+        client.headers["Authorization"] = saved
+    assert r.status_code in (403, 404), r.text
+    conn = db.connect()
+    assert db.get_run(conn, run_id).status != "cancelled"
+    conn.close()
+
+
+def test_stopping_an_unknown_run_is_the_same_refusal(client):
+    r = client.post("/api/pipelines/runs/run_does_not_exist/stop")
+    assert r.status_code in (403, 404), r.text
