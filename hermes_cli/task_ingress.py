@@ -49,7 +49,7 @@ import sqlite3
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator, Optional
+from typing import Any, Iterator, List, Optional
 
 from hermes_cli.sqlite_util import write_txn
 
@@ -115,6 +115,23 @@ CREATE TABLE IF NOT EXISTS external_tasks (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_external_tasks_correlation
     ON external_tasks (correlation_id);
 
+-- One task, many deliveries (#57).
+--
+-- `external_tasks` is keyed by correlation id, so a To Do item and a Telegram
+-- message about the same piece of work cannot both be rows in it: the unique
+-- index would refuse the second. That is the whole problem, and it is why this
+-- table exists. A delivery is the *channel-side* handle; the task is the work.
+CREATE TABLE IF NOT EXISTS external_deliveries (
+    platform       TEXT NOT NULL,
+    external_id    TEXT NOT NULL,
+    correlation_id TEXT NOT NULL,
+    received_at    REAL NOT NULL,
+    PRIMARY KEY (platform, external_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_external_deliveries_correlation
+    ON external_deliveries (correlation_id);
+
 CREATE INDEX IF NOT EXISTS idx_external_tasks_board_task
     ON external_tasks (board_task_id);
 
@@ -131,6 +148,29 @@ CREATE TABLE IF NOT EXISTS routing_rules (
 _INITIALIZED_PATHS: set[str] = set()
 
 
+def _backfill_deliveries(conn: sqlite3.Connection) -> None:
+    """Give every existing task a delivery row for its own (platform, id).
+
+    Before #57 the task row *was* the delivery, so a database written by the old
+    schema has rows with no delivery behind them. Backfilling keeps those tasks
+    reachable through the new lookup instead of silently vanishing from it.
+
+    ``INSERT OR IGNORE`` on the primary key makes this safe to re-run, which
+    matters because the schema is applied on every open.
+
+    It opens its own transaction rather than relying on the caller: a bare
+    execute leaves an implicit transaction open, and the next ``write_txn`` on
+    the same connection then fails with "cannot start a transaction within a
+    transaction" -- an error a long way from this function.
+    """
+    with write_txn(conn):
+        conn.execute(
+            "INSERT OR IGNORE INTO external_deliveries "
+            "(platform, external_id, correlation_id, received_at) "
+            "SELECT platform, external_id, correlation_id, received_at FROM external_tasks"
+        )
+
+
 def connect(db_path: Optional[Path] = None) -> sqlite3.Connection:
     """Open (and initialize if needed) the ingress DB. Schema init is
     idempotent and cached per resolved path per process; ``db_path`` is the
@@ -143,6 +183,7 @@ def connect(db_path: Optional[Path] = None) -> sqlite3.Connection:
         if resolved in _INITIALIZED_PATHS:
             return
         conn.executescript(SCHEMA_SQL)
+        _backfill_deliveries(conn)
         conn.commit()
         _INITIALIZED_PATHS.add(resolved)
 
@@ -430,6 +471,14 @@ def upsert_task(
                 (profile, project, channel, title, _dumps(detail), ts,
                  platform, external_id),
             )
+    # A task created on To Do is also a To Do *delivery*. Without this the task
+    # row exists but nothing can reach it through the delivery lookup, so
+    # `list_deliveries` would omit its own channel and a second channel's binding
+    # would not be visible from the first.
+    record_delivery(
+        conn, platform=platform, external_id=external_id,
+        correlation_id=correlation, now=ts,
+    )
     task = get_task(conn, platform=platform, external_id=external_id)
     if task is None:  # pragma: no cover - the row was just written
         raise RuntimeError("external task vanished immediately after upsert")
@@ -439,11 +488,79 @@ def upsert_task(
 def get_task(
     conn: sqlite3.Connection, *, platform: str, external_id: str
 ) -> Optional[ExternalTask]:
+    """The task behind one channel-side handle.
+
+    Resolved through ``external_deliveries`` first, so a To Do id and a Telegram
+    id that name the same correlation id return the **same** task. Falling back
+    to the task row keeps databases written before #57 readable.
+    """
+    row = conn.execute(
+        "SELECT correlation_id FROM external_deliveries "
+        "WHERE platform = ? AND external_id = ?",
+        (platform, external_id),
+    ).fetchone()
+    if row is not None:
+        return get_task_by_correlation(conn, row["correlation_id"])
     row = conn.execute(
         "SELECT * FROM external_tasks WHERE platform = ? AND external_id = ?",
         (platform, external_id),
     ).fetchone()
     return ExternalTask.from_row(row) if row is not None else None
+
+
+def record_delivery(
+    conn: sqlite3.Connection,
+    *,
+    platform: str,
+    external_id: str,
+    correlation_id: str,
+    now: Optional[float] = None,
+) -> str:
+    """Attach a channel-side handle to a task; returns the correlation id.
+
+    Insert-first, so two concurrent deliveries of the same item cannot both
+    decide they own the binding: the primary key decides, and the loser gets the
+    winner's correlation id back rather than inventing its own.
+
+    Two platforms naming the **same** correlation id is the #57 case -- a To Do
+    item and a Telegram message about the same work -- and it is exactly what
+    this table makes expressible.
+    """
+    ts = time.time() if now is None else now
+    with write_txn(conn):
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO external_deliveries "
+            "(platform, external_id, correlation_id, received_at) VALUES (?, ?, ?, ?)",
+            (platform, external_id, correlation_id, ts),
+        )
+        if cur.rowcount == 0:
+            row = conn.execute(
+                "SELECT correlation_id FROM external_deliveries "
+                "WHERE platform = ? AND external_id = ?",
+                (platform, external_id),
+            ).fetchone()
+            if row is not None and row["correlation_id"] != correlation_id:
+                # A retry that names a different task is a real conflict, not a
+                # duplicate. Silently keeping the old binding would make the
+                # delivery's own correlation id a lie.
+                raise ValueError(
+                    f"delivery ({platform!r}, {external_id!r}) is already bound to "
+                    f"{row['correlation_id']!r}, not {correlation_id!r}"
+                )
+            return row["correlation_id"] if row is not None else correlation_id
+    return correlation_id
+
+
+def list_deliveries(
+    conn: sqlite3.Connection, correlation_id: str
+) -> List[dict]:
+    """Every channel-side handle for one task."""
+    rows = conn.execute(
+        "SELECT platform, external_id, received_at FROM external_deliveries "
+        "WHERE correlation_id = ? ORDER BY platform, external_id",
+        (correlation_id,),
+    ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def get_task_by_correlation(
@@ -472,6 +589,13 @@ def bind_run(
     ``api_server`` the session key is not bound to a credential.
     """
     ts = time.time() if now is None else now
+    # Resolved through the delivery to the task's own row. Binding by the
+    # delivery's (platform, external_id) would update nothing for a second
+    # channel: that handle has no task row of its own, so the run and the
+    # session were written nowhere and the binding silently vanished.
+    task = get_task(conn, platform=platform, external_id=external_id)
+    if task is None:
+        return None
     with write_txn(conn):
         conn.execute(
             """
@@ -480,11 +604,11 @@ def bind_run(
                    run_id = COALESCE(?, run_id),
                    session_id = COALESCE(?, session_id),
                    updated_at = ?
-             WHERE platform = ? AND external_id = ?
+             WHERE correlation_id = ?
             """,
-            (board_task_id, run_id, session_id, ts, platform, external_id),
+            (board_task_id, run_id, session_id, ts, task.correlation_id),
         )
-    return get_task(conn, platform=platform, external_id=external_id)
+    return get_task_by_correlation(conn, task.correlation_id)
 
 
 def set_state(
