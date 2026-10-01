@@ -260,6 +260,51 @@ def test_missing_task_is_none_not_an_error(conn):
 # --- routing rules table (#55 groundwork) -----------------------------------
 
 
+# --- one key format across both webhook paths ------------------------------
+
+
+def test_the_receipt_key_matches_the_teams_pipeline_format():
+    """Held against the real plugin code, not against a copy of the format.
+
+    Two systems that dedupe but spell their keys differently still run the
+    duplicate twice, and nothing reports it. So this test calls the existing
+    implementation.
+    """
+    import json as _json
+
+    from plugins.teams_pipeline.store import TeamsPipelineStore
+
+    cases = [
+        {"id": "evt-1", "subject": "x"},
+        {"subject": "y", "value": 2},
+        {"b": 1, "a": 2},  # key order must not matter
+    ]
+    for notification in cases:
+        expected = TeamsPipelineStore.build_notification_receipt_key(notification)
+        assert ti.receipt_key(notification) == expected, notification
+
+
+def test_a_receipt_key_is_stable_across_key_order():
+    assert ti.receipt_key({"a": 1, "b": 2}) == ti.receipt_key({"b": 2, "a": 1})
+
+
+def test_an_explicit_id_wins_over_the_canonical_form():
+    # Otherwise two deliveries of the same notification could produce two keys
+    # if one of them carried an id and the other did not.
+    with_id = ti.receipt_key({"id": "e1", "x": 1})
+    without = ti.receipt_key({"x": 1})
+    assert with_id == "id:e1"
+    assert without.startswith("sha256:")
+
+
+def test_a_receipt_key_claim_is_idempotent_end_to_end(conn):
+    key = ti.receipt_key({"id": "evt-x"})
+    first = ti.claim_event(conn, platform="todo", event_id=key, payload_hash="h")
+    second = ti.claim_event(conn, platform="todo", event_id=key, payload_hash="h")
+    assert first.claimed is True
+    assert second.claimed is False
+
+
 def test_routing_rules_are_primary_keyed_per_platform(conn):
     with ti.write_txn(conn):
         conn.execute(

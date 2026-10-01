@@ -43,6 +43,7 @@ profile switches.
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import json
 import sqlite3
 import time
@@ -228,6 +229,30 @@ class ExternalTask:
             received_at=row["received_at"],
             updated_at=row["updated_at"],
         )
+
+
+def receipt_key(notification: dict) -> str:
+    """One key for one webhook delivery, in the same format the Teams pipeline
+    already uses (``plugins/teams_pipeline/store.py``).
+
+    The format is duplicated rather than imported on purpose. That plugin
+    directory is not importable from this package's dependency graph, and a
+    cross-plugin import to save three lines would couple the core to a plugin
+    that policy can move out of the tree. The contract is the *string*, and this
+    test is what holds the two honest:
+
+        id:<explicit id>                      when the payload carries one
+        sha256:<hex of canonical JSON>        otherwise
+
+    Two systems that agree on the spelling can share a delivery id. Two systems
+    that invent their own cannot, and the failure is silent: both dedupe, each
+    within itself, and the duplicate still runs twice.
+    """
+    explicit = notification.get("id")
+    if explicit:
+        return f"id:{explicit}"
+    canonical = json.dumps(notification, sort_keys=True, separators=(",", ":"))
+    return f"sha256:{hashlib.sha256(canonical.encode('utf-8')).hexdigest()}"
 
 
 def _dumps(value: Any) -> Optional[str]:
