@@ -7,7 +7,7 @@ import { StepStripView } from "@/components/kanban/pipeline/StepStripView";
 import {
   buildInputs,
   fieldsFromInputsSchema,
-  missingRequired,
+  inputProblems,
   unsupportedFields,
 } from "@/components/kanban/pipeline/inputForm";
 import {
@@ -121,7 +121,11 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
     () => fieldsFromInputsSchema(body?.inputs_schema),
     [body]
   );
-  const missing = React.useMemo(() => missingRequired(fields, values), [fields, values]);
+  // Validity is judged on what would actually be sent, not on what is typed.
+  // A required number holding "abc" looks filled and would be dropped on the way
+  // out, so a presence check alone lets the run start without it.
+  const problems = React.useMemo(() => inputProblems(fields, values), [fields, values]);
+  const missing = React.useMemo(() => Object.keys(problems), [problems]);
   const unsupported = React.useMemo(() => unsupportedFields(fields), [fields]);
   // Import readiness (#30, spec §6): a template that is stored but not runnable
   // is still selectable, and Run stays disabled with the reason on screen — a
@@ -289,6 +293,7 @@ export function PipelinePanel({ selectedCardId, onRunCreated, onError }: Pipelin
             className="btn btn-sm btn-primary"
             onClick={start}
             disabled={busy || !row || !runnable || missing.length > 0}
+            title={Object.entries(problems).map(([k, v]) => `${k}: ${v}`).join("; ")}
           >
             {busy ? "Working…" : "Run"}
           </button>

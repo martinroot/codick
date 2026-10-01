@@ -107,6 +107,69 @@ export function unsupportedFields(fields: InputField[]): InputField[] {
   return fields.filter((f) => f.unsupported);
 }
 
+/**
+ * Why this run cannot start, by field name.
+ *
+ * The check has to run against what {@link buildInputs} actually produced, not
+ * against the raw form values. They are not the same thing: a required number
+ * field holding `"abc"` is present in the form, so a presence check passes, and
+ * then `buildInputs` drops it for being non-numeric — and the run starts with a
+ * required input silently missing. The author filled the field in, watched it
+ * type, and got a report that does not contain it.
+ *
+ * This is the same reasoning as "unknown is never zero", one layer up: a value
+ * that could not be carried is absent, and absent is not valid.
+ */
+export function inputProblems(
+  fields: InputField[],
+  values: Record<string, unknown>
+): Record<string, string> {
+  const built = buildInputs(fields, values);
+  const problems: Record<string, string> = {};
+
+  for (const field of fields) {
+    const raw = values[field.name];
+    if (field.unsupported) {
+      // Only a *value* the form cannot render is a blocker. An untouched
+      // optional array is not: `buildInputs` omits it, and reporting it would
+      // make every run on a template with an optional attachment refuse to
+      // start over a field nobody filled in.
+      if (field.required || (raw !== undefined && raw !== null
+          && !(typeof raw === "string" && raw.trim() === ""))) {
+        problems[field.name] = "this input cannot be entered here — use Load JSON";
+      }
+      continue;
+    }
+    const missing = raw === undefined || raw === null
+      || (typeof raw === "string" && raw.trim() === "");
+
+    if (missing) {
+      if (field.required) problems[field.name] = "required";
+      continue;
+    }
+    // Present in the form but absent from the payload: it could not be carried.
+    if (!(field.name in built)) {
+      problems[field.name] = field.kind === "number"
+        ? `not a number: ${JSON.stringify(raw)}`
+        : "could not be used as entered";
+      continue;
+    }
+    if (field.kind === "number" && field.numericMin !== null) {
+      const value = built[field.name] as number;
+      if (value < field.numericMin) {
+        problems[field.name] = `must be at least ${field.numericMin}`;
+      }
+    }
+    if (field.kind === "number" && field.numericMax !== null) {
+      const value = built[field.name] as number;
+      if (value > field.numericMax) {
+        problems[field.name] = `must be at most ${field.numericMax}`;
+      }
+    }
+  }
+  return problems;
+}
+
 /** Missing required values, by field name. */
 export function missingRequired(fields: InputField[], values: Record<string, unknown>): string[] {
   return fields
