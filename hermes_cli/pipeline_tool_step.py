@@ -41,9 +41,23 @@ __all__ = [
 
 def registered_tool_schema(tool_id: str) -> Optional[Mapping[str, Any]]:
     """The registered tool's ``parameters`` JSON Schema, or ``None`` when the
-    tool is unknown. Injectable replacement lives in ``validate_tool_args``."""
+    tool is unknown. Injectable replacement lives in :func:`validate_tool_args`.
+
+    A tool that exists in this install but has not been imported yet is not
+    unknown -- it is undiscovered, and reporting "not registered" sends the
+    author hunting for a typo that is not there. Discovery is memoized on disk,
+    so the extra call is a cache read after the first time.
+    """
     from tools.registry import registry
     schema = registry.get_schema(tool_id)
+    if schema is None:
+        try:
+            from tools.registry import discover_builtin_tools
+
+            discover_builtin_tools()
+            schema = registry.get_schema(tool_id)
+        except Exception:  # pragma: no cover - discovery must never fail a step
+            pass
     if not isinstance(schema, dict):
         return None
     params = schema.get("parameters")
