@@ -135,6 +135,7 @@ def drive_run(
     max_steps: int = 64,
     adapter_factory: Optional[Callable[[], StepAdapter]] = None,
     now: Optional[int] = None,
+    on_advance: Optional[Callable[[str], None]] = None,
 ) -> DriveReport:
     """Drive one run until it parks, and report where it stopped.
 
@@ -171,6 +172,17 @@ def drive_run(
         report.step_id = outcome.step_id or report.step_id
         if outcome.detail:
             report.details.append(outcome.detail)
+
+        # Told after every advance so the board can follow the run as it goes.
+        # Without it a card jumps once from where it was born to where it
+        # finished, and a long run is indistinguishable from a stalled one -- the
+        # one thing a board exists to tell apart. Never fatal: a watcher that
+        # fails must not stop the work it is watching.
+        if on_advance is not None:
+            try:
+                on_advance(run_id)
+            except Exception:  # pragma: no cover - observation must not steer
+                logger.exception("on_advance hook failed for run %s", run_id)
 
         if outcome.status in PARKING_STATUSES:
             report.stop_reason = f"parked: {outcome.status}"

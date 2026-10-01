@@ -106,7 +106,8 @@ def _drive(run_id: str, owner: str, adapter_factory: Callable[[], object]) -> No
     try:
         with closing(_connect()) as conn:
             adapter = adapter_factory()
-            report = runner.drive_run(conn, run_id, adapter, owner=owner)
+            report = runner.drive_run(conn, run_id, adapter, owner=owner,
+                                      on_advance=lambda rid: _sync_card(rid))
             logger.info(
                 "pipeline run %s drove to %s in %d step(s): %s",
                 run_id, report.status, report.steps, report.stop_reason,

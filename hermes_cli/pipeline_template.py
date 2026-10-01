@@ -58,7 +58,7 @@ SCHEMA_VERSION = "1.0"
 CONDITION_OPS = frozenset({"eq", "ne", "exists", "gt", "gte", "lt", "lte", "all", "any"})
 _ORDER_OPS = frozenset({"gt", "gte", "lt", "lte"})
 
-STEP_TYPES = ("agent", "tool", "user_input", "condition")
+STEP_TYPES = ("agent", "tool", "user_input", "condition", "delay")
 
 
 # --- Structural schema (Draft 2020-12) ----------------------------------------
@@ -116,6 +116,11 @@ _TEMPLATE_SCHEMA = {
                     },
                 },
                 "wait_timeout_seconds": {"type": ["integer", "null"], "minimum": 0},
+                # delay: a step that takes time and spends nothing. For pacing
+                # against a rate limit, for waiting out something outside the
+                # run, and for making a multi-step run legible on the board
+                # instead of a single jump from start to finish.
+                "seconds": {"type": "integer", "minimum": 0, "maximum": 300},
                 # condition
                 "cases": {"type": "array", "minItems": 1},
                 "default": {"type": "object"},

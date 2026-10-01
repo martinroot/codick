@@ -367,8 +367,37 @@ def advance(
                               outputs=_outputs_for(conn, run_id), max_rework=max_rework)
     if step_type == "user_input":
         return _run_user_input(conn, run_id, step, owner=owner, lease_ttl=lease_ttl, now=now)
+    if step_type == "delay":
+        return _run_delay(conn, run_id, template, step, now=now, owner=owner)
     return _run_model_step(conn, run_id, template, step, adapter, owner=owner,
                           lease_ttl=lease_ttl, max_attempts=max_attempts, now=now)
+
+
+def _run_delay(conn, run_id, template, step, *, now: int, owner=None) -> _AdvanceResult:
+    """Spend wall-clock time without spending a model call or a tool.
+
+    A delay is an activation like any other, so it counts against the run's
+    step budget -- otherwise a delay loop would be the one step type that could
+    run forever. It records no usage at all: nothing was consumed, and a step
+    that reports zero because it did nothing would be indistinguishable from a
+    free tool that did.
+    """
+    db.bump_step_executions(conn, run_id)
+    seconds = step.get("seconds")
+    try:
+        seconds = int(seconds)
+    except (TypeError, ValueError):
+        seconds = 0
+    seconds = max(0, min(300, seconds))
+    if seconds:
+        # Small waits in slices, so a stop request or a deadline is noticed
+        # between them instead of after the whole wait.
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            time.sleep(min(0.25, deadline - time.monotonic()))
+    db.append_event(conn, run_id, "step.completed", step_id=step.get("id"),
+                    payload={"type": "delay", "seconds": seconds, "status": "completed"})
+    return _route_on(conn, run_id, template, step, now=now, owner=owner)
 
 
 def _run_condition(conn, run_id, template, step, *, inputs, outputs, max_rework) -> _AdvanceResult:
@@ -669,10 +698,22 @@ def _record_success(conn, run_id, template, step, attempt, output, *, now=None,
     """Land a completed step and route on, in as few transactions as possible."""
     db.finish_attempt(conn, attempt.id, "completed",
                       output=output if isinstance(output, dict) else {}, occurred_at=now)
+    return _route_on(conn, run_id, template, step, now=now, owner=owner,
+                     attempt_id=attempt.id)
+
+
+def _route_on(conn, run_id, template, step, *, now=None, owner=None,
+              attempt_id=None) -> _AdvanceResult:
+    """Decide what a finished step leads to, and write that down.
+
+    Shared by every step type so a `delay` routes exactly like an agent step:
+    transitions, rework budget, declared results and completion are one set of
+    rules, not one rule for real steps and a reimplementation for the others.
+    """
     outputs = _outputs_for(conn, run_id)
     inputs = (db.get_run(conn, run_id).inputs) or {}
     decision = select_next(template, step, inputs=inputs, outputs=outputs)
-    db.append_event(conn, run_id, "step.transition", step_id=step.get("id"), attempt_id=attempt.id,
+    db.append_event(conn, run_id, "step.transition", step_id=step.get("id"), attempt_id=attempt_id,
                     payload={"reason": decision.reason, "next": decision.step_id, "rework": decision.rework})
     max_rework, _max_attempts, _max_exec = _limits(template, step)
     if decision.rework:

@@ -335,3 +335,69 @@ def test_a_finished_run_attaches_its_deliverable_to_the_card(client):
     stored = Path(found[0].stored_path)
     assert stored.is_file(), f"attachment row points at a missing file: {stored}"
     assert stored.read_bytes(), "attached file is empty"
+
+
+def _delay_template(seconds: int) -> dict:
+    """A template whose only work is to take time."""
+    return {
+        "schema_version": "1.0",
+        "id": "delay-check",
+        "version": "1.0.0",
+        "name": "Delay check",
+        "inputs_schema": {"type": "object", "properties": {}},
+        "start_step": "pause",
+        "steps": [
+            {"id": "pause", "type": "delay", "title": "Pause", "seconds": seconds, "next": None},
+        ],
+    }
+
+
+def test_a_delay_step_waits_and_reports_no_usage(client, tmp_path):
+    """A delay spends wall-clock time and nothing else.
+
+    It must not report a cost: nothing was consumed, and a zero here would be
+    indistinguishable from a free tool that did real work.
+    """
+    template = _delay_template(2)
+    client.post("/api/pipelines/templates", json={"template": template})
+    run_id = client.post(
+        "/api/pipelines/runs", json={"template_id": template["id"], "inputs": {}},
+        headers={"Idempotency-Key": "delay-1"},
+    ).json()["id"]
+
+    started = time.monotonic()
+    detail = _await_status(client, run_id, {"completed", "failed"}, timeout=30.0)
+    elapsed = time.monotonic() - started
+
+    assert detail["status"] == "completed", detail
+    assert elapsed >= 1.5, f"delay of 2s finished in {elapsed:.2f}s"
+
+    conn = db.connect()
+    try:
+        usage = conn.execute(
+            "SELECT kind, cost_micros FROM step_usage WHERE run_id = ?", (run_id,)
+        ).fetchall()
+    finally:
+        conn.close()
+    assert usage == [], f"a delay recorded usage: {usage}"
+
+
+def test_a_delay_counts_against_the_step_budget(client):
+    """Otherwise a delay loop is the one step type that can run for ever."""
+    template = _delay_template(0)
+    template["limits"] = {"max_step_executions": 2}
+    client.post("/api/pipelines/templates", json={"template": template})
+    run_id = client.post(
+        "/api/pipelines/runs", json={"template_id": template["id"], "inputs": {}},
+        headers={"Idempotency-Key": "delay-budget"},
+    ).json()["id"]
+
+    detail = _await_status(client, run_id, {"completed", "failed"}, timeout=30.0)
+    assert detail["status"] == "completed", detail
+
+    conn = db.connect()
+    try:
+        run = db.get_run(conn, run_id)
+    finally:
+        conn.close()
+    assert run.step_executions == 1, run.step_executions
