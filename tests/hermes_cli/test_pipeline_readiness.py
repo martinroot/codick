@@ -41,12 +41,31 @@ def test_a_missing_tool_makes_the_template_unavailable_with_its_name():
     ]
 
 
-def test_a_registered_tool_leaves_it_ready():
+def test_a_registered_and_available_tool_leaves_it_ready():
+    """Both questions, answered yes.
+
+    The checker is injected so the test says what it means. Without it this
+    resolves against the real registry, and it stops being a test of readiness
+    at all -- it becomes a test of whether this machine happens to have a DOCX
+    provider configured, which is #63's subject and lives in
+    ``test_pipeline_readiness_availability.py``.
+    """
     verdict = assess_readiness(
-        tpl(TOOL_STEP), tool_names={"documents.export_docx"}
+        tpl(TOOL_STEP), tool_names={"documents.export_docx"},
+        checker=lambda name: True,
     )
     assert verdict["readiness_status"] == READINESS_READY
     assert verdict["readiness_detail"] is None
+
+
+def test_a_registered_but_unavailable_tool_is_not_ready():
+    """The distinction #63 exists for, in the module that grew it."""
+    verdict = assess_readiness(
+        tpl(TOOL_STEP), tool_names={"documents.export_docx"},
+        checker=lambda name: False,
+    )
+    assert verdict["readiness_status"] == READINESS_UNAVAILABLE
+    assert "registered but not available" in verdict["readiness_detail"][0]
 
 
 def test_detail_is_a_list_or_none_never_a_bare_string():
