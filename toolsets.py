@@ -128,7 +128,10 @@ TOOLSETS = {
         ["read_file", "write_file", "patch", "search_files"],
     ),
     "tts": _ts("Text-to-speech: convert text to audio with Edge TTS (free), ElevenLabs, OpenAI, or xAI", ["text_to_speech"]),
-    "documents": _ts("Write real Office documents (.docx) from text", ["documents.export_docx"]),
+    "documents": _ts(
+        "Write real documents (.docx, .pdf) from text",
+        ["documents.export_docx", "documents.export_pdf"],
+    ),
     "todo": _ts("Task planning and tracking for multi-step work", ["todo_list"]),
     "memory": _ts("Persistent memory across sessions (personal notes + user profile)", ["memory"]),
     "context_engine": _ts("Runtime tools exposed by the active context engine"),
