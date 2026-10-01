@@ -644,6 +644,38 @@ def _is_accepted_host(
 
 
 @app.middleware("http")
+async def json_content_type_middleware(request: Request, call_next):
+    """Treat a JSON document as JSON even when the client forgot to say so.
+
+    `fetch` assigns no content type to a string body, so a client that supplies
+    its own headers -- an idempotency key, say -- sends `text/plain`, and the
+    body model then rejects the whole document with "Input should be a valid
+    dictionary" and blames the payload's shape for a wire problem.
+
+    Fixing that in one caller left every other caller broken, which is the wrong
+    layer: the API is the thing that knows what shape it accepts. The body is
+    left untouched -- only the declared type is corrected, and only when the
+    bytes already parse as JSON, so a genuinely non-JSON payload still fails and
+    still says so.
+    """
+    if request.method in ("POST", "PUT", "PATCH"):
+        content_type = request.headers.get("content-type", "")
+        base = content_type.split(";", 1)[0].strip().lower()
+        # Both of these are what "no useful type" looks like on the wire: an
+        # absent header, `text/plain` from fetch for a string body, and the
+        # form type curl defaults to. In every case the bytes decide.
+        if base in ("", "text/plain", "application/x-www-form-urlencoded"):
+            body = await request.body()
+            stripped = body.lstrip()
+            if stripped[:1] in (b"{", b"["):
+                headers = [(k, v) for k, v in request.scope["headers"]
+                           if k.lower() != b"content-type"]
+                headers.append((b"content-type", b"application/json"))
+                request.scope["headers"] = headers
+    return await call_next(request)
+
+
+@app.middleware("http")
 async def host_header_middleware(request: Request, call_next):
     """Reject requests whose Host header doesn't match the bound interface (DNS rebinding, GHSA-ppp5-vxwm-4cf7)."""
     # app.state.bound_host is set by start_server() at listen time.
