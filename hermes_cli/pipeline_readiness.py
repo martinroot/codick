@@ -125,10 +125,70 @@ def missing_tools(
     return [name for name in required_tool_names(template) if name not in tool_names]
 
 
+def unavailable_tools(
+    template: Mapping[str, Any],
+    tool_names: Optional[set] = None,
+    reader: Callable[[], Optional[set]] = _default_tool_names,
+    checker: Optional[Callable[[str], bool]] = None,
+) -> List[str]:
+    """Tools this template needs that are registered but **not usable here**.
+
+    Registration is not availability. ``image_generation`` is always registered
+    and its ``check_fn`` returns False unless a provider is configured — so a
+    template naming it was reported ``ready``, sold, paid for, and then failed at
+    the tool step. That is the exact failure this module documents, and checking
+    only the registry cannot see it.
+
+    The checker is injected so a test does not have to stand up credentials, and
+    so a caller with its own view (a different profile) can supply one. A checker
+    that raises is treated as "unavailable", never as "fine": a probe that cannot
+    answer has not said yes.
+    """
+    if tool_names is None:
+        try:
+            tool_names = reader()
+        except Exception:
+            return []
+    if tool_names is None:
+        return []
+    if checker is None:
+        checker = _registry_checker()
+
+    unavailable = []
+    for name in required_tool_names(template):
+        if name not in tool_names:
+            continue  # already reported as missing
+        try:
+            if not checker(name):
+                unavailable.append(name)
+        except Exception:
+            unavailable.append(name)
+    return unavailable
+
+
+def _registry_checker() -> Callable[[str], bool]:
+    """Availability straight from the registry's own cached ``check_fn``."""
+
+    def check(name: str) -> bool:
+        from tools.registry import registry
+
+        entry = registry.get_entry(name)
+        if entry is None:
+            return False
+        if entry.check_fn is None:
+            return True
+        from tools.registry import _memo_check  # cached, scope-aware
+
+        return bool(_memo_check(entry.check_fn, {}))
+
+    return check
+
+
 def assess_readiness(
     template: Mapping[str, Any],
     tool_names: Optional[set] = None,
     reader: Callable[[], Optional[set]] = _default_tool_names,
+    checker: Optional[Callable[[str], bool]] = None,
 ) -> Dict[str, Any]:
     """``{"readiness_status": ..., "readiness_detail": [...]}`` for a template.
 
@@ -137,11 +197,13 @@ def assess_readiness(
     string and then fail to iterate.
     """
     missing = missing_tools(template, tool_names, reader)
-    if not missing:
+    unusable = unavailable_tools(template, tool_names, reader, checker)
+    if not missing and not unusable:
         return {"readiness_status": READINESS_READY, "readiness_detail": None}
-    return {
-        "readiness_status": READINESS_UNAVAILABLE,
-        "readiness_detail": [
-            f"tool {name!r} is not registered in this install" for name in missing
-        ],
-    }
+    detail = [f"tool {name!r} is not registered in this install" for name in missing]
+    detail += [
+        f"tool {name!r} is registered but not available in this install "
+        f"(its own readiness check failed; configure the provider or remove the step)"
+        for name in unusable
+    ]
+    return {"readiness_status": READINESS_UNAVAILABLE, "readiness_detail": detail}
