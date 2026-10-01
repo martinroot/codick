@@ -6,12 +6,22 @@ explain itself is the part that matters when a delivery ran under the wrong
 profile and produced the wrong output.
 """
 
-from types import SimpleNamespace
+from dataclasses import dataclass, replace
 
 import pytest
 
 from hermes_cli import task_routing as routing
 from hermes_cli.task_routing import ROUTED, UNROUTED, Rule
+
+
+@dataclass(frozen=True)
+class Target:
+    """A stand-in for the frozen ``ExternalTask``. It has to be a real dataclass
+    because ``apply_to`` returns a new value rather than assigning: a mutable
+    stand-in would let that shortcut hide."""
+    profile: object = None
+    project: object = None
+    channel: object = None
 
 
 def task(**overrides):
@@ -119,26 +129,27 @@ def test_a_routed_decision_without_a_profile_is_not_routed():
 
 
 def test_applying_a_routed_decision_writes_the_profile():
-    target = SimpleNamespace(profile=None, project=None, channel="ops")
-    routing.route(task(channel="ops"),
-                  [Rule(name="c", channel="ops", profile="ops-agent")]).apply_to(target)
-    assert target.profile == "ops-agent"
+    target = Target(profile=None, project=None, channel="ops")
+    routed = routing.route(task(channel="ops"),
+                           [Rule(name="c", channel="ops", profile="ops-agent")]).apply_to(target)
+    assert routed.profile == "ops-agent"
 
 
 def test_applying_an_unrouted_decision_changes_nothing():
     """Writing a null over a real profile would be a decision dressed as an
     absence -- the task would look unassigned rather than unrouted."""
-    target = SimpleNamespace(profile="already-set", project="p", channel="ops")
+    target = Target(profile="already-set", project="p", channel="ops")
     before = (target.profile, target.project, target.channel)
-    routing.route(task(channel="nowhere"), []).apply_to(target)
+    assert routing.route(task(channel="nowhere"), []).apply_to(target) is target
     assert (target.profile, target.project, target.channel) == before
 
 
 def test_a_project_rule_sets_the_project_too():
-    target = SimpleNamespace(profile=None, project=None, channel="ops")
-    routing.route(task(project="billing", channel="ops"),
-                  [Rule(name="p", project="billing", profile="billing-agent")]).apply_to(target)
-    assert target.project == "billing"
+    target = Target(profile=None, project=None, channel="ops")
+    routed = routing.route(
+        task(project="billing", channel="ops"),
+        [Rule(name="p", project="billing", profile="billing-agent")]).apply_to(target)
+    assert routed.project == "billing"
 
 
 # --- the decision is inspectable ---------------------------------------------

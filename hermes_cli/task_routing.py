@@ -29,7 +29,7 @@ assigned to whoever happened to be default.**
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, List, Mapping, Optional, Sequence
 
 UNROUTED = "unrouted"
@@ -96,19 +96,22 @@ class RouteDecision:
         }
 
     def apply_to(self, task: Any) -> Any:
-        """Write the decision onto an ``ExternalTask``, leaving unrouted ones be.
+        """A copy of *task* with the decision applied; unrouted ones come back
+        untouched.
 
-        An unrouted task keeps whatever it had. Writing a null profile over one
-        would be a decision dressed as an absence.
+        ``ExternalTask`` is frozen, which is right -- a task's identity should
+        not be editable in place -- so this returns a new value rather than
+        assigning. Writing a null profile over an existing one would be a
+        decision dressed as an absence.
         """
         if not self.routed:
             return task
-        task.profile = self.profile
+        changes: Dict[str, Any] = {"profile": self.profile}
         if self.project is not None:
-            task.project = self.project
+            changes["project"] = self.project
         if self.channel is not None:
-            task.channel = self.channel
-        return task
+            changes["channel"] = self.channel
+        return replace(task, **changes)
 
 
 def route(

@@ -288,6 +288,14 @@ def test_a_receipt_key_is_stable_across_key_order():
     assert ti.receipt_key({"a": 1, "b": 2}) == ti.receipt_key({"b": 2, "a": 1})
 
 
+def test_ingress_data_root_actually_resolves(monkeypatch, tmp_path):
+    """The path helper imported a module that does not exist, and every test
+    passed an explicit path so nothing called it. Green tests, broken function.
+    This is the test that would have caught it at the time."""
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    assert ti.ingress_db_path() == tmp_path / "plugin-data" / "ingress" / "ingress.db"
+
+
 def test_an_explicit_id_wins_over_the_canonical_form():
     # Otherwise two deliveries of the same notification could produce two keys
     # if one of them carried an id and the other did not.

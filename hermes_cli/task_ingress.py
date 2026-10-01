@@ -61,7 +61,10 @@ from hermes_cli.sqlite_util import write_txn
 def ingress_data_root() -> Path:
     """``<HERMES_HOME>/plugin-data/ingress/`` — resolved on every call so it
     follows the active profile."""
-    from hermes_cli.home import get_hermes_home
+    # `hermes_constants`, not `hermes_cli.home` -- there is no such module, and
+    # this import sat behind a passing test suite for a full cycle because every
+    # test passed an explicit path and never called the function.
+    from hermes_constants import get_hermes_home
 
     return get_hermes_home() / "plugin-data" / "ingress"
 
