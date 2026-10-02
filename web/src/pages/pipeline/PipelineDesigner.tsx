@@ -3,6 +3,7 @@ import {
   Background,
   Controls,
   ReactFlow,
+  type NodeTypes,
   ReactFlowProvider,
   addEdge,
   useEdgesState,
@@ -26,6 +27,17 @@ import {
   type NodeKind,
   type StepNodeData,
 } from "./canvas";
+import { StepNode } from "./StepNode";
+
+const NODE_TYPES: NodeTypes = { default: StepNode };
+
+const KIND_COLOUR: Record<string, string> = {
+  agent: "#6366f1",
+  tool: "#10b981",
+  user_input: "#f59e0b",
+  condition: "#ec4899",
+  delay: "#64748b",
+};
 
 /**
  * The pipeline editor.
@@ -449,8 +461,20 @@ function Canvas() {
           <Palette onAdd={addBlock} />
         </div>
         <div className="col-12 col-lg-7">
+          <div className="d-flex flex-wrap gap-3 small text-body-secondary">
+            {NODE_KINDS.map((kind) => (
+              <span key={kind} className="d-inline-flex align-items-center gap-1">
+                <span
+                  className="rounded-circle d-inline-block"
+                  style={{ width: 10, height: 10, background: KIND_COLOUR[kind] }}
+                />
+                {KIND_LABEL[kind]}
+              </span>
+            ))}
+          </div>
           <div style={{ height: "62vh", minHeight: "26rem" }} className="border rounded bg-body-tertiary">
             <ReactFlow
+              nodeTypes={NODE_TYPES}
               nodes={nodes}
               edges={edges}
               onNodesChange={onNodesChange}

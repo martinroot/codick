@@ -131,32 +131,54 @@ export function templateToNodes(
     };
   });
 
+  const EDGE_COLOUR: Record<string, string> = {
+    agent: "#6366f1",
+    tool: "#10b981",
+    user_input: "#f59e0b",
+    condition: "#ec4899",
+    delay: "#64748b",
+  };
+  const colourOf = (from: string): string => EDGE_COLOUR[byId.get(from)?.type ?? "agent"] ?? "#94a3b8";
+  const edgeBase = (id: string, source: string, target: string, label?: string): Edge => ({
+    id,
+    source,
+    target,
+    label,
+    style: { stroke: colourOf(source), strokeWidth: 2 },
+    labelStyle: { fill: colourOf(source), fontSize: 11 },
+    labelBgStyle: { fill: "#ffffffdd" },
+    markerEnd: { type: "arrowclosed" as never, color: colourOf(source) },
+  });
+
   const edges: Edge[] = [];
   for (const step of steps) {
     if (step.type === "condition") {
       (step.cases ?? []).forEach((c, i) => {
         if (!c?.next) return;
-        edges.push({
-          id: `${step.id}->case-${i}`,
-          source: step.id,
-          target: c.next,
-          label: describe(c.when),
-          animated: false,
-          style: c.rework ? { strokeDasharray: "4 3" } : undefined,
-        });
+        const edge = edgeBase(`${step.id}->case-${i}`, step.id, c.next, describe(c.when));
+        // A rework case is a loop: routed as a right-angle edge so it reads as
+        // a return rather than as the next step.
+        if (c.rework) {
+          edge.type = "smoothstep";
+          edge.style = { ...edge.style, strokeDasharray: "5 4" };
+          edge.label = `${edge.label} · rework`;
+        }
+        edges.push(edge);
       });
       if (typeof step.default?.next === "string") {
-        edges.push({
-          id: `${step.id}->default`,
-          source: step.id,
-          target: step.default.next,
-          label: step.default.fail ? `fail: ${step.default.fail}` : "otherwise",
-        });
+        edges.push(
+          edgeBase(
+            `${step.id}->default`,
+            step.id,
+            step.default.next,
+            step.default.fail ? `fail: ${step.default.fail}` : "otherwise",
+          ),
+        );
       }
       continue;
     }
     if (typeof step.next === "string") {
-      edges.push({ id: `${step.id}->next`, source: step.id, target: step.next });
+      edges.push(edgeBase(`${step.id}->next`, step.id, step.next));
     }
   }
 

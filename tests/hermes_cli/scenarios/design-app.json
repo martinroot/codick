@@ -1,0 +1,319 @@
+{
+  "schema_version": "1.0",
+  "id": "design-app",
+  "version": "1.0.0",
+  "name": "Design an app, in layers",
+  "description": "Research, three design passes, a human gate, a scored critique loop with bounded rework, then a handover pack. No single agent turn can do this: the critique has to be able to send work back, and the score has to be read from the critic's own output.",
+  "start_step": "brief",
+  "inputs_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "idea": {
+        "type": "string",
+        "title": "What are we building",
+        "description": "One paragraph, the way you would say it out loud.",
+        "default": "A small app that shows which of my saved recipes I have not cooked in the last two months, with a weekly plan and a shopping list."
+      },
+      "audience": {
+        "type": "string",
+        "title": "Who it is for",
+        "default": "One person cooking for themselves on a weeknight"
+      },
+      "depth": {
+        "type": "string",
+        "title": "How many design passes",
+        "description": "Each pass is a full draft. More passes costs more.",
+        "default": "3"
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "brief",
+      "type": "agent",
+      "title": "Turn the idea into a brief",
+      "profile": "researcher",
+      "instruction": "Read the idea and the audience. Write a brief with: the one job this app does, the three things it must do on the first screen, the two things it must never do, and the single question the design has to answer. Be concrete. No preamble.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "job": {
+            "type": "string"
+          },
+          "first_screen": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "must_not": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "question": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "job",
+          "first_screen",
+          "must_not",
+          "question"
+        ]
+      },
+      "next": "pass_one"
+    },
+    {
+      "id": "pass_one",
+      "type": "agent",
+      "title": "Pass 1 — information architecture",
+      "profile": "writer",
+      "instruction": "From the brief, lay out the screens and what each one answers. Name the navigation between them. Skip visual design entirely; this pass is about structure.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "screens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "navigation": {
+            "type": "string"
+          }
+        }
+      },
+      "next": "pass_two"
+    },
+    {
+      "id": "pass_two",
+      "type": "agent",
+      "title": "Pass 2 — the flows that matter",
+      "profile": "writer",
+      "instruction": "For the two most-used flows, write them step by step as the person would experience them, including what happens when they get it wrong. Flag every place the person has to remember something the app could remember for them.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "flows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "memory_wins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "next": "pass_three"
+    },
+    {
+      "id": "pass_three",
+      "type": "agent",
+      "title": "Pass 3 — visual and voice",
+      "profile": "writer",
+      "instruction": "Now the surface: layout, hierarchy, colour direction, and the words on screen. Keep the words short enough to read while holding a pan.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "type": "string"
+          },
+          "palette": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "voice": {
+            "type": "string"
+          }
+        }
+      },
+      "next": "gate"
+    },
+    {
+      "id": "gate",
+      "type": "user_input",
+      "title": "A person decides",
+      "prompt": "Three passes are done. Read the brief, the structure, the flows and the surface. Is the direction right, or should it go back for another pass?",
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "restart_from": {
+            "type": "string",
+            "description": "pass_one, pass_two or pass_three"
+          }
+        }
+      },
+      "wait_timeout_seconds": 172800,
+      "chat": {
+        "enabled": true,
+        "profile": "default"
+      },
+      "next": "gate_check"
+    },
+    {
+      "id": "gate_check",
+      "type": "condition",
+      "title": "Person's call",
+      "cases": [
+        {
+          "when": {
+            "op": "eq",
+            "left": "steps.gate.output.approved",
+            "right": true
+          },
+          "next": "critique"
+        },
+        {
+          "when": {
+            "op": "eq",
+            "left": "steps.gate.output.restart_from",
+            "right": "pass_three"
+          },
+          "next": "pass_three",
+          "rework": true
+        },
+        {
+          "when": {
+            "op": "eq",
+            "left": "steps.gate.output.restart_from",
+            "right": "pass_two"
+          },
+          "next": "pass_two",
+          "rework": true
+        }
+      ],
+      "default": {
+        "next": "pass_one",
+        "fail": "no usable answer"
+      }
+    },
+    {
+      "id": "critique",
+      "type": "agent",
+      "title": "Critique it against the brief",
+      "profile": "researcher",
+      "instruction": "Judge the work against the brief, not against taste. For each of the three must-not items, say whether the work breaks it. Give a score out of 10 and name the single biggest thing that would raise it.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "number"
+          },
+          "breaks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "biggest_fix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "score",
+          "biggest_fix"
+        ]
+      },
+      "next": "score_gate"
+    },
+    {
+      "id": "score_gate",
+      "type": "condition",
+      "title": "Good enough?",
+      "cases": [
+        {
+          "when": {
+            "op": "lt",
+            "left": "steps.critique.output.score",
+            "right": 8
+          },
+          "next": "rework",
+          "rework": true
+        }
+      ],
+      "default": {
+        "next": "handover"
+      }
+    },
+    {
+      "id": "rework",
+      "type": "agent",
+      "title": "Rework, once, and mean it",
+      "profile": "writer",
+      "instruction": "Take the critique and apply the single biggest fix. Change only that. Say in one line what you changed and why it addresses the critique.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "changed": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        }
+      },
+      "next": "critique"
+    },
+    {
+      "id": "handover",
+      "type": "agent",
+      "title": "Handover pack",
+      "profile": "writer",
+      "instruction": "Write the pack: the brief, the screens, the flows, the surface decisions, every critique the work went through and what each one changed, and the three things still open. No preamble.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string"
+          },
+          "open_questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "summary"
+        ]
+      },
+      "next": null
+    }
+  ],
+  "limits": {
+    "max_step_executions": 60,
+    "max_rework_cycles": 12
+  },
+  "result": {
+    "type": "object",
+    "properties": {
+      "summary": {
+        "type": "string"
+      },
+      "open_questions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "summary"
+    ]
+  }
+}
