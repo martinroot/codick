@@ -460,14 +460,22 @@ def test_a_string_can_name_more_than_one_ref():
     assert got == "/tmp/vpn/run_abc/iter-0.md"
 
 
-def test_a_slot_that_is_not_a_string_is_refused_rather_than_stringified():
+def test_a_slot_holding_a_number_renders_it():
+    """A round number in a filename is a number. Demanding `"1"` where the value
+    is `1` makes every iteration folder a trap."""
+    from hermes_cli.pipeline_executor import resolve_refs
+    got = resolve_refs("round-{{steps.r.n}}.md", inputs={}, outputs={"r": {"n": 3}})
+    assert got == "round-3.md"
+
+
+def test_a_slot_holding_a_container_is_refused_rather_than_stringified():
     """str() on a dict here would write a Python repr into a file and be
     discovered much later."""
     from hermes_cli.pipeline_executor import RefUnavailable, resolve_refs
     try:
         resolve_refs("{{steps.s.obj}}", inputs={}, outputs={"s": {"obj": {"a": 1}}})
     except RefUnavailable as exc:
-        assert "must be a string" in str(exc)
+        assert "must be a string or number" in str(exc)
         return
     raise AssertionError("expected RefUnavailable")
 

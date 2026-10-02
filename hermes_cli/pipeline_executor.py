@@ -919,11 +919,17 @@ def _interpolate(text: str, **kwargs: Any) -> str:
         if optional:
             ref = ref[len(_OPTIONAL_PREFIX):]
         found = _resolve_one({"ref": ref, **({"optional": True} if optional else {})}, **kwargs)
-        if not isinstance(found, str):
-            # Silently str()-ing a dict here would write a Python repr into a
-            # file and be discovered much later.
-            raise RefUnavailable(f"{{{ref}}}: is {type(found).__name__}, and a slot must be a string")
-        return found
+        if isinstance(found, str):
+            return found
+        if isinstance(found, bool) or isinstance(found, (int, float)):
+            # A round number in a filename is a number, not a string someone
+            # remembered to quote. Demanding `"1"` where the value is `1` makes
+            # every iteration folder a trap.
+            return str(found)
+        # A container is a different matter: str()-ing a dict here would write a
+        # Python repr into a file and be discovered much later, by whoever opens
+        # it, with no hint that the template meant something else.
+        raise RefUnavailable(f"{{{ref}}}: is {type(found).__name__}, and a slot must be a string or number")
 
     return _REF_IN_STRING.sub(replace, text)
 
