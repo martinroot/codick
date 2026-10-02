@@ -3,7 +3,7 @@
   "id": "vpn-red-team",
   "name": "VPN app, designed badly then fixed",
   "description": "Writes a deliberately weak design for a VPN app, then runs a red-team loop: the reviewer tries to break the logic, the fixer applies one change, the snapshot records the iteration in its own folder. Stops when the reviewer stops finding anything that breaks.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "start_step": "bad_draft",
   "limits": {
     "max_step_executions": 40,
@@ -36,29 +36,48 @@
       "type": "agent",
       "title": "Draft it badly on purpose",
       "profile": "writer",
-      "instruction": "You are writing the FIRST version of a design, and it is meant to be bad. Do the obvious lazy thing in every place there is a choice: put everything on one screen, name the buttons with the feature instead of the benefit, ignore what happens when the connection drops, and leave the paywall as a wall with no explanation. Cover the screens that exist for this product, including onboarding, the paywall, the connect button and server selection. Be concrete and specific, not vague -- a vague bad draft cannot be improved. End with the full the first, deliberately bad design, as markdown, in the `markdown` field.",
+      "instruction": "You are writing the FIRST version of a design, and it is meant to be bad. Do the obvious lazy thing in every place there is a choice: put everything on one screen, name the buttons with the feature instead of the benefit, ignore what happens when the connection drops, and leave the paywall as a wall with no explanation. Cover the screens that exist for this product, including onboarding, the paywall, the connect button and server selection. Be concrete and specific, not vague -- a vague bad draft cannot be improved. End with the full the first, deliberately bad design, as markdown, in the `markdown` field. Put the whole design, as markdown, in the `markdown` field.",
       "output_schema": {
         "type": "object",
         "properties": {
-          "screens": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "notes": {
-            "type": "string"
-          },
           "markdown": {
             "type": "string"
           }
         },
         "required": [
-          "markdown",
-          "screens"
+          "markdown"
         ]
       },
-      "next": "save_round_0"
+      "next": "merge_round"
+    },
+    {
+      "id": "merge_round",
+      "type": "agent",
+      "title": "Fold it into the design",
+      "profile": "writer",
+      "instruction": "The design is in the data below. If `change` is empty this is the first pass: return the design unchanged. If it is not empty, apply that one change and nothing else. Either way output the complete current design as markdown in `markdown` -- not a diff.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "markdown": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "markdown"
+        ]
+      },
+      "next": "save_round_0",
+      "input": {
+        "design": {
+          "ref": "steps.carry.output.markdown"
+        },
+        "change": {
+          "ref": "steps.fix_it.output.change",
+          "optional": true,
+          "default": ""
+        }
+      }
     },
     {
       "id": "save_round_0",
@@ -67,10 +86,10 @@
       "tool": "write_file",
       "instruction": "Write the round 0 design into its own folder under the run.",
       "input": {
-        "file_path": "{{inputs.workdir}}/{{run.id}}/round-0.md",
         "content": {
-          "ref": "steps.bad_draft.output.markdown"
-        }
+          "ref": "steps.merge_round.output.markdown"
+        },
+        "path": "{{inputs.workdir}}/{{run.id}}/round-0.md"
       },
       "next": "red_team"
     },
@@ -79,7 +98,7 @@
       "type": "agent",
       "title": "Try to break the logic",
       "profile": "researcher",
-      "instruction": "You are the reviewer. Read the design as if you were a user and a lawyer and the person who pays the bill at the same time. Find the things that are actually BROKEN, not merely ugly: states the design does not handle, promises it makes that nothing delivers, moments where the user can be stuck, and anything a subscription would be refused for. For each one say the exact moment it happens and what the user sees. If you genuinely cannot break anything any more, say so and give severity 0. The first review you do is round 1; each review after it is one higher.",
+      "instruction": "You are the reviewer. The current design is in the data below -- read it there, not from memory. Be a user, a lawyer and the person who pays the bill at the same time. Find the things that are actually BROKEN, not merely ugly: states the design does not handle, promises it makes that nothing delivers, moments where a user can get stuck, and anything a subscription would be refused for. For each one say the exact moment it happens and what the user sees. If you genuinely cannot break anything any more, say so and give severity 0. This is round 1.",
       "output_schema": {
         "type": "object",
         "properties": {
@@ -98,17 +117,21 @@
             "description": "The single highest-value change. Only if there is something to fix."
           },
           "round": {
-            "type": "integer",
-            "description": "This review's number, starting at 1."
+            "type": "integer"
           }
         },
         "required": [
+          "worst_severity",
           "findings",
-          "round",
-          "worst_severity"
+          "round"
         ]
       },
-      "next": "severity_gate"
+      "next": "severity_gate",
+      "input": {
+        "design": {
+          "ref": "steps.merge_round.output.markdown"
+        }
+      }
     },
     {
       "id": "severity_gate",
@@ -138,33 +161,11 @@
       "type": "agent",
       "title": "Fix exactly one thing",
       "profile": "writer",
-      "instruction": "Take the reviewer's single highest-value change and apply it to the design. Change only that. Keep everything else as it is. Say in one line what changed.",
+      "instruction": "Take the reviewer's findings in the data below and apply the single highest-value change. Change only that; everything else stays. In one line say what you changed. In `markdown`, output the design with that change applied.",
       "output_schema": {
         "type": "object",
         "properties": {
           "change": {
-            "type": "string"
-          }
-        }
-      },
-      "next": "merge_round"
-    },
-    {
-      "id": "merge_round",
-      "type": "agent",
-      "title": "Fold it into the design",
-      "profile": "writer",
-      "instruction": "Rewrite the whole design with that one change applied. This becomes the new current design. Output the complete design, not a diff. End with the full the whole design with the change applied, as markdown, in the `markdown` field.",
-      "output_schema": {
-        "type": "object",
-        "properties": {
-          "screens": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "notes": {
             "type": "string"
           },
           "markdown": {
@@ -172,11 +173,43 @@
           }
         },
         "required": [
-          "markdown",
-          "screens"
+          "change",
+          "markdown"
         ]
       },
-      "next": "save_round"
+      "next": "carry",
+      "input": {
+        "design": {
+          "ref": "steps.merge_round.output.markdown"
+        },
+        "findings": {
+          "ref": "steps.red_team.output.findings"
+        }
+      }
+    },
+    {
+      "id": "carry",
+      "type": "agent",
+      "title": "Carry the fix back to the loop",
+      "profile": "writer",
+      "input": {
+        "change": {
+          "ref": "steps.fix_it.output.change"
+        }
+      },
+      "instruction": "The fixed design is in the data below. Write it out, as markdown, into `markdown`, unchanged.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "markdown": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "markdown"
+        ]
+      },
+      "next": "merge_round"
     },
     {
       "id": "save_round",
@@ -185,10 +218,10 @@
       "tool": "write_file",
       "instruction": "Write the current design into a folder named for this run, so each iteration is kept apart from the others.",
       "input": {
-        "file_path": "{{inputs.workdir}}/{{run.id}}/round-{{steps.red_team.output.round}}.md",
         "content": {
-          "ref": "steps.merge_round.output.markdown"
-        }
+          "ref": "steps.carry.output.markdown"
+        },
+        "path": "{{inputs.workdir}}/{{run.id}}/round-{{steps.red_team.output.round}}.md"
       },
       "next": "red_team"
     },
@@ -215,7 +248,12 @@
           "verdict"
         ]
       },
-      "next": "publish"
+      "next": "publish",
+      "input": {
+        "design": {
+          "ref": "steps.carry.output.markdown"
+        }
+      }
     },
     {
       "id": "publish",
@@ -238,7 +276,18 @@
           "rounds"
         ]
       },
-      "next": null
+      "next": null,
+      "input": {
+        "design": {
+          "ref": "steps.carry.output.markdown"
+        },
+        "verdict": {
+          "ref": "steps.smoke.output.verdict"
+        },
+        "findings": {
+          "ref": "steps.red_team.output.findings"
+        }
+      }
     }
   ],
   "result": {

@@ -223,7 +223,11 @@ def test_a_driver_that_raises_leaves_the_run_recoverable_not_failed(client):
 
         conn = db.connect()
         run = db.get_run(conn, run_id)
-        assert run.status in ("queued", "running"), run.status
+        # Recoverable, and saying why. This used to assert "queued" or
+        # "running" -- which is a run that reads on the board as still working,
+        # with nothing left to move it and no reason given.
+        assert run.status == "blocked", run.status
+        assert "driver stopped" in (run.error or ""), run.error
         # And a later driver can still finish it.
         from hermes_cli.pipeline_runner import drive_run
 
@@ -401,3 +405,79 @@ def test_a_delay_counts_against_the_step_budget(client):
     finally:
         conn.close()
     assert run.step_executions == 1, run.step_executions
+
+
+def test_a_driver_that_dies_does_not_leave_the_run_running_forever():
+    """A driver that stops mid-run used to log and move on. The run kept its
+    "running" status with no error and nothing left to move it, which reads on
+    the board as a run that is still working. It must land in a state a person
+    can act on, and say why."""
+    from hermes_cli import pipeline_dispatch as dispatch
+    from hermes_cli import pipelines_db as pdb
+    from hermes_cli import pipeline_runner as runner
+
+    with tempfile.TemporaryDirectory() as tmp:
+        os.environ["HERMES_PIPELINES_DB"] = str(Path(tmp) / "p.db")
+        try:
+            conn = dispatch._connect()
+            template = {
+                "schema_version": "1.0", "id": "t", "version": "1", "start_step": "work",
+                "steps": [{"id": "work", "type": "agent", "profile": "p", "instruction": "x"}],
+            }
+            run_id = pdb.create_run(conn, template, inputs={})
+            pdb.set_run_status(conn, run_id, "running")
+
+            def explode(*a, **k):
+                raise RuntimeError("the driver exploded mid-run")
+
+            original = runner.drive_run
+            runner.drive_run = explode
+            try:
+                dispatch._drive(run_id, "test-owner", lambda: None)
+            finally:
+                runner.drive_run = original
+
+            run = pdb.get_run(conn, run_id)
+            assert run.status == "blocked", run.status
+            assert "driver stopped" in (run.error or ""), run.error
+        finally:
+            os.environ.pop("HERMES_PIPELINES_DB", None)
+
+
+def test_a_condition_naming_data_that_is_not_there_fails_the_run():
+    """A branch whose guard reads a ref that is unavailable used to propagate
+    out of the driver and kill the dispatch loop, leaving the run "running" with
+    no error. It must fail, and say what is missing."""
+    from hermes_cli import pipeline_executor as ex
+    from hermes_cli import pipelines_db as pdb
+
+    with tempfile.TemporaryDirectory() as tmp:
+        os.environ["HERMES_PIPELINES_DB"] = str(Path(tmp) / "p.db")
+        try:
+            conn = dispatch_conn()
+            template = {
+                "schema_version": "1.0", "id": "t", "version": "1", "start_step": "gate",
+                "steps": [
+                    {"id": "gate", "type": "condition",
+                     "cases": [{"when": {"op": "gt",
+                                         "left": {"ref": "steps.missing.output.n"},
+                                         "right": 1},
+                                "next": "later"}],
+                     "default": {"next": "later"}},
+                    {"id": "later", "type": "agent", "profile": "p", "instruction": "x"},
+                ],
+            }
+            run_id = pdb.create_run(conn, template, inputs={})
+            pdb.set_run_status(conn, run_id, "running")
+            result = ex.advance(conn, run_id, adapter=None, owner="test-owner")
+            assert result.status == "failed", result.status
+            run = pdb.get_run(conn, run_id)
+            assert run.status == "failed", run.status
+            assert "not available" in (run.error or ""), run.error
+        finally:
+            os.environ.pop("HERMES_PIPELINES_DB", None)
+
+
+def dispatch_conn():
+    from hermes_cli import pipeline_dispatch as dispatch
+    return dispatch._connect()

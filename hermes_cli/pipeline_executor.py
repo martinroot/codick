@@ -334,7 +334,13 @@ def advance(
     # resting state: once the request is answered, this call is what consumes
     # the answer and moves on. Leaving it out made that path unreachable — the
     # run accepted a response and then refused every attempt to continue.
-    run = db.require_active_run_status(conn, run_id, "queued", "running", "waiting_input")
+    # `blocked` belongs here for the same reason: it is what a run is put into
+    # when nobody can tell whether the step in flight completed, which is
+    # exactly the state a later driver exists to pick up. Excluding it made
+    # "recoverable" mean recoverable by nobody.
+    run = db.require_active_run_status(
+        conn, run_id, "queued", "running", "waiting_input", "blocked",
+    )
     template = run.template_snapshot or {}
     if not isinstance(template, Mapping):
         raise ValueError(f"run {run_id} has no template snapshot")
@@ -405,7 +411,19 @@ def _run_condition(conn, run_id, template, step, *, inputs, outputs, max_rework)
     # A condition is an activation: it consumes budget, and counting it only
     # when it produced an attempt would let a condition loop run unbounded.
     db.bump_step_executions(conn, run_id)
-    decision = select_next(template, step, inputs=inputs, outputs=outputs)
+    try:
+        decision = select_next(template, step, inputs=inputs, outputs=outputs)
+    except RefUnavailable as exc:
+        # Missing data under a branch is a run-level failure, not something to
+        # retry -- retrying cannot conjure the output. Left unhandled it
+        # propagated out of the driver, killed the dispatch loop for this run and
+        # left the run "running" with no error and no way to move again: a
+        # template typo became a run that hangs forever instead of a run that
+        # says what is missing.
+        db.append_event(conn, run_id, "step.failed", step_id=step.get("id"),
+                        payload={"error": str(exc), "error_code": "ref_unavailable"})
+        db.finish_run(conn, run_id, "failed", error=str(exc), error_code="ref_unavailable")
+        return _AdvanceResult("failed", str(exc), step_id=step.get("id"))
     db.append_event(conn, run_id, "step.transition", step_id=step.get("id"),
                     payload={"reason": decision.reason, "next": decision.step_id, "rework": decision.rework})
     if decision.rework:

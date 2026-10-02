@@ -113,11 +113,27 @@ def _drive(run_id: str, owner: str, adapter_factory: Callable[[], object]) -> No
                 run_id, report.status, report.steps, report.stop_reason,
             )
             _sync_card(run_id)
-    except Exception:
-        # A driver that dies must not look like a run that failed: the run's own
-        # state is in SQLite, and `recover` reconciles it. Logging is the whole
-        # response here on purpose.
+    except Exception as exc:
+        # A driver that dies must not leave the run "running" with no error and
+        # nothing left to move it: the run needs a terminal state, not a log
+        # line. A run whose driver vanished mid-flight is marked blocked rather
+        # than failed -- nobody knows whether the step in flight completed, and
+        # calling that a failure would be a guess. `recover` can pick it up.
         logger.exception("pipeline driver for run %s stopped unexpectedly", run_id)
+        try:
+            from hermes_cli import pipelines_db as db
+            with closing(_connect()) as conn:
+                row = db.get_run(conn, run_id) if hasattr(db, "get_run") else None
+                if row is not None and getattr(row, "status", None) in ("running", "queued"):
+                    # `blocked` is a recoverable state, not a terminal one, so it
+                    # is set rather than finished -- `recover` picks it up.
+                    db.set_run_status(
+                        conn, run_id, "blocked",
+                        error=f"the driver stopped: {exc}", error_code="driver_stopped",
+                    )
+                    logger.warning("run %s marked blocked after its driver stopped", run_id)
+        except Exception:  # pragma: no cover - best effort
+            logger.exception("could not mark run %s after its driver stopped", run_id)
     finally:
         with _lock:
             _driving.pop(run_id, None)
