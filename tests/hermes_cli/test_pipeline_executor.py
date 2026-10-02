@@ -421,3 +421,29 @@ if __name__ == "__main__":
         print(f"FAILED: {len(failures)} of {len(tests)} — {', '.join(failures)}")
         sys.exit(1)
     print(f"all {len(tests)} checks passed")
+
+
+def test_a_step_can_address_its_own_run_by_id():
+    """A pipeline that writes its own intermediate work needs a directory that
+    is this run's and not the next one's. Before ``run.`` existed, a step could
+    only name ``inputs`` and ``steps``, so it had nowhere to put it."""
+    conn = db.connect()
+    template = dict(TEMPLATE, steps=[
+        {"id": "draft", "type": "agent", "profile": "w", "instruction": "Draft", "input": {}, "next": "save"},
+        {"id": "save", "type": "tool", "tool": "t", "instruction": "Save",
+         "input": {"path": {"ref": "run.id"}}},
+    ])
+    run_id = db.create_run(conn, template, inputs={})
+    adapter = FakeAdapter(scripted(draft=[{}], save=[{}]))
+    run = _drain(conn, run_id, adapter)
+    assert run.status == "completed", run.error
+    assert adapter.calls_for("save")[0]["input"] == {"path": run_id}
+
+
+def test_a_run_ref_to_something_the_run_does_not_have_fails():
+    from hermes_cli.pipeline_executor import RefUnavailable, resolve_refs
+    try:
+        resolve_refs({"ref": "run.nope"}, inputs={}, outputs={}, run={"id": "r1"})
+    except RefUnavailable:
+        return
+    raise AssertionError("expected RefUnavailable")

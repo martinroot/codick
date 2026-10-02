@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0",
+  "id": "vpn-red-team",
+  "name": "VPN app, designed badly then fixed",
+  "description": "Writes a deliberately weak design for a VPN app, then runs a red-team loop: the reviewer tries to break the logic, the fixer applies one change, the snapshot records the iteration in its own folder. Stops when the reviewer stops finding anything that breaks.",
+  "version": "1.0.0",
+  "start_step": "bad_draft",
+  "limits": {
+    "max_step_executions": 40,
+    "max_rework_cycles": 8
+  },
+  "inputs_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "workdir": {
+        "type": "string",
+        "title": "Where the iterations go",
+        "default": "/home/grokwin/vpn-iterations"
+      },
+      "product": {
+        "type": "string",
+        "title": "What we are designing",
+        "default": "A VPN client for phones: three onboarding screens, a paywall, a big connect button, and a server list you can pick from."
+      },
+      "bar": {
+        "type": "number",
+        "title": "Stop when nothing scores below this",
+        "default": 3
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "bad_draft",
+      "type": "agent",
+      "title": "Draft it badly on purpose",
+      "profile": "writer",
+      "instruction": "You are writing the FIRST version of a design, and it is meant to be bad. Do the obvious lazy thing in every place there is a choice: put everything on one screen, name the buttons with the feature instead of the benefit, ignore what happens when the connection drops, and leave the paywall as a wall with no explanation. Cover the screens that exist for this product, including onboarding, the paywall, the connect button and server selection. Be concrete and specific, not vague -- a vague bad draft cannot be improved.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "screens": { "type": "array", "items": { "type": "string" } },
+          "notes": { "type": "string" }
+        },
+        "required": ["screens"]
+      },
+      "next": "save_round_0"
+    },
+    {
+      "id": "save_round_0",
+      "type": "tool",
+      "title": "Keep round 0",
+      "tool": "write_file",
+      "instruction": "Write the round 0 design into its own folder under the run.",
+      "input": {
+        "file_path": {
+          "ref": "inputs.workdir"
+        },
+        "content": {
+          "ref": "steps.bad_draft.output"
+        }
+      },
+      "next": "red_team"
+    },
+    {
+      "id": "red_team",
+      "type": "agent",
+      "title": "Try to break the logic",
+      "profile": "researcher",
+      "instruction": "You are the reviewer. Read the design as if you were a user and a lawyer and the person who pays the bill at the same time. Find the things that are actually BROKEN, not merely ugly: states the design does not handle, promises it makes that nothing delivers, moments where the user can be stuck, and anything a subscription would be refused for. For each one say the exact moment it happens and what the user sees. If you genuinely cannot break anything any more, say so and give severity 0.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "worst_severity": {
+            "type": "integer",
+            "description": "1 is cosmetic, 5 is the app is unusable or unlawful. 0 means nothing found."
+          },
+          "findings": { "type": "array", "items": { "type": "string" } },
+          "the_fix": {
+            "type": "string",
+            "description": "The single highest-value change. Only if there is something to fix."
+          }
+        },
+        "required": ["worst_severity", "findings"]
+      },
+      "next": "severity_gate"
+    },
+    {
+      "id": "severity_gate",
+      "type": "condition",
+      "title": "Anything left worth fixing?",
+      "cases": [
+        {
+          "when": {
+            "op": "gt",
+            "left": { "ref": "steps.red_team.output.worst_severity" },
+            "right": { "ref": "inputs.bar" }
+          },
+          "next": "fix_it",
+          "rework": true
+        }
+      ],
+      "default": { "next": "smoke" }
+    },
+    {
+      "id": "fix_it",
+      "type": "agent",
+      "title": "Fix exactly one thing",
+      "profile": "writer",
+      "instruction": "Take the reviewer's single highest-value change and apply it to the design. Change only that. Keep everything else as it is. Say in one line what changed.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "change": { "type": "string" }
+        }
+      },
+      "next": "merge_round"
+    },
+    {
+      "id": "merge_round",
+      "type": "agent",
+      "title": "Fold it into the design",
+      "profile": "writer",
+      "instruction": "Rewrite the whole design with that one change applied. This becomes the new current design. Output the complete design, not a diff.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "screens": { "type": "array", "items": { "type": "string" } },
+          "notes": { "type": "string" }
+        },
+        "required": ["screens"]
+      },
+      "next": "save_round"
+    },
+    {
+      "id": "save_round",
+      "type": "tool",
+      "title": "Keep this round",
+      "tool": "write_file",
+      "instruction": "Write the current design into a folder named for this run, so each iteration is kept apart from the others.",
+      "input": {
+        "file_path": {
+          "ref": "inputs.workdir"
+        },
+        "content": {
+          "ref": "steps.merge_round.output"
+        }
+      },
+      "next": "red_team"
+    },
+    {
+      "id": "smoke",
+      "type": "agent",
+      "title": "Smoke test the whole flow",
+      "profile": "researcher",
+      "instruction": "Walk the finished design end to end as a first-time user: install, pay or not pay, connect, pick a server, lose connection, come back. Write down every point where the user has no idea what to do. This is the last word on whether the design works.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "verdict": { "type": "string" },
+          "stuck_points": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["verdict"]
+      },
+      "next": "publish"
+    },
+    {
+      "id": "publish",
+      "type": "agent",
+      "title": "Write the report",
+      "profile": "writer",
+      "instruction": "Write the final report: the starting design in one paragraph, every round of changes in order with the reason for each, what the reviewer found each time, and the smoke-test verdict. Plain markdown, no preamble.",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "report": { "type": "string" },
+          "rounds": { "type": "integer" }
+        },
+        "required": ["report", "rounds"]
+      },
+      "next": null
+    }
+  ],
+  "result": {
+    "type": "object",
+    "properties": {
+      "report": { "type": "string" },
+      "rounds": { "type": "integer" }
+    },
+    "required": ["report"]
+  }
+}

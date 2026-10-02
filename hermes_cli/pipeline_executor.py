@@ -622,7 +622,10 @@ def _run_model_step(conn, run_id, template, step, adapter, *, owner, lease_ttl, 
 
     try:
         try:
-            resolved_input = resolve_refs(step.get("input", {}), inputs=inputs, outputs=outputs)
+            resolved_input = resolve_refs(
+                step.get("input", {}), inputs=inputs, outputs=outputs,
+                run={"id": run_id},
+            )
         except RefUnavailable as exc:
             # Missing data under a conditional branch is a run-level failure,
             # not a retryable step error: retrying cannot conjure the output.
@@ -840,30 +843,53 @@ def _lookup(root: Any, parts: list[str]) -> Any:
     return cur
 
 
-def resolve_refs(value: Any, *, inputs: Mapping[str, Any], outputs: Mapping[str, Any]) -> Any:
+def resolve_refs(
+    value: Any,
+    *,
+    inputs: Mapping[str, Any],
+    outputs: Mapping[str, Any],
+    run: Optional[Mapping[str, Any]] = None,
+) -> Any:
     """Substitute every ``{"ref": ...}`` in ``value``.
 
     ``outputs`` maps step id -> that step's output object. Spec §5: data
     availability under conditional branches is re-checked at execution, so an
     unavailable ref raises :class:`RefUnavailable` here rather than being
-    silently filled with a default. ``optional: true`` with a ``default`` is the
-    only way to say "it may be absent, and use this instead".
+    silently filled with a default. ``optional: true`` with a ``default`` is
+    the only way to say "it may be absent, and use this instead".
+
+    ``run`` exposes the run itself under a ``run.`` ref -- currently its id.
+    A pipeline that writes its own intermediate work needs somewhere to put it
+    that is this run's and not the next one's; a step that could only name
+    ``inputs`` had nowhere to put it.
     """
+    run_ctx = run or {}
     if isinstance(value, Mapping):
         if isinstance(value.get("ref"), str):
-            return _resolve_one(value, inputs=inputs, outputs=outputs)
-        return {k: resolve_refs(v, inputs=inputs, outputs=outputs) for k, v in value.items()}
+            return _resolve_one(value, inputs=inputs, outputs=outputs, run=run_ctx)
+        return {
+            k: resolve_refs(v, inputs=inputs, outputs=outputs, run=run_ctx)
+            for k, v in value.items()
+        }
     if isinstance(value, list):
-        return [resolve_refs(v, inputs=inputs, outputs=outputs) for v in value]
+        return [resolve_refs(v, inputs=inputs, outputs=outputs, run=run_ctx) for v in value]
     return value
 
 
-def _resolve_one(spec: Mapping[str, Any], *, inputs: Mapping[str, Any], outputs: Mapping[str, Any]) -> Any:
+def _resolve_one(
+    spec: Mapping[str, Any],
+    *,
+    inputs: Mapping[str, Any],
+    outputs: Mapping[str, Any],
+    run: Optional[Mapping[str, Any]] = None,
+) -> Any:
     ref = spec["ref"].strip()
     parts = [p for p in ref.split(".") if p]
-    if len(parts) < 2 or parts[0] not in ("inputs", "steps"):
+    if len(parts) < 2 or parts[0] not in ("inputs", "steps", "run"):
         raise RefUnavailable(ref)
-    if parts[0] == "inputs":
+    if parts[0] == "run":
+        found = _lookup(run or {}, parts[1:])
+    elif parts[0] == "inputs":
         found = _lookup(inputs, parts[1:])
     else:
         step_id = parts[1]
