@@ -30,6 +30,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 import time
+import re
 from typing import Any, Callable, Mapping, Optional, Protocol
 
 logger = logging.getLogger(__name__)
@@ -873,7 +874,40 @@ def resolve_refs(
         }
     if isinstance(value, list):
         return [resolve_refs(v, inputs=inputs, outputs=outputs, run=run_ctx) for v in value]
+    if isinstance(value, str) and "{{" in value and "}}" in value:
+        return _interpolate(value, inputs=inputs, outputs=outputs, run=run_ctx)
     return value
+
+
+_REF_IN_STRING = re.compile(r"\{\{\s*([^{}]+?)\s*\}\}")
+
+# Names a ``{{...}}`` slot may carry beyond a ref. Used when a slot is written
+# `{{optional:...}}`, so a path can name a fallback without repeating the ref
+# machinery.
+_OPTIONAL_PREFIX = "optional:"
+
+
+def _interpolate(text: str, **kwargs: Any) -> str:
+    """Fill ``{{ref}}`` slots in a string.
+
+    A ref resolves to exactly one value, so without this a step could name
+    ``inputs.workdir`` *or* ``run.id`` for its output path but never both --
+    and "one folder per run, one file per iteration" is not expressible.
+    """
+
+    def replace(match: "re.Match[str]") -> str:
+        ref = match.group(1)
+        optional = ref.startswith(_OPTIONAL_PREFIX)
+        if optional:
+            ref = ref[len(_OPTIONAL_PREFIX):]
+        found = _resolve_one({"ref": ref, **({"optional": True} if optional else {})}, **kwargs)
+        if not isinstance(found, str):
+            # Silently str()-ing a dict here would write a Python repr into a
+            # file and be discovered much later.
+            raise RefUnavailable(f"{{{ref}}}: is {type(found).__name__}, and a slot must be a string")
+        return found
+
+    return _REF_IN_STRING.sub(replace, text)
 
 
 def _resolve_one(

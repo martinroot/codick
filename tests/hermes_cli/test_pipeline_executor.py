@@ -447,3 +447,32 @@ def test_a_run_ref_to_something_the_run_does_not_have_fails():
     except RefUnavailable:
         return
     raise AssertionError("expected RefUnavailable")
+
+
+def test_a_string_can_name_more_than_one_ref():
+    """A step's output path needs the workdir *and* the run id. One ref resolves
+    to one value, so without interpolation the path could name either."""
+    from hermes_cli.pipeline_executor import resolve_refs
+    got = resolve_refs(
+        "{{inputs.workdir}}/{{run.id}}/iter-0.md",
+        inputs={"workdir": "/tmp/vpn"}, outputs={}, run={"id": "run_abc"},
+    )
+    assert got == "/tmp/vpn/run_abc/iter-0.md"
+
+
+def test_a_slot_that_is_not_a_string_is_refused_rather_than_stringified():
+    """str() on a dict here would write a Python repr into a file and be
+    discovered much later."""
+    from hermes_cli.pipeline_executor import RefUnavailable, resolve_refs
+    try:
+        resolve_refs("{{steps.s.obj}}", inputs={}, outputs={"s": {"obj": {"a": 1}}})
+    except RefUnavailable as exc:
+        assert "must be a string" in str(exc)
+        return
+    raise AssertionError("expected RefUnavailable")
+
+
+def test_a_plain_string_with_no_slots_is_untouched():
+    from hermes_cli.pipeline_executor import resolve_refs
+    assert resolve_refs("just text", inputs={}, outputs={}) == "just text"
+    assert resolve_refs("{{}}", inputs={}, outputs={}) == "{{}}"

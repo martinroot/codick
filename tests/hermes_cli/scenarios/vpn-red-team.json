@@ -36,14 +36,27 @@
       "type": "agent",
       "title": "Draft it badly on purpose",
       "profile": "writer",
-      "instruction": "You are writing the FIRST version of a design, and it is meant to be bad. Do the obvious lazy thing in every place there is a choice: put everything on one screen, name the buttons with the feature instead of the benefit, ignore what happens when the connection drops, and leave the paywall as a wall with no explanation. Cover the screens that exist for this product, including onboarding, the paywall, the connect button and server selection. Be concrete and specific, not vague -- a vague bad draft cannot be improved.",
+      "instruction": "You are writing the FIRST version of a design, and it is meant to be bad. Do the obvious lazy thing in every place there is a choice: put everything on one screen, name the buttons with the feature instead of the benefit, ignore what happens when the connection drops, and leave the paywall as a wall with no explanation. Cover the screens that exist for this product, including onboarding, the paywall, the connect button and server selection. Be concrete and specific, not vague -- a vague bad draft cannot be improved. End with the full the first, deliberately bad design, as markdown, in the `markdown` field.",
       "output_schema": {
         "type": "object",
         "properties": {
-          "screens": { "type": "array", "items": { "type": "string" } },
-          "notes": { "type": "string" }
+          "screens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          },
+          "markdown": {
+            "type": "string"
+          }
         },
-        "required": ["screens"]
+        "required": [
+          "markdown",
+          "screens"
+        ]
       },
       "next": "save_round_0"
     },
@@ -54,11 +67,9 @@
       "tool": "write_file",
       "instruction": "Write the round 0 design into its own folder under the run.",
       "input": {
-        "file_path": {
-          "ref": "inputs.workdir"
-        },
+        "file_path": "{{inputs.workdir}}/{{run.id}}/round-0.md",
         "content": {
-          "ref": "steps.bad_draft.output"
+          "ref": "steps.bad_draft.output.markdown"
         }
       },
       "next": "red_team"
@@ -68,7 +79,7 @@
       "type": "agent",
       "title": "Try to break the logic",
       "profile": "researcher",
-      "instruction": "You are the reviewer. Read the design as if you were a user and a lawyer and the person who pays the bill at the same time. Find the things that are actually BROKEN, not merely ugly: states the design does not handle, promises it makes that nothing delivers, moments where the user can be stuck, and anything a subscription would be refused for. For each one say the exact moment it happens and what the user sees. If you genuinely cannot break anything any more, say so and give severity 0.",
+      "instruction": "You are the reviewer. Read the design as if you were a user and a lawyer and the person who pays the bill at the same time. Find the things that are actually BROKEN, not merely ugly: states the design does not handle, promises it makes that nothing delivers, moments where the user can be stuck, and anything a subscription would be refused for. For each one say the exact moment it happens and what the user sees. If you genuinely cannot break anything any more, say so and give severity 0. The first review you do is round 1; each review after it is one higher.",
       "output_schema": {
         "type": "object",
         "properties": {
@@ -76,13 +87,26 @@
             "type": "integer",
             "description": "1 is cosmetic, 5 is the app is unusable or unlawful. 0 means nothing found."
           },
-          "findings": { "type": "array", "items": { "type": "string" } },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "the_fix": {
             "type": "string",
             "description": "The single highest-value change. Only if there is something to fix."
+          },
+          "round": {
+            "type": "integer",
+            "description": "This review's number, starting at 1."
           }
         },
-        "required": ["worst_severity", "findings"]
+        "required": [
+          "findings",
+          "round",
+          "worst_severity"
+        ]
       },
       "next": "severity_gate"
     },
@@ -94,14 +118,20 @@
         {
           "when": {
             "op": "gt",
-            "left": { "ref": "steps.red_team.output.worst_severity" },
-            "right": { "ref": "inputs.bar" }
+            "left": {
+              "ref": "steps.red_team.output.worst_severity"
+            },
+            "right": {
+              "ref": "inputs.bar"
+            }
           },
           "next": "fix_it",
           "rework": true
         }
       ],
-      "default": { "next": "smoke" }
+      "default": {
+        "next": "smoke"
+      }
     },
     {
       "id": "fix_it",
@@ -112,7 +142,9 @@
       "output_schema": {
         "type": "object",
         "properties": {
-          "change": { "type": "string" }
+          "change": {
+            "type": "string"
+          }
         }
       },
       "next": "merge_round"
@@ -122,14 +154,27 @@
       "type": "agent",
       "title": "Fold it into the design",
       "profile": "writer",
-      "instruction": "Rewrite the whole design with that one change applied. This becomes the new current design. Output the complete design, not a diff.",
+      "instruction": "Rewrite the whole design with that one change applied. This becomes the new current design. Output the complete design, not a diff. End with the full the whole design with the change applied, as markdown, in the `markdown` field.",
       "output_schema": {
         "type": "object",
         "properties": {
-          "screens": { "type": "array", "items": { "type": "string" } },
-          "notes": { "type": "string" }
+          "screens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          },
+          "markdown": {
+            "type": "string"
+          }
         },
-        "required": ["screens"]
+        "required": [
+          "markdown",
+          "screens"
+        ]
       },
       "next": "save_round"
     },
@@ -140,11 +185,9 @@
       "tool": "write_file",
       "instruction": "Write the current design into a folder named for this run, so each iteration is kept apart from the others.",
       "input": {
-        "file_path": {
-          "ref": "inputs.workdir"
-        },
+        "file_path": "{{inputs.workdir}}/{{run.id}}/round-{{steps.red_team.output.round}}.md",
         "content": {
-          "ref": "steps.merge_round.output"
+          "ref": "steps.merge_round.output.markdown"
         }
       },
       "next": "red_team"
@@ -158,10 +201,19 @@
       "output_schema": {
         "type": "object",
         "properties": {
-          "verdict": { "type": "string" },
-          "stuck_points": { "type": "array", "items": { "type": "string" } }
+          "verdict": {
+            "type": "string"
+          },
+          "stuck_points": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         },
-        "required": ["verdict"]
+        "required": [
+          "verdict"
+        ]
       },
       "next": "publish"
     },
@@ -174,10 +226,17 @@
       "output_schema": {
         "type": "object",
         "properties": {
-          "report": { "type": "string" },
-          "rounds": { "type": "integer" }
+          "report": {
+            "type": "string"
+          },
+          "rounds": {
+            "type": "integer"
+          }
         },
-        "required": ["report", "rounds"]
+        "required": [
+          "report",
+          "rounds"
+        ]
       },
       "next": null
     }
@@ -185,9 +244,15 @@
   "result": {
     "type": "object",
     "properties": {
-      "report": { "type": "string" },
-      "rounds": { "type": "integer" }
+      "report": {
+        "type": "string"
+      },
+      "rounds": {
+        "type": "integer"
+      }
     },
-    "required": ["report"]
+    "required": [
+      "report"
+    ]
   }
 }
