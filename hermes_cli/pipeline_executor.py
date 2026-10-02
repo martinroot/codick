@@ -696,8 +696,18 @@ def _run_model_step(conn, run_id, template, step, adapter, *, owner, lease_ttl, 
 
 
 def _record_failure(conn, run_id, attempt, step, exc: AdapterError, *, max_attempts) -> _AdvanceResult:
-    """Fail or retry an attempt, honouring the one class of error never retried."""
-    code = getattr(exc, "error_code", "adapter_error")
+    """Fail or retry an attempt, honouring the one class of error never retried.
+
+    ``exc`` is usually an :class:`AdapterError`, but the adoption path passes the
+    collected :class:`ExecutionResult` straight through. Both carry
+    ``error_code``, so that read worked by accident -- while ``str(exc)`` on a
+    result is its ``repr``, and that is what landed in the database: a run
+    resumed after a restart failed with ``ExecutionResult(state='failed',
+    error_code='contract_invalid')`` and no explanation at all, on the one path
+    where somebody is most likely to be reading why.
+    """
+    code = getattr(exc, "error_code", None) or "adapter_error"
+    message = getattr(exc, "error", None) or str(exc)
     retryable = code not in TERMINAL_INPUT_ERRORS
     if retryable and attempt.attempt_no < max_attempts:
         retry_id = db.create_attempt(
@@ -705,13 +715,13 @@ def _record_failure(conn, run_id, attempt, step, exc: AdapterError, *, max_attem
             attempt_no=attempt.attempt_no + 1, input_snapshot=attempt.input_snapshot,
             idempotency_key=attempt.idempotency_key,
         )
-        db.finish_attempt(conn, attempt.id, "failed", error=str(exc), error_code=code)
+        db.finish_attempt(conn, attempt.id, "failed", error=message, error_code=code)
         db.append_event(conn, run_id, "step.retry", step_id=attempt.step_id,
                         attempt_id=retry_id,
                         payload={"after_attempt": attempt.attempt_no, "error_code": code})
         return _AdvanceResult("retrying", f"{code} -> attempt {attempt.attempt_no + 1}", step_id=attempt.step_id)
-    db.finish_attempt(conn, attempt.id, "failed", error=str(exc), error_code=code)
-    db.finish_run(conn, run_id, "failed", error=str(exc), error_code=code)
+    db.finish_attempt(conn, attempt.id, "failed", error=message, error_code=code)
+    db.finish_run(conn, run_id, "failed", error=message, error_code=code)
     return _AdvanceResult("failed", code, step_id=attempt.step_id)
 
 

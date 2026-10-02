@@ -484,3 +484,37 @@ def test_a_plain_string_with_no_slots_is_untouched():
     from hermes_cli.pipeline_executor import resolve_refs
     assert resolve_refs("just text", inputs={}, outputs={}) == "just text"
     assert resolve_refs("{{}}", inputs={}, outputs={}) == "{{}}"
+
+
+def test_a_resumed_run_records_why_the_collected_result_failed():
+    """A run whose attempt was already submitted is adopted on the next drive,
+    and that path passed the collected ExecutionResult into _record_failure
+    instead of an exception. `str()` of a result is its repr, so the run failed
+    with `ExecutionResult(state='failed', error_code='contract_invalid')` and no
+    explanation -- on exactly the path somebody reads to find out what happened
+    after a restart."""
+    from hermes_cli.pipeline_executor import ExecutionResult, advance
+
+    conn = db.connect()
+    template = dict(TEMPLATE, steps=[
+        {"id": "draft", "type": "agent", "profile": "w", "instruction": "Draft", "input": {}, "next": None},
+    ])
+    run_id = db.create_run(conn, template, inputs={"topic": "x"})
+    adapter = FakeAdapter(scripted(draft=[{}]))
+    adapter._results["exec_1"] = ExecutionResult(
+        state="failed",
+        error="output did not satisfy output_schema: round: not an integer",
+        error_code="contract_invalid",
+    )
+    # An attempt that was already submitted before the process that submitted it
+    # went away: the next drive adopts whatever the adapter has for it.
+    attempt_id = db.create_attempt(conn, run_id, "draft", attempt_no=1)
+    claimed = db.claim_attempt(conn, attempt_id, "A", ttl_seconds=60, now=1000)
+    assert claimed is True
+    db.start_attempt(conn, attempt_id, execution_id="exec_1", occurred_at=1000)
+
+    result = advance(conn, run_id, adapter, owner="B")
+    assert result.status == "failed", result.status
+    run = db.get_run(conn, run_id)
+    assert "output_schema" in (run.error or ""), run.error
+    assert "ExecutionResult(" not in (run.error or ""), run.error
