@@ -643,7 +643,11 @@ def _run_model_step(conn, run_id, template, step, adapter, *, owner, lease_ttl, 
         try:
             resolved_input = resolve_refs(
                 step.get("input", {}), inputs=inputs, outputs=outputs,
-                run={"id": run_id},
+                # `rework_cycles` is the engine's own count of how many times this
+                # run has been sent back. A step that wants "one file per
+                # iteration" should not have to ask a model to count for it.
+                run={"id": run_id,
+                     "rework_cycles": int(db.get_run(conn, run_id).rework_cycles or 0)},
             )
         except RefUnavailable as exc:
             # Missing data under a conditional branch is a run-level failure,

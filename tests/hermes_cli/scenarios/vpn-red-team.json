@@ -3,7 +3,7 @@
   "id": "vpn-red-team",
   "name": "VPN app, designed badly then fixed",
   "description": "Writes a deliberately weak design for a VPN app, then runs a red-team loop: the reviewer tries to break the logic, the fixer applies one change, the snapshot records the iteration in its own folder. Stops when the reviewer stops finding anything that breaks.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "start_step": "bad_draft",
   "limits": {
     "max_step_executions": 40,
@@ -103,7 +103,7 @@
       "type": "agent",
       "title": "Try to break the logic",
       "profile": "researcher",
-      "instruction": "You are the reviewer. The current design is in the data below -- read it there, not from memory. Be a user, a lawyer and the person who pays the bill at the same time. Find the things that are actually BROKEN, not merely ugly: states the design does not handle, promises it makes that nothing delivers, moments where a user can get stuck, and anything a subscription would be refused for. For each one say the exact moment it happens and what the user sees. If you genuinely cannot break anything any more, say so and give severity 0. This is round 1.",
+      "instruction": "You are the reviewer. The current design is in the data below -- read it there, not from memory. Be a user, a lawyer and the person who pays the bill at the same time. Find the things that are actually BROKEN, not merely ugly: states the design does not handle, promises it makes that nothing delivers, moments where a user can get stuck, and anything a subscription would be refused for. For each one say the exact moment it happens and what the user sees. If you genuinely cannot break anything any more, say so and give severity 0. Review the design as it now stands.",
       "output_schema": {
         "type": "object",
         "properties": {
@@ -120,15 +120,11 @@
           "the_fix": {
             "type": "string",
             "description": "The single highest-value change. Only if there is something to fix."
-          },
-          "round": {
-            "type": "integer"
           }
         },
         "required": [
           "worst_severity",
-          "findings",
-          "round"
+          "findings"
         ]
       },
       "input": {
@@ -145,7 +141,7 @@
       "tool": "write_file",
       "instruction": "Write the current design into a folder named for this run, so each iteration is kept apart from the others.",
       "input": {
-        "path": "{{inputs.workdir}}/{{run.id}}/round-{{steps.red_team.output.round}}.md",
+        "path": "{{inputs.workdir}}/{{run.id}}/round-{{run.rework_cycles}}.md",
         "content": {
           "ref": "steps.carry.output.markdown"
         }

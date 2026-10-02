@@ -518,3 +518,23 @@ def test_a_resumed_run_records_why_the_collected_result_failed():
     run = db.get_run(conn, run_id)
     assert "output_schema" in (run.error or ""), run.error
     assert "ExecutionResult(" not in (run.error or ""), run.error
+
+
+def test_a_step_can_name_the_runs_own_rework_count():
+    """One file per iteration needs an iteration number, and the engine already
+    keeps one: asking a model to count produced a file called round-1.md that
+    was overwritten five times."""
+    from hermes_cli.pipeline_executor import advance
+
+    conn = db.connect()
+    template = dict(TEMPLATE, steps=[
+        {"id": "draft", "type": "agent", "profile": "w", "instruction": "Draft",
+         "input": {"n": {"ref": "run.rework_cycles"}}, "next": "uses"},
+        {"id": "uses", "type": "tool", "tool": "t", "instruction": "Use",
+         "input": {"n": {"ref": "run.rework_cycles"}}},
+    ])
+    run_id = db.create_run(conn, template, inputs={"topic": "x"})
+    adapter = FakeAdapter(scripted(draft=[{}], uses=[{}, {}]))
+    _drain(conn, run_id, adapter)
+    seen = [c["input"]["n"] for c in adapter.calls if c.get("step_id") == "uses"]
+    assert seen and all(isinstance(v, int) for v in seen), seen
