@@ -50,9 +50,58 @@ _enabled = True
 
 
 def set_enabled(enabled: bool) -> None:
-    """Enable or disable starting drivers in this process."""
+    """Enable or disable starting drivers in this process.
+
+    Deliberately does not sweep: this is called at runtime by tests and by
+    callers that are mid-run, and a run this process is driving is `running`
+    for a reason. Sweeping belongs to process startup, where "there is no live
+    driver" actually means "there never will be".
+    """
     global _enabled
     _enabled = bool(enabled)
+
+
+def sweep_orphaned_runs() -> int:
+    """Mark runs a previous process left mid-flight as blocked.
+
+    A driver lives in a process. When that process goes -- restarted, crashed,
+    deployed over -- the run it was driving keeps its "running" status forever,
+    because nothing was left alive to move it and the only other thing that
+    revisits a run is a person touching it through the API. On a board that run
+    is indistinguishable from one that is still working.
+
+    Blocked rather than failed: nobody can tell whether the step in flight
+    completed, and calling that a failure would be a guess. Blocked is the state
+    `recover` and a resumed driver both accept.
+    """
+    from hermes_cli import pipelines_db as db
+
+    swept = 0
+    try:
+        with closing(_connect()) as conn:
+            rows = conn.execute(
+                "SELECT id FROM pipeline_runs WHERE status IN ('running', 'queued')"
+            ).fetchall()
+            for (run_id,) in rows:
+                if is_driving(run_id):
+                    continue
+                db.set_run_status(
+                    conn, run_id, "blocked",
+                    error="the process driving this run went away before it finished",
+                    error_code="orphaned",
+                )
+                db.append_event(
+                    conn, run_id, "run.orphaned",
+                    payload={"reason": "no live driver after restart"},
+                )
+                _sync_card(run_id)
+                swept += 1
+    except Exception:
+        logger.exception("could not sweep orphaned pipeline runs")
+        return 0
+    if swept:
+        logger.info("marked %d orphaned pipeline run(s) blocked after restart", swept)
+    return swept
 
 
 def is_enabled() -> bool:

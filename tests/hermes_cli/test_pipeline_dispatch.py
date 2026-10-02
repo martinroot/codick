@@ -481,3 +481,33 @@ def test_a_condition_naming_data_that_is_not_there_fails_the_run():
 def dispatch_conn():
     from hermes_cli import pipeline_dispatch as dispatch
     return dispatch._connect()
+
+
+def test_a_run_left_running_by_a_dead_process_is_swept():
+    """A driver lives in a process. When that process goes, the run it was
+    driving keeps "running" forever and nothing revisits it except a person
+    touching it through the API. Blocked, not failed: nobody can tell whether
+    the step in flight completed."""
+    from hermes_cli import pipeline_dispatch as dispatch
+    from hermes_cli import pipelines_db as pdb
+
+    with tempfile.TemporaryDirectory() as tmp:
+        os.environ["HERMES_PIPELINES_DB"] = str(Path(tmp) / "p.db")
+        try:
+            conn = dispatch._connect()
+            template = {
+                "schema_version": "1.0", "id": "t", "version": "1", "start_step": "work",
+                "steps": [{"id": "work", "type": "agent", "profile": "p", "instruction": "x"}],
+            }
+            stuck = pdb.create_run(conn, template, inputs={})
+            pdb.set_run_status(conn, stuck, "running")
+            done = pdb.create_run(conn, template, inputs={})
+            pdb.finish_run(conn, done, "completed")
+
+            assert dispatch.sweep_orphaned_runs() == 1
+            assert pdb.get_run(conn, stuck).status == "blocked"
+            assert "went away" in (pdb.get_run(conn, stuck).error or "")
+            # A finished run is not touched.
+            assert pdb.get_run(conn, done).status == "completed"
+        finally:
+            os.environ.pop("HERMES_PIPELINES_DB", None)

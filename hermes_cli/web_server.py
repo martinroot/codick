@@ -243,6 +243,18 @@ async def _lifespan(app: "FastAPI"):
     )
     hosted_room_start_thread.start()
 
+    # A pipeline run is driven by a thread in this process. Runs a previous
+    # process left mid-flight are still "running" in the database with nothing
+    # alive to move them, and on a board they look like work in progress. This
+    # backend is now responsible for them, so it says so and marks them
+    # blocked rather than leaving them running forever.
+    try:
+        from hermes_cli import pipeline_dispatch as _pipeline_dispatch
+
+        _pipeline_dispatch.sweep_orphaned_runs()
+    except Exception:
+        _log.exception("Could not sweep orphaned pipeline runs during backend startup")
+
     # Desktop-spawned backends fire cron jobs themselves, since the app has no
     # gateway running the scheduler. Server `hermes dashboard` is unaffected —
     # it relies on its own gateway.
