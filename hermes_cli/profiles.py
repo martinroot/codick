@@ -14,7 +14,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from hermes_cli.archive_safe import archive_root_dirs, make_targz, normalize_archive_parts, safe_extract_targz
 from hermes_cli.home_data_layout import PM_RUNTIME_ROOT_DIRS
@@ -2200,6 +2200,81 @@ def export_profile(name: str, output_path: str, extra_files: Optional[Dict[str, 
             target.write_text(content, encoding="utf-8")
         _scrub_export_secrets(staged)
         return Path(make_targz(base, tmpdir, canon))
+
+
+def inspect_archive(archive: Path, name: Optional[str] = None) -> Dict[str, Any]:
+    """What this archive holds, before anything is written.
+
+    Reads the tar's member list only — no extraction, no mutation — so the console
+    can show a person what is about to land on their machine before they commit to
+    it. Three things it answers that the raw import cannot:
+
+    * **Which profile name** the archive would claim, and whether that name is
+      already taken here. A collision is reported as a rename suggestion rather
+      than a failure, because it is a normal thing to hit on a machine with many
+      agents.
+    * **That no secrets travel with it.** `export_profile` drops `auth.json`,
+      `.env` and `bot-desktop` and force-redacts the rest, so a profile moved
+      between machines arrives without provider keys. Silently omitting this is
+      how someone ships a profile to twelve servers believing the keys came too.
+    * **What it will bring** — the skills it carries, by name.
+    """
+    import tarfile
+
+    path = Path(archive)
+    try:
+        roots = sorted(archive_root_dirs(path))
+    except (tarfile.TarError, OSError, EOFError) as exc:
+        raise ValueError(f"Not a readable .tar.gz archive: {exc}") from exc
+
+    if len(roots) != 1:
+        raise ValueError(
+            f"A profile archive must contain exactly one top-level directory; "
+            f"this one has {len(roots)} ({', '.join(roots[:5]) or 'none'})."
+        )
+    root = roots[0]
+    inferred = (name or root).strip()
+    canon_error: Optional[str] = None
+    canon = inferred
+    try:
+        canon = _canon_valid(inferred)
+        if canon == "default":
+            canon_error = (
+                "Cannot import as 'default' — that is the built-in root profile. "
+                "Choose another name."
+            )
+    except ValueError as exc:
+        canon_error = str(exc)
+
+    with tarfile.open(path, "r:gz") as tf:
+        members = tf.getmembers()
+        skills: List[str] = []
+        has_dotenv = False
+        for member in members:
+            parts = normalize_archive_parts(member.name)
+            if len(parts) >= 2 and parts[1] == ".env":
+                has_dotenv = True
+            # <root>/skills/<name>/SKILL.md — one level of skill dir, exactly.
+            if (len(parts) == 4 and parts[1] == "skills" and parts[3] == "SKILL.md"):
+                skills.append(parts[2])
+
+    exists = bool(canon) and not canon_error and get_profile_dir(canon).exists()
+    return {
+        "root": root,
+        "name": canon or inferred,
+        "available_name": not canon_error,
+        "name_error": canon_error,
+        "name_taken": exists,
+        "suggested_name": f"{canon}-imported" if exists and canon else (canon or inferred),
+        "member_count": len(members),
+        "skills": sorted(set(skills)),
+        "has_dotenv": has_dotenv,
+        "credentials_transferred": False,
+        "credentials_note": (
+            "Provider keys, bot tokens and OAuth are NOT part of a profile archive — "
+            "they are stripped on export. Set them for this profile after importing."
+        ),
+    }
 
 
 def import_profile(archive_path: str, name: Optional[str] = None) -> Path:
