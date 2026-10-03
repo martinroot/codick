@@ -169,6 +169,59 @@ def unavailable_tools(
     return unavailable
 
 
+# Per-tool verdicts behind both the template string and the profile report. The
+# profile console names the offending tool AND its reason in a table; the template
+# path renders the same verdict as prose. Two renderings of one classification —
+# a second implementation is how "available" starts meaning two things.
+TOOL_NOT_REGISTERED = "not_registered"
+TOOL_CHECK_FAILED = "check_fn_false"
+
+
+def tool_availability(
+    names: Any,
+    tool_names: Optional[set] = None,
+    reader: Callable[[], Optional[set]] = _default_tool_names,
+    checker: Optional[Callable[[str], bool]] = None,
+) -> List[Dict[str, Any]]:
+    """``[{tool, status, reason}]`` for *names* — the structured form of the check.
+
+    A registry that cannot be read yields an empty list, not a list of everything
+    missing: *unknown* is not *empty*, and reporting every tool as missing is how
+    a profile looks broken for a reason that has nothing to do with it. Same guard,
+    same ordering and same checker that :func:`assess_readiness` uses.
+    """
+    if isinstance(names, str):
+        names = [names]
+    if tool_names is None:
+        try:
+            tool_names = reader()
+        except Exception:
+            return []
+    if tool_names is None:
+        return []
+    if checker is None:
+        checker = default_checker()
+
+    rows: List[Dict[str, Any]] = []
+    for name in names:
+        if not isinstance(name, str) or not name.strip():
+            continue
+        if name not in tool_names:
+            rows.append({"tool": name, "status": TOOL_NOT_REGISTERED,
+                         "reason": f"tool {name!r} is not registered in this install"})
+            continue
+        try:
+            usable = checker(name)
+        except Exception:
+            # A probe that cannot answer has not said yes.
+            usable = False
+        if not usable:
+            rows.append({"tool": name, "status": TOOL_CHECK_FAILED,
+                         "reason": f"tool {name!r} is registered but not available in this install "
+                                   f"(its own readiness check failed; configure the provider or disable it)"})
+    return rows
+
+
 def default_checker() -> Callable[[str], bool]:
     """Availability straight from the registry's own cached ``check_fn``.
 
@@ -213,15 +266,12 @@ def assess_readiness(
     ``readiness_detail`` is a list even when the status is ``ready``: the column
     is parsed back as JSON, so a string here would be read back as a truthy
     string and then fail to iterate.
+
+    Rendered from :func:`tool_availability`, not from its own scan: the profile
+    console reports the same verdicts as a table, and two scans of the registry
+    is how "available" quietly starts meaning two different things.
     """
-    missing = missing_tools(template, tool_names, reader)
-    unusable = unavailable_tools(template, tool_names, reader, checker)
-    if not missing and not unusable:
+    rows = tool_availability(required_tool_names(template), tool_names, reader, checker)
+    if not rows:
         return {"readiness_status": READINESS_READY, "readiness_detail": None}
-    detail = [f"tool {name!r} is not registered in this install" for name in missing]
-    detail += [
-        f"tool {name!r} is registered but not available in this install "
-        f"(its own readiness check failed; configure the provider or remove the step)"
-        for name in unusable
-    ]
-    return {"readiness_status": READINESS_UNAVAILABLE, "readiness_detail": detail}
+    return {"readiness_status": READINESS_UNAVAILABLE, "readiness_detail": [row["reason"] for row in rows]}

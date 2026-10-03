@@ -1148,3 +1148,33 @@ async def get_profile_desktop_overlay(name: str):
     if overlay is _MISSING:
         return {"exists": False, "desktop": None}
     return {"exists": True, "desktop": overlay}
+
+
+@router.get("/api/profiles/{name}/analysis")
+async def analyze_profile_endpoint(name: str):
+    """Read-only report: what this profile is made of and what is missing.
+
+    The console's "Analyze" button. Three levels — structure, tool readiness,
+    skills — and a hard rule: nothing here writes, and nothing is substituted.
+    A missing tool is reported under its own name, because a person repairing
+    their own profile who does not know part of it was silently rewritten is
+    worse off than one who was told the truth.
+    """
+    from hermes_cli import profile_analysis
+
+    profile_dir = _resolve_profile_dir(name)
+
+    def _run() -> Dict[str, Any]:
+        # analyze_profile enters the profile's own scope itself; doing it here too
+        # would be belt-and-braces over the same context-local, not a second guard.
+        return profile_analysis.analyze_profile(profile_dir)
+
+    try:
+        report = await run_in_threadpool(_run)
+    except Exception as e:
+        # An unreadable profile is a report saying so, not an empty one: an empty
+        # object reads as "nothing to fix", which is the exact false assurance
+        # this endpoint exists to remove.
+        _log.exception("GET /api/profiles/%s/analysis failed", name)
+        raise HTTPException(status_code=500, detail=f"Could not analyze profile: {e}")
+    return report
