@@ -102,6 +102,32 @@ html {
   overflow: hidden;
 }
 
+/* Full-viewport height, as utilities. These were Tailwind's `h-dvh` /
+ * `max-h-dvh`; after the move to Bootstrap nothing defined them, so the app
+ * shell resolved to *no* height and grew past the viewport — where `#root`'s
+ * `overflow: hidden` then cut the kanban board off with no scrollbar to reach
+ * it. The page looked stuck loading while every API call had returned 200.
+
+ * Declared here rather than swapped for `h-100` because `dvh` tracks the
+ * *dynamic* viewport: on a phone the URL bar collapsing must not resize the
+ * board's scroll container and reset the PTY fit. `vh` would do exactly that. */
+.h-dvh {
+  height: 100dvh;
+}
+
+.max-h-dvh {
+  max-height: 100dvh;
+}
+
+/* `100dvh` on the root is not enough on its own: the shell is a flex child, so
+ * without an explicit height it resolves to its content's height instead of the
+ * viewport's. Pinning `min-height` to 0 lets the inner panels scroll rather
+ * than stretch the shell. */
+.h-dvh,
+.max-h-dvh {
+  min-height: 0;
+}
+
 body {
   font-family: var(--theme-font-sans);
   min-height: 0;
