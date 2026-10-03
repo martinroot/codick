@@ -17,6 +17,7 @@ import inspect
 import json
 import logging
 import re
+import secrets
 import subprocess
 import sys
 import threading
@@ -25,12 +26,12 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 
 from hermes_cli.session_listing import subagent_listing_scope
 from hermes_cli.web_deps import late
 from hermes_cli.config import get_process_hermes_home
-from hermes_cli.profiles import ProfileIdentitySettlementPending
+from hermes_cli.profiles import ProfileIdentitySettlementPending, _profile_export_directory
 from hermes_cli.web_server_config import (
     _apply_main_model_assignment, _normalize_main_model_assignment, _validated_main_model_selection,
 )
@@ -1130,6 +1131,95 @@ async def import_profile_endpoint(body: ProfileImport):
             "Reading desktop.json from imported profile %s failed", imported,
             fn=lambda: _read_desktop_overlay(profile_dir))
     return {"ok": True, "name": imported, "path": str(profile_dir), "desktop": desktop_overlay}
+
+
+def _safe_archive_upload_name(filename: str | None) -> str:
+    """A staged upload's basename, sanitised.
+
+    The name arrives from the browser and is used to build a path, so it is
+    reduced to a basename, stripped of separators and control characters, and
+    forced to ``.tar.gz`` — the only shape `import_profile` accepts. Anything
+    else would let a crafted filename decide where the upload lands.
+    """
+    name = Path(filename or "profile.tar.gz").name.strip()
+    name = re.sub(r"[^A-Za-z0-9._-]+", "-", name).strip(".-") or "profile.tar.gz"
+    if not name.lower().endswith(".tar.gz"):
+        name = name.removesuffix(".tar") + ".tar.gz" if name.lower().endswith(".tar") else f"{name}.tar.gz"
+    return name
+
+
+@router.post("/api/profiles/import-upload")
+async def import_profile_upload_endpoint(
+    file: UploadFile = File(...),
+    name: Optional[str] = Form(None),
+    inspect_only: bool = Form(False),
+):
+    """Import a profile from an uploaded archive, or just look at it.
+
+    The dashboard shares the filesystem with the agent, so the existing import
+    endpoint takes a *path* — fine locally, useless for a desktop client or for
+    moving a profile between twelve servers. This accepts the bytes.
+
+    ``inspect_only=true`` answers "what is in this, and what will it claim here?"
+    without writing anything, which is what the console shows before the confirm.
+    Uploaded archives are always staged outside any profile and deleted on every
+    exit — including the rejected ones.
+    """
+    from hermes_cli import profiles as profiles_mod
+    from hermes_cli.web_routers.files import stream_upload_to_path
+
+    staged_root = _profile_export_directory() / "uploads"
+    try:
+        staged_root.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"Could not create upload staging directory: {exc}")
+    if staged_root.is_symlink():
+        raise HTTPException(status_code=500, detail="Upload staging directory is a symlink; refusing to stage through it")
+
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    target = staged_root / f"{stamp}-{secrets.token_hex(4)}-{_safe_archive_upload_name(file.filename)}"
+    try:
+        await stream_upload_to_path(
+            file, target,
+            too_large="Profile archive is too large",
+            not_writable="Upload staging directory is not writable",
+            write_failed="Could not write uploaded archive",
+        )
+        if inspect_only:
+            try:
+                return {"staged": True, "inspect": await run_in_threadpool(
+                    profiles_mod.inspect_archive, target, (name or "").strip() or None)}
+            except ValueError as exc:
+                # Malformed is the user's file, not a server fault: 400 with the reason,
+                # so the UI can show it instead of "Internal Server Error".
+                raise HTTPException(status_code=400, detail=str(exc))
+        try:
+            preview = await run_in_threadpool(
+                profiles_mod.inspect_archive, target, (name or "").strip() or None)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        if preview.get("name_error"):
+            raise HTTPException(status_code=400, detail=preview["name_error"])
+        with _profile_errors("POST /api/profiles/import-upload failed",
+                             bad_request=(ValueError, FileExistsError)):
+            profile_dir = await run_in_threadpool(
+                profiles_mod.import_profile, str(target), name=(name or "").strip() or None)
+    finally:
+        # The staged archive is a copy of something the user already owns; leaving it
+        # behind would accumulate a full set of profile copies nobody asked to keep.
+        target.unlink(missing_ok=True)
+
+    imported = profile_dir.name
+    _best_effort("Creating wrapper for imported profile %s failed", imported,
+                 fn=lambda: (profiles_mod.check_alias_collision(imported)
+                             or profiles_mod.create_wrapper_script(imported)))
+    desktop_overlay = None
+    if (profile_dir / "desktop.json").is_file():
+        desktop_overlay = _best_effort(
+            "Reading desktop.json from imported profile %s failed", imported,
+            fn=lambda: _read_desktop_overlay(profile_dir))
+    return {"ok": True, "name": imported, "path": str(profile_dir),
+            "desktop": desktop_overlay, "inspect": preview}
 
 
 @router.get("/api/profiles/{name}/desktop-overlay")
