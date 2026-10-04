@@ -224,7 +224,7 @@ public sealed class GatewayClient(Gateway gateway)
         if (uri.Host.Length == 0) return "В адресе нет хоста.";
         var port = uri.Port;
         return port == 80 || port == 443
-            ? "Порт не указан явно. Для шлюза Hermes обычно 8642 (api_server) или 9122 (serve)."
+            ? "Порт не указан явно. Для шлюза Hermes обычно 9119 (hermes serve)."
             : $"Порт {port}.";
     }
 
@@ -235,7 +235,7 @@ public sealed class GatewayClient(Gateway gateway)
         if (url.Length == 0) return "Адрес пуст.";
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return "Адрес должен начинаться с http:// или https://";
         if (uri.Port == 8642)
-            return "Порт 8642 — это api_server: там нет /api/ws. Для разговора нужен порт hermes serve (9122).";
+            return "Порт 8642 — это старый api_server: он больше не поднимается, и /api/ws там не было. Для разговора нужен hermes serve (обычно 9119).";
         return $"Порт {uri.Port}.";
     }
 }

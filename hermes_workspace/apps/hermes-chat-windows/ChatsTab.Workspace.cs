@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.IO;
 
 namespace HermesChat;
 public partial class ChatsTab
@@ -28,6 +30,73 @@ public partial class ChatsTab
     }
 
     public string CurrentWorkspaceThreadId => _thread?.Id ?? "";
+
+    // ── Рабочая папка диалога ──────────────────────────────────────────────
+    // Агент видит файлы только из папки сессии. Без явной папки сессия берёт
+    // каталог приложения, и репозиторий в диалоге просто не находится.
+    private void LoadWorkingDir()
+    {
+        if (WorkingDirBox is null) return;
+        WorkingDirBox.Text = _thread?.WorkingDir ?? "";
+        if (WorkingDirHint is null) return;
+        var dir = _thread?.WorkingDir ?? "";
+        WorkingDirHint.Text = dir.Length == 0
+            ? "Не задана: агент работает в папке шлюза. Укажи путь к репозиторию, чтобы он был виден."
+            : Directory.Exists(dir)
+                ? "Папка есть на этой машине."
+                : "⚠ Папки нет на этой машине. Если шлюз удалённый, путь должен существовать ТАМ.";
+    }
+
+    /// <summary>Применение папки. Меняет следующую СОЗДАВАЕМУЮ сессию: у уже
+    /// созданной сессии рабочая папка своя, и подмена значения на лету молча
+    /// ничего не дала бы. Поэтому при смене папки сессия заводится заново.</summary>
+    private void OnWorkingDirSave(object sender, RoutedEventArgs e) => ApplyWorkingDir();
+    private void OnWorkingDirEnter(object sender, KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Enter or Key.Return)) return;
+        e.Handled = true;
+        ApplyWorkingDir();
+    }
+
+    private void ApplyWorkingDir()
+    {
+        if (_thread is null || WorkingDirBox is null) return;
+        var dir = WorkingDirBox.Text.Trim();
+        if (dir.Length == 0)
+        {
+            MessageBox.Show("Укажи папку, например C:\\Users\\marti\\Projects\\codick",
+                "Рабочая папка", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (_thread.WorkingDir == dir) { LoadWorkingDir(); return; }
+        _thread.WorkingDir = dir;
+        // Сессия создаётся с папкой, поэтому старую отвязываем: иначе шлюз
+        // продолжит старую сессию в прежнем каталоге и папка не подействует.
+        _thread.RemoteSessionId = "";
+        _runs.End(_thread.Id);
+        _store.Save();
+        LoadWorkingDir();
+        UpdateHeader();
+    }
+
+    private void OnPickWorkingDir(object sender, RoutedEventArgs e)
+    {
+        if (WorkingDirBox is null) return;
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Выбери папку репозитория",
+            CheckFileExists = false,
+            ValidateNames = false,
+            FileName = "Выбери папку",
+        };
+        if (dialog.ShowDialog(Application.Current.MainWindow) != true) return;
+        var picked = System.IO.Path.GetDirectoryName(dialog.FileName);
+        if (picked is null) return;
+        WorkingDirBox.Text = picked;
+        ApplyWorkingDir();
+    }
+
+
     public void OpenStoredThread(string id) { var thread = _store.Threads.FirstOrDefault(t => t.Id == id); if (thread is not null) Show(thread); }
     public WorkspaceCoordinator? Coordinator { get; set; }
     private int _projectPage;
@@ -163,6 +232,85 @@ public partial class ChatsTab
         if (response is null || response.Status != "ok") throw new InvalidOperationException(response?.Note ?? "Шлюз не вернул результат.");
         return response.Text;
     }
+    /// <summary>Разбор очереди: сообщения, которые оркестратор поставил мостом,
+    /// отправляются в шлюз тем же путём, что и сообщение из интерфейса.
+    ///
+    /// Почему очередь, а не прямая отправка: WS-соединение на сессию шлюза
+    /// принадлежит приложению. Второй клиент, подключившийся к той же сессии,
+    /// стал бы драться с ним за ввод и за события — поэтому пишет только
+    /// приложение, а мост лишь помечает сообщение.</summary>
+    public void PumpQueuedMessages()
+    {
+        if (State is null) return;
+        foreach (var thread in _threads.ToList())
+        {
+            var queued = thread.Messages.Where(m => m.Queued).ToList();
+            if (queued.Count == 0) continue;
+            if (_runs.IsBusy(thread.Id)) continue;                 // диалог уже отвечает
+            if (thread.GatewayId.Length == 0) continue;           // нет шлюза — некуда
+            if (thread.RemoteSessionId.Length == 0) continue;     // сессия ещё не создана
+            var message = queued[0];
+            if (message.Note.Contains("НЕ отправлена", StringComparison.Ordinal)) continue;
+            message.Queued = false;
+            message.Note = "отправлено оркестратором через мост";
+            _store.Save();
+            Dispatcher.BeginInvoke(new Action(async () =>
+            {
+                try
+                {
+                    await SendQueuedAsync(thread, message);
+                }
+                catch (Exception error)
+                {
+                    // Возвращать в очередь НЕЛЬЗЯ: при недоступном шлюзе это
+                    // превращалось в бесконечный цикл — раз в секунду новая
+                    // попытка, и лента засорялась пустыми сообщениями. Задача
+                    // остаётся в диалоге с пометкой, владелец её увидит.
+                    CrashLog.Write("Очередь моста: " + error);
+                    message.Note = "задача от оркестратора НЕ отправлена: " + error.Message
+                                   + " — шлюз недоступен, отправь вручную.";
+                    _store.Save();
+                }
+                finally { RefreshThreadGroups(); RefreshRequestBar(); }
+            }));
+        }
+    }
+
+    private async Task SendQueuedAsync(ChatThread thread, ChatMessage message)
+    {
+        // Диалог переключаем на тот, чью сессию трогаем: иначе отрисовка идёт
+        // в чужой чат, а это выглядело бы как «сообщение ушло не туда».
+        var previous = _thread;
+        if (!ReferenceEquals(previous, thread)) Show(thread);
+
+        var run = new ChatRun(thread.Id, thread, new ChatMessage { Role = "agent", Status = "running" });
+        _runs.TryBegin(thread.Id, thread, run.Message, out run);
+        if (run is null) { if (!ReferenceEquals(previous, thread)) Show(previous); return; }
+
+        var cts = new CancellationTokenSource();
+        run.Cts = cts;
+        thread.Messages.Add(run.Message);
+        try
+        {
+            var gateway = await EnsureTuiAsync(run, cts.Token);
+            var completion = new TuiCompletionSignal();
+            run.Completion = completion;
+            await gateway.SubmitAsync(message.Text, cts.Token);
+            await completion.Task;
+        }
+        finally
+        {
+            run.Cts = null;
+            run.Completion = null;
+            _runs.End(thread.Id);
+            if (run.Message.Status == "running") run.Message.Status = "partial";
+            _store.Save();
+            if (!ReferenceEquals(previous, thread)) Show(previous);
+            Render();
+            UpdateStats();
+        }
+    }
+
     private void CancelWorkspaceRun()
     {
         var run = _runs.Stop(_thread?.Id ?? "");

@@ -125,6 +125,9 @@
             <StackPanel Grid.Row="0">
                 <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="16,10">
                     <DockPanel>
+                        <Button DockPanel.Dock="Right" x:Name="CopyAllBtn" Content="⧉ Переписку" Style="{StaticResource Btn}"
+                                Click="OnCopyConversation" Margin="0,0,8,0" Padding="10,3"
+                                ToolTip="Скопировать весь диалог целиком — выделить мышью текст в ленте нельзя"/>
                         <Button DockPanel.Dock="Right" x:Name="StopBtn" Content="Остановить" Style="{StaticResource Btn}"
                                 Click="OnStop" Visibility="Collapsed" MinWidth="110"/>
                         <TextBlock x:Name="HeaderText" Text="Проект" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"
@@ -204,6 +207,23 @@
                         <ComboBox x:Name="ProfileBox"  Width="250" Margin="0,0,8,0"
                                   SelectionChanged="OnProfileChanged"
                                   ToolTip="Агент этого диалога. Пусто — универсальный."/>
+<TextBlock Text="Рабочая папка" FontSize="12" Foreground="{StaticResource Dim}" Margin="0,12,0,4"
+                           ToolTip="Папка на машине шлюза, из которой агент видит файлы. Например C:\Users\marti\Projects\codick"/>
+<StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+    <TextBox x:Name="WorkingDirBox" Width="460" VerticalAlignment="Center"
+             KeyDown="OnWorkingDirEnter"/>
+    <Button x:Name="WorkingDirSave" Content="Применить" Style="{StaticResource Btn}" Margin="8,0,0,0"
+            Click="OnWorkingDirSave" Padding="10,3"
+            ToolTip="Применится при следующей отправке: сессия шлюза создаётся с этой папкой"/>
+    <Button x:Name="PickWorkingDirBtn" Content="Папка…" Style="{StaticResource Btn}" Margin="8,0,0,0"
+            Click="OnPickWorkingDir" Padding="10,3"/>
+</StackPanel>
+<TextBlock x:Name="WorkingDirHint" FontSize="11" Foreground="{StaticResource Dim}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+<StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+    <Button x:Name="ClearHistoryBtn" Content="Очистить историю чата" Style="{StaticResource Btn}"
+            Click="OnClearHistory" Padding="10,4"
+            ToolTip="Удалить сообщения этого диалога. Сессия на шлюзе сохранится."/>
+</StackPanel>
 <Expander Header="Диагностика сессии" Foreground="{StaticResource Dim}" Margin="0,12">                <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="16,4">
                     <DockPanel LastChildFill="True">
                         <Button x:Name="CopyIdsBtn" DockPanel.Dock="Right" Content="⧉ ID" Style="{StaticResource Btn}"

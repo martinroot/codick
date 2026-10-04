@@ -95,9 +95,18 @@ public sealed class TuiGateway : IDisposable
     public async Task<string> CreateSessionAsync(
         string title,
         CancellationToken ct = default,
-        IEnumerable<(string role, string content)>? history = null)
+        IEnumerable<(string role, string content)>? history = null,
+        string? workingDir = null)
     {
         var parameters = new JsonObject { ["title"] = title };
+        // Рабочая папка: без неё агент работает в папке приложения и не видит
+        // репозиторий. cwd_explicit=true — папка выбрана сознательно, поэтому
+        // профилем она не перебивается.
+        if (!string.IsNullOrWhiteSpace(workingDir))
+        {
+            parameters["cwd"] = workingDir;
+            parameters["cwd_explicit"] = true;
+        }
         var seed = history?
             .Where(message => (message.role is "user" or "assistant") && !string.IsNullOrWhiteSpace(message.content))
             .Select(message => new Dictionary<string, string> { ["role"] = message.role, ["content"] = message.content })

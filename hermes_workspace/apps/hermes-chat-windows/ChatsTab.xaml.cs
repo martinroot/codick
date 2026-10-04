@@ -264,6 +264,8 @@ public partial class ChatsTab : UserControl
         Render();
         UpdateStats();
         RefreshRequestBar();
+        ScrollToEnd(force: true);   // выбор диалога в списке — тоже открытие
+        LoadWorkingDir();
     }
 
     private void Select(ChatThread thread)
@@ -309,6 +311,8 @@ public partial class ChatsTab : UserControl
         Render();
         UpdateStats();
         RefreshRequestBar();
+        ScrollToEnd(force: true);
+        LoadWorkingDir();
         Input.Focus();
     }
 
@@ -375,7 +379,24 @@ public partial class ChatsTab : UserControl
             Foreground = Find(message.Status switch { "running" => "Warn", "failed" => "Bad", "partial" => "Warn", "stopped" => "Dim", _ => "Dim" }),
             Margin = new Thickness(2, 0, 0, 4)
         };
+        // Кнопка копирования — ОТДЕЛЬНЫМ потомком панели. Вкладывать её в
+        // DockPanel с мета-строкой нельзя: LiveBubbleAccess ищет мета-TextBlock
+        // прямым потомком StackPanel, и вложенный он не находился — PatchLive
+        // молча переставал обновлять пузырь, то есть ломалась отрисовка стрима.
         panel.Children.Add(meta);
+        var copy = new Button
+        {
+            Content = "⧉ скопировать",
+            Style = (Style)FindResource("Btn"),
+            Tag = message,
+            Padding = new Thickness(6, 1, 6, 1),
+            FontSize = 10.5,
+            HorizontalAlignment = message.IsAgent ? HorizontalAlignment.Left : HorizontalAlignment.Right,
+            Margin = new Thickness(2, 0, 0, 4),
+            ToolTip = "Скопировать текст сообщения"
+        };
+        copy.Click += OnCopyMessage;
+        panel.Children.Add(copy);
 
         var summary = message.IsAgent && message.Status == "ok" && _store.ChatBindings.Values.Any(b => b.OrchestratorThreadId == _thread?.Id)
             ? WorkspaceDecision.DisplayText(message.Body) : null;
@@ -987,14 +1008,14 @@ public partial class ChatsTab : UserControl
                 // Старые версии сохраняли runtime id; восстанавливаем локальную историю
                 // именно этого диалога, не того, который мог быть выбран во время await.
                 var live = run.Message;
-                await gateway.CreateSessionAsync(title, ct, RecoveryHistory(thread, live));
+                await gateway.CreateSessionAsync(title, ct, RecoveryHistory(thread, live), thread.WorkingDir);
                 thread.RemoteSessionId = gateway.StoredSessionId;
                 live.Note = "Старая сессия шлюза устарела; восстановил историю в новой сессии.";
             }
         }
         else
         {
-            await gateway.CreateSessionAsync(title, ct);
+            await gateway.CreateSessionAsync(title, ct, workingDir: thread.WorkingDir);
             thread.RemoteSessionId = gateway.StoredSessionId;
         }
         _store.Save();
@@ -1462,7 +1483,11 @@ public partial class ChatsTab : UserControl
     /// чем выполняется, и окно перестаёт отвечать.</summary>
     private bool _scrollQueued;
 
-    private void ScrollToEnd()
+    /// <param name="force">Прокрутить вниз даже если лента не у хвоста. Нужен при
+    /// ОТКРЫТИИ диалога: «пользователь сам ушёл читать вверх» там неправда —
+    /// открыть чат и увидеть его середину неудобно, а неправильное поведение
+    /// выглядит как «лента не дорисовалась».</param>
+    private void ScrollToEnd(bool force = false)
     {
         if (_scrollQueued) return;
         _scrollQueued = true;
@@ -1476,7 +1501,7 @@ public partial class ChatsTab : UserControl
                 // догонять хвост не нужно — это и есть главный источник «зависает».
                 var atBottom = FeedScroll.ScrollableHeight <= 0
                                || FeedScroll.VerticalOffset >= FeedScroll.ScrollableHeight - FeedScroll.ViewportHeight - 60;
-                if (atBottom) FeedScroll.ScrollToEnd();
+                if (force || atBottom) FeedScroll.ScrollToEnd();
             }
             catch (Exception) { /* лента ещё не измерена */ }
         }), DispatcherPriority.Background);
@@ -1788,6 +1813,100 @@ public partial class ChatsTab : UserControl
         if (item.Provider.Length > 0) message.Provider = item.Provider;
         if (item.RouteSource.Length > 0) message.RouteSource = item.RouteSource;
         if (item.DurationMs > 0) message.DurationMs = item.DurationMs;
+    }
+
+    /// <summary>Скопировать весь диалог. В ленте текст рисуется TextBlock,
+    /// а он мышью не выделяется, поэтому выбрать несколько ответов в
+    /// интерфейсе нечем. Копирование берёт данные из модели, а не из
+    /// отрисовки: свёрнутые блоки и сообщения за пределами ленты попадают
+    /// в буфер целиком. Во время стрима доступен только уже накопленный
+    /// текст — полного ответа физически ещё нет.</summary>
+    private void OnCopyConversation(object sender, RoutedEventArgs e)
+    {
+        if (_thread is null || _thread.Messages.Count == 0) return;
+        var lines = new List<string>();
+        foreach (var message in _thread.Messages)
+        {
+            var text = message.Body.Trim();
+            if (text.Length == 0) continue;
+            var who = message.IsAgent ? "Hermes" : "Ты";
+            var stamp = DateTimeOffset.FromUnixTimeSeconds(message.CreatedAt).ToLocalTime().ToString("dd.MM HH:mm:ss");
+            lines.Add($"[{stamp}] {who}:\n{text}");
+        }
+        if (lines.Count == 0) return;
+        try
+        {
+            var payload = "Диалог: " + _thread.Title + "\n" +
+                          (_thread.WorkingDir.Length > 0 ? "Папка: " + _thread.WorkingDir + "\n" : "") +
+                          new string('─', 60) + "\n\n" + string.Join("\n\n", lines);
+            Clipboard.SetText(payload);
+            CopyAllBtn.Content = "✓ скопировано";
+            var reset = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
+            reset.Tick += (_, _) => { CopyAllBtn.Content = "⧉ Переписку"; reset.Stop(); };
+            reset.Start();
+        }
+        catch (Exception error)
+        {
+            CrashLog.Write("Копирование переписки: " + error.Message);
+            MessageBox.Show("Не удалось скопировать: " + error.Message, "HermesChat");
+        }
+    }
+
+    /// <summary>Скопировать одно сообщение:Копируется видимый текст, а не
+    /// служебные поля: в буфер обмена попадает ровно то, что человек видит.</summary>
+    private void OnCopyMessage(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: ChatMessage message }) return;
+        var text = message.Body.Length > 0 ? message.Body : message.Text;
+        if (text.Length == 0) return;
+        try
+        {
+            Clipboard.SetText(text);
+            var button = (Button)sender;
+            button.Content = "✓";
+            var reset = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.2) };
+            reset.Tick += (_, _) => { button.Content = "⧉"; reset.Stop(); };
+            reset.Start();
+        }
+        catch (Exception error)
+        {
+            CrashLog.Write("Копирование сообщения: " + error.Message);
+            MessageBox.Show("Не удалось скопировать: " + error.Message, "HermesChat");
+        }
+    }
+
+    /// <summary>Очистить историю диалога. Сессия шлюза при этом НЕ трогается:
+    /// удаляются только локальные сообщения, поэтому следующая отправка
+    /// продолжит ту же сессию. Спросить нужно обязательно — действие
+    /// необратимо и без подтверждения пропала бы работа целого дня.</summary>
+    private void OnClearHistory(object sender, RoutedEventArgs e)
+    {
+        if (_thread is null || _thread.Messages.Count == 0) return;
+        if (_thread is not null && _runs.IsBusy(_thread.Id))
+        {
+            MessageBox.Show("Сначала дождись ответа или нажми STOP: очистка во время стрима оборвёт его.",
+                "HermesChat", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var count = _thread.Messages.Count;
+        if (MessageBox.Show($"Удалить {count} сообщений в диалоге «{_thread.Title}»? Отменить будет нельзя.",
+                "Очистить историю", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+
+        _thread.Messages.Clear();
+        _runs.End(_thread.Id);
+        _pendingRequests.Clear();
+        _requestSignature = "";
+        if (_thread.ProfileId.Length > 0)
+        {
+            var profile = _store.Profiles.FirstOrDefault(p => p.Id == _thread.ProfileId);
+            if (profile is not null) profile.ThreadMessages = 0;
+        }
+        _store.Save();
+        RefreshThreadGroups();
+        RefreshRequestBar();
+        Render();
+        UpdateStats();
+        UpdateHeader();
     }
 
     /// <summary>Метрики одного ответа: токены, контекст, кэш и только известная стоимость.</summary>
@@ -2329,7 +2448,8 @@ public partial class ChatsTab : UserControl
         Render();
         UpdateStats();
         RefreshRequestBar();
-        ScrollToEnd();
+        ScrollToEnd(force: true);   // открыли чат — показываем хвост, а не середину
+        LoadWorkingDir();
         Input.Focus();
     }
 

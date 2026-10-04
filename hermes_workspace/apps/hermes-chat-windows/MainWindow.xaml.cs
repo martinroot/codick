@@ -52,6 +52,7 @@ public partial class MainWindow : Window
         _activityTimer.Tick += (_,_) =>
         {
             Chats.RefreshStoredConversation();
+            Chats.PumpQueuedMessages();
             foreach (var runner in _workers.Values.Where(w => w.Visibility == Visibility.Visible)) runner.RefreshStoredConversation();
             var signature = string.Join("|", _store.Threads.SelectMany(t => t.Messages).Where(m => m.WaitingApproval || m.WaitingClarification).Select(m => m.Id));
             if (signature != _approvalSignature) { _approvalSignature = signature; RefreshWorkspace(); }

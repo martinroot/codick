@@ -71,6 +71,12 @@ public sealed class ChatMessage
     /// <summary>Сообщение пришло из шлюза, а не отправлено из приложения. Такие
     /// не хранятся в state.json: их история лежит в шлюзе и читается оттуда.</summary>
     public bool Remote { get; set; }
+    /// <summary>Сообщение поставлено в очередь на отправку: его дописал в
+    /// диалог ОРКЕСТРАТОР извне (мост), а отправить должен сам диалог.
+    /// Очередь — единственный способ писать в чужой диалог, не забирая его
+    /// WS-соединение себе: соединение на сессию у приложения, и второй клиент
+    /// начал бы с ним драться за ввод.</summary>
+    public bool Queued { get; set; }
     [JsonIgnore]
     public bool IsRunning => Status == "running";
     /// <summary>Что показать в ленте: во время стрима — накопленный текст, иначе финальный.</summary>
@@ -111,6 +117,11 @@ public sealed class ChatThread : INotifyPropertyChanged
         }
     }
     public string SessionKey { get; set; } = "";
+    /// <summary>Рабочая папка диалога на сервере шлюза: агент видит файлы только
+    /// отсюда. Без неё сессия наследует папку приложения, и репозиторий в диалоге
+    /// просто не виден. Задаётся при СОЗДАНИИ сессии — у возобновлённой сессии
+    /// рабочая папка своя, и смена значения заводит новую сессию.</summary>
+    public string WorkingDir { get; set; } = "";
     public List<ChatMessage> Messages { get; set; } = new();
     /// <summary>Модель этого диалога. Пусто — модель по умолчанию из настроек.</summary>
     public string Model { get; set; } = "";
@@ -242,7 +253,10 @@ public sealed class RemoteMessage
 
 public sealed class ChatSettings
 {
-    public string BaseUrl { get; set; } = "http://127.0.0.1:8642";
+    /// <summary>Локальный hermes serve и есть TUI-шлюз: сессии и /api/ws живут на нём.
+    /// Старый api_server на 8642 больше не поднимается, и адрес на него делал
+    /// шлюз «Этот ноут» недоступным при живом шлюзе на 9119.</summary>
+    public string BaseUrl { get; set; } = "http://127.0.0.1:9119";
     public string ApiKey { get; set; } = "";
     public string DefaultSessionKey { get; set; } = "agent:hermeschat:win:dm:marti";
     public string Model { get; set; } = "hermes-agent";

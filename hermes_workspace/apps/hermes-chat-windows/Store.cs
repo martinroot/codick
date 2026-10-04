@@ -170,6 +170,7 @@ public sealed class Store
             thread.GatewayId = thread.GatewayId ?? "";
             thread.GatewayName = thread.GatewayName ?? "";
             thread.SessionKey ??= "";
+            thread.WorkingDir ??= "";
             thread.RemoteSessionId ??= "";
             thread.Skills ??= new List<string>();
             thread.Messages ??= new List<ChatMessage>();
@@ -193,6 +194,7 @@ public sealed class Store
                 message.ApprovalChoices ??= new List<string>();
                 message.Steers ??= new List<string>();
                 message.ApprovalCommand = message.ApprovalCommand ?? "";
+
                 message.ApprovalTool = message.ApprovalTool ?? "";
                 message.ApprovalRequestId = message.ApprovalRequestId ?? "";
                 message.ClarifyRequestId = message.ClarifyRequestId ?? "";

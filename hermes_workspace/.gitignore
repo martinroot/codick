@@ -10,6 +10,10 @@ dist/
 # Временные проекты WPF: WPF создаёт их при прерванной сборке и не убирает.
 *_wpftmp.csproj
 
+# Ярлыки и состояние конкретной машины в Windows/ — не исходники.
+*.lnk
+Windows/tree-snapshot.json
+
 # Виртуальное окружение Python
 .venv/
 __pycache__/
