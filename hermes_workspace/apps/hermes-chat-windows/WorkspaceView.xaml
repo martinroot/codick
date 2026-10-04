@@ -1,0 +1,8 @@
+<UserControl x:Class="HermesChat.WorkspaceView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<Grid Margin="28,24"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+<DockPanel><StackPanel><TextBlock Text="Пульт управления" FontSize="30" FontWeight="SemiBold"/><TextBlock Text="Проекты, активные итерации и решения в одном месте" Foreground="{StaticResource Dim}" Margin="0,8,0,0"/></StackPanel><TextBlock x:Name="Clock" HorizontalAlignment="Right" Foreground="{StaticResource Accent}" FontSize="18" VerticalAlignment="Center"/></DockPanel>
+<Border Grid.Row="1" Background="{StaticResource Panel}" CornerRadius="12" Padding="20" Margin="0,22,0,18"><TextBlock x:Name="Summary" FontSize="18"/></Border>
+<Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
+<ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel><TextBlock Text="Все проекты" FontSize="19" Margin="0,0,0,14"/><WrapPanel x:Name="ProjectsPanel"/></StackPanel></ScrollViewer>
+<ScrollViewer Grid.Column="1" Margin="24,0,0,0" VerticalScrollBarVisibility="Auto"><StackPanel><TextBlock Text="Решения и активность" FontSize="19" Margin="0,0,0,14"/><StackPanel x:Name="ActivityPanel"/></StackPanel></ScrollViewer>
+</Grid></Grid></UserControl>

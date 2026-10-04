@@ -1,0 +1,66 @@
+<Window x:Class="HermesChat.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Настройки" Height="640" Width="680"
+        Background="{StaticResource Bg}" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Адрес шлюза" FontSize="12" Foreground="{StaticResource Dim}"/>
+            <TextBox x:Name="BaseBox" Margin="0,6,0,0" Text="http://127.0.0.1:8642"/>
+            <TextBlock Text="Это api_server Hermes (hermes gateway), а не сам Hermes CLI."
+                       FontSize="11" Foreground="{StaticResource Dim}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,16">
+            <TextBlock Text="Ключ API (API_SERVER_KEY)" FontSize="12" Foreground="{StaticResource Dim}"/>
+            <PasswordBox x:Name="KeyBox" Margin="0,6,0,0" Padding="8,6"
+                         Background="{StaticResource Panel}" Foreground="{StaticResource Fg}"
+                         BorderBrush="{StaticResource Line}" CaretBrush="{StaticResource Accent}"/>
+            <TextBlock x:Name="KeyNote" FontSize="11" Foreground="{StaticResource Dim}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Margin="0,0,0,16">
+            <TextBlock Text="Ключ памяти (X-Hermes-Session-Key)" FontSize="12" Foreground="{StaticResource Dim}"/>
+            <TextBox x:Name="SessionKeyBox" Margin="0,6,0,0"/>
+            <TextBlock Text="Одинаковый ключ объединяет память этого окна с Telegram-разговором."
+                       FontSize="11" Foreground="{StaticResource Dim}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3" Margin="0,0,0,16">
+            <TextBlock Text="Имя модели" FontSize="12" Foreground="{StaticResource Dim}"/>
+            <TextBox x:Name="ModelBox" Margin="0,6,0,0" Text="hermes-agent"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="4" Margin="0,0,0,16">
+            <CheckBox x:Name="ReasoningBox" Content="Показывать размышления агента" Margin="0,0,0,8"/>
+            <CheckBox x:Name="ToolsBox" Content="Показывать работу инструментов"/>
+        </StackPanel>
+
+        <Border Grid.Row="5" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                CornerRadius="6" Padding="12">
+            <StackPanel>
+                <TextBlock x:Name="ProbeNote" Text="Нажми «Сохранить и проверить» — приложение реально опросит шлюз."
+                           FontSize="12" Foreground="{StaticResource Dim}" TextWrapping="Wrap"/>
+                <TextBlock x:Name="EnvNote" FontSize="12" Foreground="{StaticResource Dim}"
+                           TextWrapping="Wrap" Margin="0,10,0,0"/>
+                <TextBlock x:Name="ToolsNote" FontSize="11" Foreground="{StaticResource Dim}"
+                           TextWrapping="Wrap" Margin="0,6,0,0" MaxHeight="90" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Сохранить и проверить" Style="{StaticResource PrimaryBtn}" Click="OnSaveAndProbe" MinWidth="200"/>
+            <Button Content="Отмена" Style="{StaticResource Btn}" Click="OnCancel" Margin="10,0,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>

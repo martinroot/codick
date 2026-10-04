@@ -1,0 +1,90 @@
+<Window x:Class="PulsePilot.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="PulsePilot — диспетчер проектов" Width="1500" Height="960" MinWidth="1120" MinHeight="720" Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen" UseLayoutRounding="True">
+ <Grid Margin="20">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <Grid Margin="0,0,0,16"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel><TextBlock Text="Диспетчер проектов" FontSize="26" FontWeight="SemiBold"/><TextBlock x:Name="StatusText" Foreground="{StaticResource FgDim}" Margin="0,5,0,0"/></StackPanel>
+   <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+    <TextBlock Text="Параллельно:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+    <ComboBox x:Name="SlotsBox" Width="55" SelectionChanged="SlotsChanged" Margin="0,0,12,0"/>
+    <Button x:Name="WorkButton" Content="Ушёл на работу · 30 мин" Click="BtnWork" Margin="0,0,8,0"/>
+    <Button Content="Agent Bridge…" Click="BtnAgentSettings" Margin="0,0,8,0"/>
+    <Button Content="Обновить" Click="BtnRefresh" Margin="0,0,8,0"/><Button Content="Настройки" Click="BtnSettings"/>
+   </WrapPanel>
+  </Grid>
+  <Border Grid.Row="1" Background="{StaticResource Panel2}" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <TextBlock x:Name="FleetSummary" FontSize="14" TextWrapping="Wrap"/><TextBlock x:Name="VerText" Grid.Column="1" Foreground="{StaticResource FgDim}" Margin="12,0,0,0"/>
+   </Grid>
+  </Border>
+  <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="205"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <Border Style="{StaticResource Card}" Padding="12" Margin="0,0,16,0">
+    <DockPanel><StackPanel DockPanel.Dock="Top" Margin="0,0,0,10"><TextBlock Text="НАПРАВЛЕНИЯ" FontSize="11" Foreground="{StaticResource FgDim}" Margin="4,0,0,10"/><Button Content="Все проекты" Click="BtnAllProjects"/></StackPanel>
+     <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel x:Name="DirectionStrip"/></ScrollViewer>
+    </DockPanel>
+   </Border>
+   <TabControl Grid.Column="1" x:Name="WorkspaceTabs" Background="{StaticResource Bg}" BorderThickness="0">
+    <TabItem Header="Параллельная работа">
+     <Grid Margin="0,14,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="330"/></Grid.ColumnDefinitions>
+      <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,14,0"><StackPanel>
+       <TextBlock Text="Каждая карточка — направление, поручение и реальный статус. Выбирать между работающими проектами можно свободно." Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+       <UniformGrid x:Name="FleetCards" Columns="2"/>
+      </StackPanel></ScrollViewer>
+      <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto"><StackPanel>
+       <Border Style="{StaticResource Card}" Padding="16"><StackPanel>
+        <TextBlock Text="НУЖНО МОЁ РЕШЕНИЕ" Foreground="{StaticResource Warn}" FontWeight="SemiBold" FontSize="12"/>
+        <StackPanel x:Name="AttentionList" Margin="0,12,0,0"/>
+       </StackPanel></Border>
+       <Border x:Name="InspectorCard" Style="{StaticResource Card}" Padding="16" Margin="0,14,0,0" Visibility="Collapsed"><StackPanel>
+        <TextBlock x:Name="JobTitle" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"/>
+        <TextBlock x:Name="JobStatus" Margin="0,8,0,0" Foreground="{StaticResource Accent2}" TextWrapping="Wrap"/>
+        <TextBlock x:Name="JobDetail" Margin="0,12,0,0" TextWrapping="Wrap"/>
+        <TextBlock x:Name="JobQuestion" Margin="0,12,0,0" Foreground="{StaticResource Warn}" TextWrapping="Wrap"/>
+        <WrapPanel Margin="0,14,0,0"><Button Content="Локер" Click="BtnOpenLocker" Margin="0,0,8,8"/><Button Content="Поручение" Click="BtnCopyJob" Margin="0,0,0,8"/></WrapPanel>
+        <TextBlock Text="Ответ агенту / проверенный результат" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,8,0,6"/>
+        <TextBox x:Name="JobNote" AcceptsReturn="True" TextWrapping="Wrap" Height="100" VerticalScrollBarVisibility="Auto"/>
+        <WrapPanel Margin="0,12,0,0">
+         <Button x:Name="SendInputButton" Content="Ответить агенту" Click="BtnSendInput" Style="{StaticResource PrimaryBtn}" Margin="0,0,8,8"/>
+         <Button x:Name="AcceptJobButton" Content="Принять результат" Click="BtnAcceptJob" Margin="0,0,8,8"/>
+         <Button Content="Проверить статус" Click="BtnCheckJob" Margin="0,0,8,8"/>
+         <Button Content="Проверить живость" Click="BtnCheckLiveness" Margin="0,0,8,8"/>
+         <Button Content="Ещё ▾" Click="BtnMoreChat" Margin="0,0,0,8"><Button.ContextMenu><ContextMenu>
+          <MenuItem Header="Назвать причину простоя" Click="BtnBlockReason"/>
+          <MenuItem Header="Снять причину простоя" Click="BtnClearBlockReason"/>
+          <Separator/>
+          <MenuItem Header="Я передал, жду результата" Click="BtnManualRunning"/>
+          <MenuItem Header="Запущен вручную в локере" Click="BtnManualRunning"/>
+          <MenuItem Header="Вручную: нужен мой ответ" Click="BtnManualInput"/>
+          <MenuItem Header="Вручную: результат готов" Click="BtnManualResult"/><MenuItem Header="Вручную: остановка подтверждена" Click="BtnManualStopped"/>
+          <Separator/><MenuItem Header="Остановить запуск" Click="BtnCancelJob"/><MenuItem Header="Подтвердить остановку неизвестного запуска" Click="BtnResolveUnknown"/><MenuItem Header="Напомнить через 5 минут" Click="BtnSnoozeJob"/>
+         </ContextMenu></Button.ContextMenu></Button>
+        </WrapPanel>
+       </StackPanel></Border>
+       <TextBlock x:Name="FleetHint" TextWrapping="Wrap" Foreground="{StaticResource FgDim}" Margin="4,14,4,0"/>
+      </StackPanel></ScrollViewer>
+     </Grid>
+    </TabItem>
+    <TabItem Header="Задачи и Wiki">
+     <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <WrapPanel Margin="0,0,0,12"><Button Content="+ Направление" Click="BtnAddProject" Margin="0,0,8,8"/><Button Content="+ TODO" Click="BtnAddNode" Margin="0,0,8,8"/>
+       <Button Content="Подготовить агенту" Click="BtnPrepareSelected" Style="{StaticResource PrimaryBtn}" Margin="0,0,8,8"/>
+       <Button Content="Показать текст" Click="BtnShowNode" Margin="0,0,8,8"/>
+       <Button Content="Изменить" Click="BtnEdit" Margin="0,0,8,8"/><Button Content="Готово / не готово" Click="BtnToggle" Margin="0,0,8,8"/>
+      </WrapPanel>
+      <TreeView x:Name="Tree" Grid.Row="1" SelectedItemChanged="TreeSelectionChanged" Background="{StaticResource Panel}" Foreground="{StaticResource Fg}" BorderThickness="0" Padding="12"/>
+     </Grid>
+    </TabItem>
+    <TabItem Header="Советник">
+     <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <TextBlock x:Name="ModelText" Foreground="{StaticResource FgDim}" TextWrapping="Wrap"/>
+      <ScrollViewer x:Name="ChatScroll" Grid.Row="1" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto"><StackPanel x:Name="ChatPanel"/></ScrollViewer>
+      <TextBox x:Name="ChatInput" Grid.Row="2" Height="80" AcceptsReturn="True" TextWrapping="Wrap" KeyDown="ChatInputKeyDown" VerticalScrollBarVisibility="Auto"/>
+      <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0"><Button x:Name="ChatSend" Content="Обсудить оркестрацию" Click="BtnChatSend" Style="{StaticResource PrimaryBtn}"/><TextBlock x:Name="ChatStatus" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{StaticResource FgDim}"/></StackPanel>
+     </Grid>
+    </TabItem>
+    <TabItem Header="События"><ListBox x:Name="LogList" Background="{StaticResource Panel}" Foreground="{StaticResource Fg}" BorderThickness="0" Margin="0,14,0,0"><ListBox.ItemTemplate><DataTemplate><TextBlock Margin="8" TextWrapping="Wrap"><Run Text="{Binding Ts}"/><Run Text="  "/><Run Text="{Binding Text}"/></TextBlock></DataTemplate></ListBox.ItemTemplate></ListBox></TabItem>
+   </TabControl>
+  </Grid>
+  <TextBlock x:Name="ActivityText" Grid.Row="3" FontSize="11" Foreground="{StaticResource FgDim}" Margin="0,12,0,0" TextTrimming="CharacterEllipsis"/>
+ </Grid>
+</Window>

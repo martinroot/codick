@@ -1,0 +1,1 @@
+{"argv": ["python3", "/opt/pulsepilot/run_task.py", "--prompt-file", "{prompt_file}", "--job-dir", "{job_dir}", "--run-id", "{run_id}"]}

@@ -1,0 +1,14 @@
+<Window x:Class="PulsePilot.JobSetupWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Поручение агенту" Width="760" Height="760" MinHeight="580" Background="{StaticResource Bg}" WindowStartupLocation="CenterOwner">
+ <Grid Margin="24"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel>
+   <TextBlock x:Name="TitleText" FontSize="22" TextWrapping="Wrap" FontWeight="SemiBold"/>
+   <TextBlock Text="Локер: tmux:имя-сессии, proc:имя-процесса или http(s)-адрес" Foreground="{StaticResource FgDim}" Margin="0,20,0,4"/><TextBox x:Name="LockerBox"/>
+   <TextBlock Text="Проверяемые виды локера система опрашивает сама и показывает, жив ли запуск. Свободный текст остаётся только подписью." Foreground="{StaticResource FgDim}" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"/>
+   <TextBlock Text="Общий ресурс: одинаковый ключ запрещает конкурирующие запуски" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,16,0,6"/><TextBox x:Name="ResourceBox"/>
+   <TextBlock Text="Поручение с целью и ограничениями из Wiki" Foreground="{StaticResource FgDim}" Margin="0,16,0,6"/>
+   <TextBox x:Name="PromptBox" AcceptsReturn="True" TextWrapping="Wrap" Height="380" VerticalScrollBarVisibility="Auto"/>
+   <TextBlock Text="Сохранение создаёт карточку поручения. Запуск выполняется отдельным действием «Передать агенту»." Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,12,0,0"/>
+  </StackPanel></ScrollViewer>
+  <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0"><Button Content="Отмена" Click="Cancel" Margin="0,0,8,0"/><Button Content="Сохранить поручение" Click="Save" Style="{StaticResource PrimaryBtn}"/></StackPanel>
+ </Grid>
+</Window>

@@ -1,0 +1,94 @@
+<UserControl x:Class="HermesChat.GatewaysTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="380"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Слева: реестр внешних шлюзов -->
+        <Grid Grid.Column="0" Margin="0,0,14,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Text="Внешние шлюзы" FontSize="13" Margin="0,0,0,10"/>
+            <ListBox x:Name="GatewayList" Grid.Row="1" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
+                     BorderThickness="1" Foreground="{StaticResource Fg}" SelectionChanged="OnSelect">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,4">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="8" Height="8" CornerRadius="4" VerticalAlignment="Center" Background="{Binding StatusBrush}"/>
+                                <TextBlock Text="{Binding Name}" FontSize="13" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding Url}" FontSize="11" Foreground="{StaticResource Dim}" Margin="16,2,0,0"/>
+                            <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{StaticResource Dim}" Margin="16,2,0,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="Добавить" Style="{StaticResource Btn}" Click="OnNew" MinWidth="110"/>
+                <Button Content="Удалить" Style="{StaticResource Btn}" Click="OnDelete" Margin="8,0,0,0" MinWidth="100"/>
+                <Button Content="Проверить все" Style="{StaticResource PrimaryBtn}" Click="OnProbeAll" Margin="8,0,0,0" MinWidth="130"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Справа: свойства шлюза и проверка -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Подключение внешнего агента" FontSize="13" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Имя" FontSize="12" Foreground="{StaticResource Dim}"/>
+                <TextBox x:Name="NameBox" Margin="0,4,0,12"/>
+
+                <TextBlock Text="Адрес шлюза (разговор, WebSocket)" FontSize="12" Foreground="{StaticResource Dim}"/>
+                <TextBox x:Name="UrlBox" Margin="0,4,0,4" TextChanged="OnUrlChanged" ToolTip="Порт hermes serve — тот, что отдаёт / и /api/ws. Например http://127.0.0.1:19122 (туннель на 9122)."/>
+                <TextBlock x:Name="DiagnoseText" FontSize="11" Foreground="{StaticResource Warn}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                <TextBlock Text="Адрес api_server (проверка и тестовая задача)" FontSize="12" Foreground="{StaticResource Dim}"/>
+                <TextBox x:Name="ApiUrlBox" Margin="0,4,0,4" TextChanged="OnUrlChanged"
+                         ToolTip="Там, где живёт /v1/capabilities и /v1/runs — обычно другой порт (8642). Пусто = тот же адрес."/>
+                <TextBlock Text="Hermes держит эти две ноги раздельно: разговор идёт по WebSocket в hermes serve, проверка — по REST в api_server. Если порт один, поле можно оставить пустым."
+                           FontSize="11" Foreground="{StaticResource Dim}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                <TextBlock Text="Токен шлюза (свой на каждый сервер)" FontSize="12" Foreground="{StaticResource Dim}"/>
+                <TextBox x:Name="TokenBox" Margin="0,4,0,4"/>
+                <TextBlock Text="Общий токен на несколько машин значит, что любой сервер исполнит задачу от чужого имени."
+                           FontSize="11" Foreground="{StaticResource Dim}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                <TextBlock Text="Закрепить профиль оркестратора" FontSize="12" Foreground="{StaticResource Dim}"/>
+                <ComboBox x:Name="ProfileBox" Margin="0,4,0,12"/>
+
+                <TextBlock Text="Тип" FontSize="12" Foreground="{StaticResource Dim}"/>
+                <ComboBox x:Name="KindBox" Margin="0,4,0,12">
+                    <ComboBoxItem Content="Agent Bridge (воркеры)"/>
+                    <ComboBoxItem Content="Hermes api_server"/>
+                </ComboBox>
+
+                <TextBlock Text="Заметка" FontSize="12" Foreground="{StaticResource Dim}"/>
+                <TextBox x:Name="NoteBox" Margin="0,4,0,16" MinHeight="54" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                    <Button Content="Сохранить" Style="{StaticResource Btn}" Click="OnSave" MinWidth="120"/>
+                    <Button Content="Проверить шлюз" Style="{StaticResource PrimaryBtn}" Click="OnProbe" Margin="8,0,0,0" MinWidth="150"/>
+                    <Button Content="Тестовая задача" Style="{StaticResource PrimaryBtn}" Click="OnRunTest" Margin="8,0,0,0" MinWidth="160"/>
+                    <Button Content="Открыть чат" Style="{StaticResource PrimaryBtn}" Click="OnOpenChat" Margin="8,0,0,0" MinWidth="140"
+                            ToolTip="Создать или открыть диалог с этим агентом и перейти в него."/>
+                </StackPanel>
+
+                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                        CornerRadius="6" Padding="12" x:Name="ResultBox">
+                    <StackPanel>
+                        <TextBlock x:Name="ResultText" Text="Шлюз ещё не проверялся." TextWrapping="Wrap" FontSize="12"/>
+                        <TextBlock x:Name="ResultOutput" Text="" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Accent}"
+                                   Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

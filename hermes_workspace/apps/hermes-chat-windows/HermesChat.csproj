@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>HermesWorkspace</AssemblyName>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>HermesChat</RootNamespace>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <!-- Снимок дерева копируется рядом с exe: профили берут из него свою очередь TODO. -->
+  <ItemGroup>
+    <None Update="install_agent.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
+    <!-- Тесты лежат внутри, но собираются отдельным проектом: их файлы не должны
+         попадать в сборку приложения, иначе дублируются AssemblyInfo. -->
+    <Compile Remove="tests\**\*.cs"/>
+    <None Remove="tests\**"/>
+    <None Include="..\pulsepilot\tree-snapshot.json" Link="tree-snapshot.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
+  </ItemGroup>
+</Project>

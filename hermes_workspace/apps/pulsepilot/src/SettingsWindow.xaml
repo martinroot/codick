@@ -1,0 +1,57 @@
+<Window x:Class="PulsePilot.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Настройки PulsePilot" Height="820" Width="640" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" Background="{StaticResource Bg}"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="API дерева" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock Text="Адрес" Foreground="{StaticResource FgDim}" FontSize="12" Margin="0,10,0,4"/>
+            <TextBox x:Name="UrlBox"/>
+            <TextBlock Text="Ключ X-P1026-Key" Foreground="{StaticResource FgDim}" FontSize="12" Margin="0,10,0,4"/>
+            <PasswordBox x:Name="KeyBox" Background="{StaticResource Panel2}" Foreground="{StaticResource Fg}"
+                         BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="9,6" FontFamily="Segoe UI" FontSize="13"/>
+
+            <TextBlock Text="Опрос и уведомления" FontSize="15" FontWeight="SemiBold" Margin="0,18,0,0"/>
+            <WrapPanel Margin="0,8,0,0">
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,10">
+                    <TextBlock Text="Опрос API, сек:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"/>
+                    <TextBox x:Name="PollBox" Width="50" Text="20"/>
+                </StackPanel>
+            </WrapPanel>
+
+            <CheckBox x:Name="SoundChk" Content="Звук при возврате к шагу" Margin="0,6,0,0" Foreground="{StaticResource Fg}" FontSize="13"/>
+            <CheckBox x:Name="AskChk" Content="Показывать очередь решений поверх экрана" Margin="0,6,0,0" Foreground="{StaticResource Fg}" FontSize="13"/>
+            <CheckBox x:Name="ActChk" Content="Замер активности: окна, ввод, простой" Margin="0,6,0,0"
+                      Foreground="{StaticResource Fg}" FontSize="13"/>
+
+
+            <TextBlock Text="Модель-планировщик" FontSize="15" FontWeight="SemiBold" Margin="0,18,0,0"/>
+            <TextBlock Text="Адрес API (OpenAI-совместимый)" Foreground="{StaticResource FgDim}" FontSize="12" Margin="0,10,0,4"/>
+            <TextBox x:Name="LlmUrlBox"/>
+            <TextBlock Text="Ключ модели" Foreground="{StaticResource FgDim}" FontSize="12" Margin="0,10,0,4"/>
+            <PasswordBox x:Name="LlmKeyBox" Background="{StaticResource Panel2}" Foreground="{StaticResource Fg}"
+                         BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="9,6" FontFamily="Segoe UI" FontSize="13"/>
+            <TextBlock Text="Модель" Foreground="{StaticResource FgDim}" FontSize="12" Margin="0,10,0,4"/>
+            <TextBox x:Name="LlmModelBox"/>
+            <TextBlock Foreground="{StaticResource FgDim}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap"
+                       Text="Укажи доступную модель своего OpenAI-совместимого провайдера. Пустой ключ подхватывается из окружения Hermes."/>
+            <TextBlock Text="Модель выбора задачи (кнопка «ИИ — другая задача»)" FontSize="15" FontWeight="SemiBold" Margin="0,18,0,0"/>
+            <TextBox x:Name="PickModelBox"/>
+            <TextBlock x:Name="PickModelHint" Foreground="{StaticResource FgDim}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap"/>
+
+            <TextBlock x:Name="WhereText" Foreground="{StaticResource FgDim}" FontSize="11" Margin="0,14,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="Проверить дерево" Click="Test" Margin="0,0,8,0" Padding="14,8"/>
+            <Button Content="Проверить модель" Click="TestModel" Margin="0,0,10,0" Padding="14,8"/>
+            <Button Content="Отмена" Click="Cancel" Margin="0,0,10,0" Padding="16,8"/>
+            <Button Content="Сохранить" Click="Save" Style="{StaticResource PrimaryBtn}" Padding="20,8"/>
+        </StackPanel>
+    </Grid>
+</Window>

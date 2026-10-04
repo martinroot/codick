@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup><ItemGroup><Compile Remove="tree-tests/**/*.cs"/><Compile Include="../apps/hermes-chat-windows/AgentAssets.cs" Link="AgentAssets.cs"/><Compile Include="../apps/hermes-chat-windows/WorkspaceCoordinator.cs" Link="WorkspaceCoordinator.cs"/><Compile Include="../apps/hermes-chat-windows/WorkspaceChatRelay.cs" Link="WorkspaceChatRelay.cs"/><Compile Include="../apps/hermes-chat-windows/TuiCompletionSignal.cs" Link="TuiCompletionSignal.cs"/><Compile Include="../apps/hermes-chat-windows/TuiGateway.cs" Link="TuiGateway.cs"/>
+<Compile Include="../apps/hermes-chat-windows/TuiEventBridge.cs" Link="TuiEventBridge.cs"/>
+<Compile Include="../apps/hermes-chat-windows/TuiInterimPayload.cs" Link="TuiInterimPayload.cs"/>
+<Compile Include="../apps/hermes-chat-windows/TuiUsagePayload.cs" Link="TuiUsagePayload.cs"/>
+<Compile Include="../apps/hermes-chat-windows/ChatRun.cs" Link="ChatRun.cs"/>
+<Compile Include="../apps/hermes-chat-windows/ClarifyRequestParser.cs" Link="ClarifyRequestParser.cs"/>
+<Compile Include="../apps/hermes-chat-windows/RunEvent.cs" Link="RunEvent.cs"/>
+<Compile Include="../apps/hermes-chat-windows/PendingRequestStore.cs" Link="PendingRequestStore.cs"/></ItemGroup></Project>

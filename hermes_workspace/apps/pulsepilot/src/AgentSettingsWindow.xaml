@@ -1,0 +1,10 @@
+<Window x:Class="PulsePilot.AgentSettingsWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Подключение агентов" Width="620" Height="460" Background="{StaticResource Bg}" WindowStartupLocation="CenterOwner">
+ <Grid Margin="24"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><StackPanel>
+  <TextBlock Text="Agent Bridge" FontSize="24" FontWeight="SemiBold"/>
+  <TextBlock Text="Bridge запускает настроенный worker и возвращает статусы всех параллельных процессов. Это отдельный адаптер; URL портала Hermes сюда автоматически не подходит." Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,14,0,0"/>
+  <TextBlock Text="URL Bridge" Margin="0,20,0,6"/><TextBox x:Name="UrlBox"/>
+  <TextBlock Text="Bearer token" Margin="0,14,0,6"/><PasswordBox x:Name="KeyBox" Padding="8" Background="{StaticResource Panel2}" Foreground="{StaticResource Fg}"/>
+  <TextBlock Text="Минут без обновления до напоминания" Margin="0,14,0,6"/><TextBox x:Name="StaleBox"/>
+  <TextBlock x:Name="ErrorText" Foreground="{StaticResource Warn}" TextWrapping="Wrap" Margin="0,12,0,0"/>
+ </StackPanel><StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="Отмена" Click="Cancel" Margin="0,0,8,0"/><Button Content="Сохранить" Click="Save" Style="{StaticResource PrimaryBtn}"/></StackPanel></Grid>
+</Window>

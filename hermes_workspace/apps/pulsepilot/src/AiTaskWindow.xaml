@@ -1,0 +1,24 @@
+<Window x:Class="PulsePilot.AiTaskWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ИИ — другая задача" Width="780" Height="720" MinHeight="560" Background="{StaticResource Bg}" WindowStartupLocation="CenterOwner">
+  <Grid Margin="24"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel>
+    <TextBlock x:Name="TitleText" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap"/>
+    <TextBlock x:Name="GoalText" Foreground="{StaticResource FgDim}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+    <TextBlock Text="Направь ИИ (необязательно): пара слов, что важно именно сейчас" Foreground="{StaticResource FgDim}" FontSize="12" Margin="0,18,0,6"/>
+    <TextBox x:Name="GuidanceBox" AcceptsReturn="True" TextWrapping="Wrap" Height="70" VerticalScrollBarVisibility="Auto"/>
+    <TextBlock x:Name="StatusText" TextWrapping="Wrap" Margin="0,12,0,0"/>
+    <TextBlock x:Name="NoteText" Foreground="{StaticResource FgDim}" FontSize="11.5" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed"/>
+    <TextBlock x:Name="WhyText" TextWrapping="Wrap" Foreground="{StaticResource Accent2}" Margin="0,10,0,0"/>
+    <StackPanel x:Name="Options" Margin="0,12,0,0"/>
+    <TextBlock Text="Ответ модели, как есть" Foreground="{StaticResource FgDim}" FontSize="11" Margin="0,14,0,0"/>
+    <TextBox x:Name="RawText" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" Height="120" VerticalScrollBarVisibility="Auto"
+             Background="{StaticResource Panel}" Foreground="{StaticResource FgDim}" FontSize="11.5"/>
+   </StackPanel></ScrollViewer>
+   <TextBlock x:Name="ErrorText" Grid.Row="1" Foreground="{StaticResource Bad}" TextWrapping="Wrap" Margin="0,12,0,0"/>
+   <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+    <Button x:Name="RetryButton" Content="Спросить ещё раз" Click="RetryNow" Margin="0,0,10,0" Padding="16,8"/>
+    <Button x:Name="CloseButton" Content="Закрыть" Click="Cancel" Margin="0,0,10,0" Padding="16,8"/>
+    <Button x:Name="TakeButton" Content="Взять эту задачу" Click="Take" Style="{StaticResource PrimaryBtn}" Padding="20,8" IsEnabled="False"/>
+   </StackPanel>
+  </Grid>
+</Window>

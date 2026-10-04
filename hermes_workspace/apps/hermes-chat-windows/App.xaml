@@ -1,0 +1,208 @@
+<Application x:Class="HermesChat.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:HermesChat"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <SolidColorBrush x:Key="Bg" Color="#10141D"/>
+        <SolidColorBrush x:Key="Panel" Color="#181F2B"/>
+        <SolidColorBrush x:Key="PanelHi" Color="#283448"/>
+        <SolidColorBrush x:Key="Line" Color="#293547"/>
+        <SolidColorBrush x:Key="Fg" Color="#E6E8EC"/>
+        <SolidColorBrush x:Key="Dim" Color="#8A93A0"/>
+        <SolidColorBrush x:Key="Accent" Color="#84A9FF"/>
+        <SolidColorBrush x:Key="Good" Color="#4FB477"/>
+        <SolidColorBrush x:Key="Warn" Color="#E0A33E"/>
+        <SolidColorBrush x:Key="Bad" Color="#E0605A"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+
+        <Style x:Key="Btn" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="Background" Value="{StaticResource Panel}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#242932"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryBtn" TargetType="Button" BasedOn="{StaticResource Btn}">
+            <Setter Property="Background" Value="#2C5FA8"/>
+            <Setter Property="BorderBrush" Value="#3B72C4"/>
+        </Style>
+
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <local:NotConverter x:Key="NotBoolToVis"/>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="Background" Value="{StaticResource Panel}"/>
+            <Setter Property="Padding" Value="6,4"/>
+        </Style>
+
+        <!-- Пункт списка показывает Label, а в поле редактирования — чистый Id:
+             подпись «Claude Sonnet 4» нельзя отправлять шлюзу как model. -->
+        <DataTemplate x:Key="ModelItemTemplate">
+            <TextBlock Text="{Binding Display}" Foreground="{StaticResource Fg}" VerticalAlignment="Center"/>
+        </DataTemplate>
+
+        <!-- Общий шаблон «покажи имя». DisplayMemberPath для этой цели не годится:
+             WPF не строит из него SelectionBoxItemTemplate, и ContentPresenter
+             внутри шаблона ComboBox показывает ToString() объекта — в списке
+             выбора шлюза это выглядело как «HermesChat.Gateway». -->
+        <DataTemplate x:Key="NameOnly">
+            <TextBlock Text="{Binding Name}" Foreground="{StaticResource Fg}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="ThreadTitleOnly">
+            <TextBlock Text="{Binding Title}" Foreground="{StaticResource Fg}"/>
+        </DataTemplate>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="Background" Value="{StaticResource Panel}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Focusable="False" ClickMode="Press" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="4"/>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <!-- Нужны обе части: без PART_EditableTextBox поле ввода не появляется,
+                                 а без ContentPresenter нередактируемый список (профили) пуст. -->
+                            <TextBox x:Name="PART_EditableTextBox" Margin="8,3,26,3" VerticalAlignment="Center"
+                                     Background="Transparent" BorderThickness="0" Padding="0"
+                                     Foreground="{StaticResource Fg}" CaretBrush="{StaticResource Accent}"
+                                     IsReadOnly="{TemplateBinding IsReadOnly}"
+                                     Visibility="{TemplateBinding IsEditable, Converter={StaticResource BoolToVis}}"/>
+                            <ContentPresenter Margin="8,3,26,3" VerticalAlignment="Center" IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              Visibility="{TemplateBinding IsEditable, Converter={StaticResource NotBoolToVis}}"/>
+                            <Path Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource Dim}" HorizontalAlignment="Right"
+                                  VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" PopupAnimation="Fade" AllowsTransparency="True">
+                                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" MinWidth="{TemplateBinding ActualWidth}">
+                                    <ScrollViewer MaxHeight="260"><ItemsPresenter/></ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="9,6"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Border x:Name="Card" Background="Transparent" CornerRadius="7" Padding="{TemplateBinding Padding}" BorderThickness="1" BorderBrush="Transparent"><ContentPresenter/></Border><ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="Card" Property="Background" Value="{StaticResource PanelHi}"/><Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource Accent}"/></Trigger><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Card" Property="Background" Value="{StaticResource PanelHi}"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style x:Key="TabBtn" TargetType="Button" BasedOn="{StaticResource Btn}">
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+
+        <!-- Заголовки табов рабочего пространства. Стандартный шаблон WPF красит
+             их системным цветом, и на этой тёмной теме подписи просто исчезают —
+             вкладки есть, а их не видно. Поэтому шаблон свой: таб это кнопка с
+             нижней чертой, активная подпись — акцентом. -->
+        <Style x:Key="WsTab" TargetType="TabItem">
+            <Setter Property="Foreground" Value="{StaticResource Dim}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <!-- Заголовок берёт цвет от самого таба: иначе строка рисуется
+                 дефолтным Foreground и не реагирует на выбор вкладки. -->
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TabItem}}"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource Panel}"/>
+                                <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#242932"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Полоса заголовков: слева рядом, снизу черта — так табы читаются как
+             переключатель одного рабочего места, а не как содержимое ленты. -->
+        <Style x:Key="WsTabs" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource WsTab}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" Background="{StaticResource Panel}"
+                                    BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="4,0">
+                                <TabPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1"/>
+                            </Border>
+                            <ContentPresenter Grid.Row="1" ContentSource="SelectedContent"
+                                              KeyboardNavigation.TabNavigation="Local"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="{StaticResource Fg}"/>
+            <Setter Property="Background" Value="{StaticResource Panel}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="SelectionBrush" Value="#2C5FA8"/>
+            <Setter Property="Padding" Value="8,6"/>
+        </Style>
+    </Application.Resources>
+</Application>

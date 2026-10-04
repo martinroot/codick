@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ProfileLogicTests</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\hermes-chat-windows\AgentAssets.cs"/>
+    <Compile Include="..\hermes-chat-windows\Profiles.cs"/>
+    <Compile Include="..\hermes-chat-windows\ToolVisuals.cs"/>
+    <Compile Include="..\hermes-chat-windows\ChatDiagnostics.cs"/>
+    <Compile Include="..\hermes-chat-windows\LiveBubbleAccess.cs"/>
+    <Compile Include="..\hermes-chat-windows\TuiUsagePayload.cs"/>
+    <Compile Include="..\hermes-chat-windows\MarkdownParser.cs"/>
+    <Compile Include="..\hermes-chat-windows\MarkdownRenderer.cs"/>
+    <Compile Include="..\hermes-chat-windows\ClarifyRequestParser.cs"/>
+    <Compile Include="..\hermes-chat-windows\TuiCompletionSignal.cs"/>
+    <Compile Include="..\hermes-chat-windows\TuiInterimPayload.cs"/>
+  </ItemGroup>
+</Project>

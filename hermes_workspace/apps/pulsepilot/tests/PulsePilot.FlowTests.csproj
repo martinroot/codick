@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+ <ItemGroup><Compile Include="../src/Models.cs" Link="Models.cs"/><Compile Include="../src/StateStore.cs" Link="StateStore.cs"/><Compile Include="../src/StepPlanner.cs" Link="StepPlanner.cs"/><Compile Include="../src/Scheduler.cs" Link="Scheduler.cs"/><Compile Include="../src/FleetModels.cs" Link="FleetModels.cs"/><Compile Include="../src/Liveness.cs" Link="Liveness.cs"/><Compile Include="../src/AiPick.cs" Link="AiPick.cs"/></ItemGroup>
+</Project>
